@@ -8,9 +8,9 @@
 (setq max-specpdl-size 3200)
 (setq max-lisp-eval-depth 3200)
 
-; And of course I’m sure to screw something up so let’s make sure the debugger is enabled for when I do.
+; And of course I’m sure to screw something up so let’s make sure the debugger is enabled for when I do. Or not right now as the case may be since it seems to bark all of the time.
 
-(setq debug-on-error t)
+(setq debug-on-error nil)
 
 ; Enable local lisp
 
@@ -73,7 +73,7 @@
 
 ; Where to put the fill column marker for line wraps, how many pixels to put between lines, stuff like that.
 
-(setq fill-column 80)
+(setq fill-column 100)
 (setq-default line-spacing 1)
 
 ; invoke M-x without Alt
@@ -125,8 +125,8 @@
 
 (setq ldi/face-height-default
       (if (eq system-type 'darwin)
-          160
-        140))
+          150
+        130))
 
 ;(set-face-attribute 'default t
 ;                    :family "Iosevka"
@@ -567,7 +567,7 @@
                 js2-indent-on-enter-key t
                 js2-global-externs (list "window" "module" "require" "buster" "sinon" "assert" "refute" "setTimeout" "clearTimeout" "setInterval" "clearInterval" "location" "__dirname" "console" "JSON" "jQuery" "$"))
 
-  (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode)))
+  (add-to-list 'auto-mode-alist '("\\.[jt]s[x]?$" . js2-mode)))
 
 (use-package js2-refactor
    :ensure t
@@ -688,7 +688,6 @@
         ivy-re-builders-alist)
   (push (cons t #'ivy--regex-fuzzy) ivy-re-builders-alist))
 
-
 ;; NOTE: If you want to move everything out of the ~/.emacs.d folder
 ;; reliably, set `user-emacs-directory` before loading no-littering!
 ;(setq user-emacs-directory "~/.cache/emacs")
@@ -714,3 +713,119 @@
                 (while (search-forward "\\u0000" nil t)
                   (replace-match "" nil t)))
 		(apply oldfn args)))
+
+(use-package auctex
+  :straight t
+  :defer t
+  :mode
+  ("\\.tex\\'" . latex-mode)
+  ("\\.ltx\\'" . latex-mode)
+  :commands
+  (latex-mode
+   LaTeX-mode
+   TeX-mode)
+  :hook (LaTeX-mode .
+                    (lambda ()
+                        (turn-on-reftex)
+                        (LaTeX-preview-setup)
+                        (flyspell-mode)
+                        (outline-minor-mode)
+                        (hs-minor-mode)
+                      )
+                    )
+  :init
+  (setq-default TeX-master nil)
+  (setq-default TeX-engine 'xetex)
+  (setq-default TeX-PDF-mode t)
+  ;; :config
+  :custom
+  (TeX-auto-save t)
+  (TeX-parse-self t)
+  (TeX-save-query nil)
+  (TeX-PDF-mode t)
+  (LaTeX-beamer-item-overlay-flag nil)
+  (TeX-PDF-mode t)
+  (TeX-quote-after-quote nil)
+  (TeX-open-quote "\"")
+  (TeX-close-quote "\"")
+  (TeX-insert-macro-default-style 'mandatory-args-only)
+  )
+
+
+
+;; --------------------------------------------------------------------
+(use-package reftex
+  :commands turn-on-reftex
+  :config (setq reftex-plug-into-AUCTeX t)
+  )
+
+;; Other auctex settings ---------------------------------------------
+(use-package emacs
+  :config
+  (add-hook 'LaTeX-mode-hook
+            (lambda ()
+              (add-to-list 'TeX-command-list
+                           '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
+                             :help "Run latexmk on file"))))
+
+
+  (with-eval-after-load "tex"
+    (add-to-list 'TeX-view-program-list '("okular" "/usr/bin/okular %o"))
+    (setcdr (assq 'output-pdf TeX-view-program-selection) '("okular")))
+
+
+  (defun TeX-insert-quote ()
+    " "
+    )
+  
+  (defun LaTeX-indent-item ()
+    "Provide proper indentation for LaTeX \"itemize\",\"enumerate\", and
+\"description\" environments.
+  \"\\item\" is indented `LaTeX-indent-level' spaces relative to
+  the the beginning of the environment.
+  Continuation lines are indented either twice
+  `LaTeX-indent-level', or `LaTeX-indent-level-item-continuation'
+  if the latter is bound."
+    (save-match-data
+      (let* ((offset LaTeX-indent-level)
+             (contin (or (and (boundp 'LaTeX-indent-level-item-continuation)
+                              LaTeX-indent-level-item-continuation)
+                         (* 2 LaTeX-indent-level)))
+             (re-beg "\\\\begin{")
+             (re-end "\\\\end{")
+             (re-env "\\(itemize\\|\\enumerate\\|description\\)")
+             (indent (save-excursion
+                       (when (looking-at (concat re-beg re-env "}"))
+                         (end-of-line))
+                       (LaTeX-find-matching-begin)
+                       (current-column))))
+        (cond ((looking-at (concat re-beg re-env "}"))
+               (or (save-excursion
+                     (beginning-of-line)
+                     (ignore-errors
+                       (LaTeX-find-matching-begin)
+                       (+ (current-column)
+                          (if (looking-at (concat re-beg re-env "}"))
+                              contin
+                            offset))))
+                   indent))
+              ((looking-at (concat re-end re-env "}"))
+               indent)
+              ((looking-at "\\\\item")
+               (+ offset indent))
+              (t
+               (+ contin indent))))))
+
+  (defcustom LaTeX-indent-level-item-continuation 4
+    "*Indentation of continuation lines for items in itemize-like
+environments."
+    :group 'LaTeX-indentation
+    :type 'integer)
+
+  (eval-after-load "latex"
+    '(setq LaTeX-indent-environment-list
+           (nconc '(("itemize" LaTeX-indent-item)
+                    ("enumerate" LaTeX-indent-item)
+                    ("description" LaTeX-indent-item))
+                  LaTeX-indent-environment-list)))
+  )

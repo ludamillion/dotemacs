@@ -1,0 +1,17 @@
+* Emacs Configuration
+
+** About
+
+While learning Emacs I've tried a lot of different prepackaged 'distros'. Most notably, as an erstwhile (neo)vim user, Doom. After learning enough via that route and additionally deciding to try to give vanilla Emacs a solid try I'm leaving the prepackaged distros behind and building my own configuration.
+
+It won't be 100% from scratch (are they ever?) as I really like the approach of the NΛNO configuration project and have built from that.
+
+Naturally my config is built 'on the shoulders of giants' where much more experienced Emacs users have gone before. With the goal of learning in mind I aim to do my best to not put anything in this config unless I understand how it works.
+
+*** Hall of inspiration
+
+As mentioned most of my config at this point is taken from or inspired by other, smarter, people's configs. Here they are in no particular order.
+
++ [[https://github.com/rememberYou/.emacs.d][Terencio Agozzino]] (=rememberYou=)
+
+Big thanks to those from whom I have learned. (And copy and pasted from...)
