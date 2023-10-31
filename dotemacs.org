@@ -1,0 +1,170 @@
+#+TITLE: Emacs literate configuration
+#+AUTHOR: Nicolas P. Rougier
+#+DATE: 04/2022
+#+STARTUP: show2levels indent hidestars
+#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/.config/emacs/init.el")))
+
+* Emacs Configuration
+
+** About
+
+While learning Emacs I've tried a lot of different prepackaged 'distros'. Most notably, as an erstwhile (neo)vim user, Doom. After learning enough via that route and additionally deciding to try to give vanilla Emacs a solid try I'm leaving the prepackaged distros behind and building my own configuration.
+
+It won't be 100% from scratch (are they ever?) as I really like the approach of the NΛNO configuration project and have built from that. Over all I aim for a practically minimalist approach. 
+
+Naturally my config is built 'on the shoulders of giants' where much more experienced Emacs users have gone before. With the goal of learning in mind I aim to do my best to not put anything in this config unless I understand how it works.
+
+*** Hall of inspiration
+
+As mentioned most of my config at this point is taken from or inspired by other, smarter, people's configs. Here they are in no particular order.
+
++ [[https://github.com/rememberYou/.emacs.d][Terencio Agozzino]] (=rememberYou=)
++ [[https://github.com/rougier/dotemacs][Nicolas Rougier (rougier) - Author of NANO]]
+
+Big thanks to those from whom I have learned. (And copy and pasted from...)
+
+** Ask rougier - The following is taken from his literate config. Mostly just seeing if I can get things to work.
+
+This document is a literate configuration for GNU Emacs written in [[https://orgmode.org/][org]] format. It cannot be used directly and needs to be transformed to extract all the different code blocks into a single configuration file. This is done using the [[help:org-babel-tangle][org-babel-tangle]] function that "extract the bodies of all source code blocks from the current file into their own source-specific files". You can try by yourself by typing the sequence: =C-c C-v t= (org-babel-execute-subtree).
+
+However, on my Emacs (28.1), there seems to be a bug that prevent a proper tangling. You'll thus need to go to the [[Configuration]] section and execute it using =C-c C-v s= to fix this bug before tangling the file.
+
+Each subsection may be tagged with:
+
+- =:BINDING:=  The section defines some key binding
+- =:HOOK:=     The section installs some hook
+- =:ADVICE:=   The section installs some advice
+- =:FACE:=     The section modifies some face
+- =:MODE:=     The section activates a mode
+- =:DEFER:=    The content of the section is deferred (lazy load)
+- =:PERSONAL:= The content is personal and should be adapted
+- =:INACTIVE:= The content of the section won't be exported
+- =:BUGFIX:=   The section contains (temporary) bug fix code
+- =:OTHER:=    The section will be exported to a different file than default
+- =:TIMER:=    The section install a timer
+- =:OS:=       The section contains some system specific code
+
+There is also a configuration mode defined in the section below to ease the writing.
+
+When tangled, the process will create the file [[file:~/.emacs.d/init.el][~/.config/emacs/init.el]]  [[file:~/.emacs.d/early-init.el][~/.config/emacs/early-init.el]] (from the [[Early init]] section). You can either copy these files to your ~emacs.d~ or you can use [[https://github.com/plexus/chemacs2][chemacs2]] and add ~.emacs.org~ as an alternative profile.
+
+Note also that the first time you will start emacs using this configuration, *it will take a long time* because a lof of packages will be dowloaded, installed and possibly compiled (if you use Emacs 28 and above). At next restart, the process should be very fast (650 ms on my machine using OSX).
+
+** To sort :INACTIVE:
+
+#+begin_src emacs-lisp 
+
+(setq-default
+ ad-redefinition-action 'accept         ; Silence warnings for redefinition
+ custom-unlispify-menu-entries nil      ; Prefer kebab-case for titles
+ custom-unlispify-tag-names nil         ; Prefer kebab-case for symbols
+(put 'downcase-region 'disabled nil)    ; Enable downcase-region
+(put 'upcase-region 'disabled nil)      ; Enable upcase-region
+ native-comp-async-report-warnings-errors 'silent ; Skip compilation error buffers
+ read-process-output-max (* 1024 1024)  ; Increase read size per process
+
+#+end_src
+
+** To do [5/5] :INACTIVE:
+
+- [X] Tangle file when saving (org-auto-tangle)
+- [X] Hitting `space` on top node should open the node (instead of folding)
+- [X] Dim inactive entries in the sidebar
+- [X] Shift-tab to toggle sidebar (all entries)
+- [X] Filter sidebar (`f` key)
+
+** Early init :HOOK:OTHER:
+
+:PROPERTIES:
+:header-args:emacs-lisp: :tangle "~/.config/emacs/early-init.el"
+:END:
+
+This code is meant to go to the [[file:early-init.el][early-init.el]] file.
+
+#+begin_src emacs-lisp
+
+(setq
+ site-run-file nil                         ; No site-wide run-time initializations. 
+ inhibit-default-init t                    ; No site-wide default library
+ gc-cons-threshold most-positive-fixnum    ; Very large threshold for garbage
+                                           ; collector during init
+ package-enable-at-startup nil)            ; We'll use straight.el
+
+(setq native-comp-eln-load-path
+      (list (expand-file-name "eln-cache" user-emacs-directory)))
+
+;; Reset garbage collector limit after init process has ended (8Mo)
+(add-hook 'after-init-hook
+          #'(lambda () (setq gc-cons-threshold (* 8 1024 1024))))
+
+#+end_src 
+
+** Packages management :PERSONAL:
+
+Using [[https://github.com/raxod502/straight.el][straight.el]] for package management and disable checking (for speedup).
+
+#+begin_src emacs-lisp
+
+(setq straight-check-for-modifications nil)
+
+#+end_src
+
+#+begin_src emacs-lisp
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
+#+end_src
+
+Library and theme load paths with a special case for mu4e (you may need to adapt this path).
+
+#+begin_src emacs-lisp
+
+(add-to-list 'load-path
+             (expand-file-name "lisp" user-emacs-directory))
+(add-to-list 'custom-theme-load-path
+             (expand-file-name "theme" user-emacs-directory))
+
+#+end_src
+
+** Packages installation
+
+Packages used in this specific configuration. You may want to adapt this list. The first time this sequence will be executed, *it will take a long time*. Then, at next restart, it should be very fast (less than 1 second because it won't install anything basically).
+
+#+begin_src emacs-lisp
+
+(setq package-list
+      '(cape                ; Completion At Point Extensions
+        orderless           ; Completion style for matching regexps in any order
+        vertico             ; VERTical Interactive COmpletion
+        marginalia          ; Enrich existing commands with completion annotations
+        consult             ; Consulting completing-read
+        corfu               ; Completion Overlay Region FUnction
+        f                   ; Modern API for working with files and directories
+        helpful             ; A better help buffer
+        imenu-list          ; Show imenu entries in a separate buffer
+        magit               ; A Git porcelain inside Emacs.
+        markdown-mode       ; Major mode for Markdown-formatted text
+        use-package         ; A configuration macro for simplifying your .emacs
+        yaml-mode           ; YAML mode
+        org-auto-tangle     ; Tangle org file when it is saved
+        exec-path-from-shell; Get environment variables such as $PATH from the shell 
+        which-key))         ; Display available keybindings in popup
+
+;; Install packages that are not yet installed
+(dolist (package package-list)
+  (straight-use-package package))
+
+#+end_src
+
+(add-hook 'org-mode-hook 'org-auto-tangle-mode)
+
