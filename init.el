@@ -1,6 +1,6 @@
 ; Foundations
 ; Give Emacs some breathing room
-; 
+;
 ; max-specpdl-size sets the upper limit for how many variable bindings and unwind-protect Emacs allows. max-lisp-eval-depth says how deep we can get into a recursive function call.
 
 ; I got the RAM so let’s go past the respective defaults of 1600 and 800.
@@ -11,7 +11,7 @@
 ; And of course I’m sure to screw something up so let’s make sure the debugger is enabled for when I do.
 
 (setq debug-on-error t)
-
+;
 ; Enable local lisp
 
 (let ((default-directory  (expand-file-name "lisp" user-emacs-directory)))
@@ -28,8 +28,9 @@
 ; I putter with this config marginally less than I did initially - progress! - but enough that restarting Emacs for every config tweak gets tedious.
 
 ; One of the ideas I grabbed from Vianney Lebouteiller’s Emacs config.
-
+;
 (defun reload-init-file ()
+  "Reloads Emacs' configuration file"
   (interactive)
   (load-file user-init-file))
 
@@ -48,11 +49,11 @@
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
+      (bootstrap-version 6))
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
         (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
          'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
@@ -68,12 +69,20 @@
   :custom
   (straight-use-package-by-default t))
 
+(use-package no-littering)
+
+;; no-littering doesn't set this by default so we must place
+;; auto save files in the same path as it uses for sessions
+(setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+
+
 ; General Usability
 ; General guidelines for text handling
 
 ; Where to put the fill column marker for line wraps, how many pixels to put between lines, stuff like that.
 
-(setq fill-column 80)
+(setq fill-column 100)
 (setq-default line-spacing 1)
 
 ; invoke M-x without Alt
@@ -93,6 +102,7 @@
 ; macOS doesn’t use GNU Coreutils and of course its ls isn’t what dired expects. Adjust for that.
 
 (if (string-equal system-type "darwin")
+    (setq mac-option-modifier 'super)
     (setq dired-use-ls-dired nil))
 
 ; visual-fill-column for a nice soft wrap
@@ -104,7 +114,7 @@
 
   :custom
   (fill-column-enable-sensible-window-split t)
-  
+
   :bind
   (("C-x p" . 'visual-fill-column-mode)))
 
@@ -121,19 +131,11 @@
 
 ; The Roboto Mono font that NANO wants is not part of any *roboto* package I found in Pop! OS repositories. Ended up going to Font Library for a direct download.
 
-; With that note out of the way - I still lean towards Fantasque Sans Mono.
-
 (setq ldi/face-height-default
       (if (eq system-type 'darwin)
           160
         140))
 
-;(set-face-attribute 'default t
-;                    :family "Iosevka"
-;                    :width 'expanded
-;                    :height ldi/face-height-default)
-
-;(setq nano-font-family-monospaced "Iosevka")
 (setq nano-font-size (/ ldi/face-height-default 10))
 
 ; Configure nano
@@ -144,29 +146,9 @@
 (straight-use-package
  '(nano-emacs :type git :host github :repo "rougier/nano-emacs"))
 
-; Load the Nano layout
+;; the Nano layout
 
 (require 'nano-layout)
-
-; Define my colors
-
-; Because I’m the kind of person I am: setting the nano theme colors to match my own tacky tastes. Maybe not tacky but certainly not as refined as the author of nano.
-
-; This particular set of colors comes from the Spaceduck theme.
-
-(defun nano-theme-set-liminal-light ()
-  (setq frame-background-mode 'light)
-  (setq nano-color-foreground "#353c3f")
-  (setq nano-color-background "#fafafa")
-  (setq nano-color-highlight  "#f9f9f9")
-  (setq nano-color-critical   "#b4637a")
-  (setq nano-color-salient    "#286983")
-  (setq nano-color-strong     "#353c3f")
-  (setq nano-color-popout     "#d7827e")
-  (setq nano-color-subtle     "#b4bcbf")
-  (setq nano-color-faded      "#6f7e84"))
-
-(nano-theme-set-liminal-light)
 
 ; Set up font faces
 ; I feel comfortable loading nano-faces for font rules now that I’ve defined my colors. Will need to fuss a bit more in a second though.
@@ -178,8 +160,13 @@
 
 ; nano-theme maps those custom faces to pretty much everything everywhere. Pretty nice.
 
-(require 'nano-theme)
-(nano-theme)
+(use-package nano-theme
+  :straight (:type git :host github :repo "rougier/nano-theme")
+  :config
+  (setq nano-fonts-use t) ; Use theme font stack
+  (nano-light)            ; Use theme light version
+  (nano-mode)             ; Recommended settings
+  )
 
 ; Once I have my base established, I should be able to load the nano theme.
 ; Load nano defaults
@@ -194,78 +181,37 @@
 
 ; One of my favorite bits really.
 
-(require 'nano-modeline)
+(use-package nano-modeline
+  :ensure t
+  :config
+  (add-hook 'prog-mode-hook            #'nano-modeline-prog-mode)
+  (add-hook 'text-mode-hook            #'nano-modeline-text-mode)
+  (add-hook 'org-mode-hook             #'nano-modeline-org-mode)
+  (add-hook 'term-mode-hook            #'nano-modeline-term-mode)
+  (add-hook 'messages-buffer-mode-hook #'nano-modeline-message-mode)
+  (add-hook 'org-capture-mode-hook     #'nano-modeline-org-capture-mode)
+  (add-hook 'org-agenda-mode-hook      #'nano-modeline-org-agenda-mode))
 
 ; Enable nano key bindings
 
 ; C-x k
-    ; kill current buffer without asking
-; M-n
-    ; open a new frame
-; M-`
-    ; switch to other frame
-; C-x C-c
-    ; delete the current frame; exit if no frames remain
-; C-c r
-    ; interactive select from recent files
-; <M-return>
-    ; toggle maximization of current frame
+;     ; kill current buffer without asking
+; ; M-n
+;     ; open a new frame
+; ; M-`
+;     ; switch to other frame
+; ; C-x C-c
+;     ; delete the current frame; exit if no frames remain
+; ; C-c r
+;     ; interactive select from recent files
+; ; <M-return>
+;     ; toggle maximization of current frame
 
-; not sure if I like this one; it confuses org muscle memory, and if I want “maximized” I usually toggle tiling in the window manager
+; ; not sure if I like this one; it confuses org muscle memory, and if I want “maximized” I usually toggle tiling in the window manager
 
 (require 'nano-bindings)
 
-; nano Counsel integration
-
-; nano-counsel.el is small. I’ll just map its logic directly to some use-package magic.
-
-(use-package counsel
-  :bind
-  (("M-x" . 'counsel-recentf)
-   ("C-x b" . 'counsel-bookmark)
-   ("C-c r" . 'counsel-recentf)
-   ("C-x C-b" . 'counsel-switch-buffer)
-   ("C-c c" . 'counsel-org-capture)))
-
-(use-package smex)
-(use-package ivy
-  :custom
-  (ivy-height 4)
-  (ivy-count-format "")
-  (ivy-initial-inputs-alist: '((counsel-minor . "^+")
-                               (counsel-package . "^+")
-                               (counsel-org-capture . "^")
-                               (counsel-M-x . "^")
-                               (counsel-refile . "")
-                               (org-agenda-refile . "")
-                               (org-capture-refile . "")
-                               (Man-completion-table . "^")
-                               (woman . "^")))
-  (ivy-use-virtual-buffers t)
-
-  :init
-  (setq enable-recursive-minibuffers t)
-
-  :config
-  (ivy-mode 1))
-
-; I need to give myself a little context here.
-; Ivy, Counsel, and Swiper
-;
-;     flexible, simple tools for minibuffer completion in Emacs
-;
-; These are technically separate packages developed together in the swiper repo.
-;
-; Ivy
-;     an alternative completion framework for Emacs
-; Counsel
-;     Ivy-enhanced alternatives to common Emacs commands
-; Swiper
-;     Ivy-enhanced alternative to Isearch
-;
-; Loading nano-counsel failed with complaints about missing smex. Smex provides enhancements to M-x behavior, such as an interface to recent and commonly used commands. Since I want my foundation to be a clean Nano experience, I install smex as well.
-
-; nano splash
+(use-package amx)
 
 (let ((inhibit-message t))
   (message "Welcome to GNU Emacs / N Λ N O edition")
@@ -273,13 +219,11 @@
 
 (require 'nano-splash)
 
-(require 'nano-help)
-
 ; Life management with Org
 
 ; Okay here we go. Building up my org-roam experience while keeping Deft handy for the longer, more intentional notes.
 ; File locations
-;
+
 ; I work this out piecemeal, as some of the files and folders build on what’s been defined before.
 ;
 ; First: what’s the top level of everything? That depends on whether I’m in a UNIX-like system or playing with the native Windows version of Emacs.
@@ -301,50 +245,7 @@
 (setq
  ldi/current-journal (expand-file-name "journal.org" ldi/org-dir)
  ldi/org-id-locations-file (expand-file-name
-                            ".org-id-locations" ldi/org-dir)
- ldi/org-roam-directory (expand-file-name "roam" ldi/org-dir))
-
-; Oh, one more thing. I want to include org-roam files in my Org agenda. I found helpful instructions, but I’m not adding that code to my config until I understand it. Maybe if I follow the link to the beginning of the post series and start there.
-
-; What a novel idea.
-
-; But today? With my small collection of org-roam notes, I can get away with directly including them in my agenda searches.
-
-(setq ldi/org-agenda-files (list ldi/org-dir
-                                 ldi/org-roam-directory
-                                 (expand-file-name
-                                  "daily" ldi/org-roam-directory)))
-
-; ; Tumblelogging with ox-hugo
-
-; ; I started an experiment with using Org to drive a tumblelog at Random Geekery Life. Tumblelog is an older term for a blog that mainly consists of dumping whatever thoughts, links, or just whatever. Sort of like Twitter or Tumblr, but on my own site and less constrained than a tweet-length microblog. Someday I may put more words elsewhere and replace this all this explanatory text with a link.
-
-; ; For now I build the visible tumblelog as a static site with Hugo. It’s quick and it’s familiar.
-
-; ; Org enters the scene with a single file within my Hugo site.
-
-; ; (setq
-; ;  ldi/tumble-log (expand-file-name
-; ;                  "~/Sites/rgb-life/content-org/posts.org"))
-
-; ; That file contains all the content for the tumblelog, but the important part here is a function to dynamically generate a filename for ox-hugo based on the current time.
-; ;
-; ; (defun ldi/build-tumble-template ()
-; ;   (format-spec
-; ;    "* NOW %%U %%?\n:properties:\n:export_file_name: %s.md\n:end:\n"
-; ;    (list (cons ?s (format-time-string "%s")))))
-;
-; ; Hugo configuration determines permalinks from post dates, which ox-hugo derives from task completion timestamps. If I want to keep all the times for an entry in sync I manually edit, but it’s not a big deal yet. C-t d muscle memory so far is quicker than figuring out how to automate that process.
-;
-; ; The actual filename gets ignored, but the epoch timestamp keeps each output file unique at my normal human rate of adding entries.
-;
-; ; This also squeaks me past the fact that I came up with this version of the template after I already had a few entries.
-;
-; ; Then when I’m building org-capture-templates I create a datetree entry for tumblelogging.
-;
-; ; ("t" "Tumblelog" entry
-; ;  (file+olp+datetree ldi/tumble-log "Posts")
-; ;  (function ldi/build-tumble-template))
+                            ".org-id-locations" ldi/org-dir))
 
 ; Custom keywords
 ;
@@ -369,43 +270,10 @@
          "|"
          "DONE(d!)" "NOPE(-!)")))
 
-; CUSTOM_ID generation via writequit
-
-; Grabbing directly from this post.
-
-; More to keep my org-roam-ui graph in order than for publishing, but hopefully it’ll come in handy there too.
-
-(defun eos/org-custom-id-get (&optional pom create prefix)
-  "Get the CUSTOM_ID property of the entry at point-or-marker POM.
-     If POM is nil, refer to the entry at point. If the entry does
-     not have an CUSTOM_ID, the function returns nil. However, when
-     CREATE is non nil, create a CUSTOM_ID if none is present
-     already. PREFIX will be passed through to `org-id-new'. In any
-     case, the CUSTOM_ID of the entry is returned."
-  (interactive)
-  (org-with-point-at pom
-    (let ((id (org-entry-get nil "CUSTOM_ID")))
-      (cond
-       ((and id (stringp id) (string-match "\\S-" id))
-        id)
-       (create
-        (setq id (org-id-new (concat prefix "h")))
-        (org-entry-put pom "CUSTOM_ID" id)
-        (org-id-add-location id (buffer-file-name (buffer-base-buffer)))
-        id)))))
-
-(defun eos/org-add-ids-to-headlines-in-file ()
-  "Add CUSTOM_ID properties to all headlines in the
-     current file which do not already have one."
-  (interactive)
-  (org-map-entries (lambda () (eos/org-custom-id-get (point) 'create))))
-
-; Putting it all together
-
 (use-package org
+  :straight (:type built-in)
   :ensure org-plus-contrib
   :custom
-  (org-agenda-files ldi/org-agenda-files)
   (org-log-done 'time)
   (org-log-reschedule 'time)
   (org-log-into-drawer t)
@@ -423,15 +291,6 @@
   ("C-c l" . org-store-link)
 
   :config
-  (setq org-id-link-to-org-use-id t)
-  (setq org-capture-templates
-        '(("j" "Jot" entry
-           (file+olp+datetree ldi/current-journal)
-           "* %U %? \n%i\n %a")
-          ("t" "Tumblelog" entry
-           (file+olp+datetree ldi/tumble-log "Posts")
-           (function ldi/build-tumble-template))
-          ))
   (setq-local org-fontify-whole-heading-line t))
 
 (require 'nano-writer)
@@ -442,8 +301,6 @@
 ; The perfect solution for knowledge management varies by context. But the core thing really needed: someplace to drop my notes where I can find them when I need them.
 ;
 ; Deft provides exactly that. And since Org mode is the main reason I load Emacs, my ~/org folder is where Deft will look for notes.
-;
-; I don’t want org-roam notes obscuring the more persistent notes in my Org folder. Better ignore them. Also the org-brain stuff until I have a good handle on that.
 
 (use-package deft
   :custom (deft-extensions '("org")) (deft-directory ldi/org-dir)
@@ -456,35 +313,37 @@
 ; This can lead to all sorts of recursive headaches, so don’t forget!
 ;
 ; Of course I’ll end up tweaking it. But to get me started?
-;
-; “Ask deft about my notes” is more than sufficient.
-; org-roam
-;
 
 ; Project management with Projectile and friends
-;
+
 ; Projectile plus a .dir-locals.el file seems like the right way to handle development projects without bumping into everything else.
 
 (use-package projectile
   :ensure t
-
   :init
   (projectile-mode +1)
-
   :bind
   (:map projectile-mode-map
         ("s-p" . projectile-command-map)
         ("C-c p" . projectile-command-map)))
 
 ; lsp-mode and related for an IDE experience
-;
+
 ; lsp-mode adds support for Microsoft’s Language Server Protocol. Hypothetically that means easier setup of commonly desired features like linting and autocompletion.
-;
+
 ; lsp-mode uses YASnippet for abbreviation and expansion.
 
 (use-package yasnippet)
 
 ; nano-modeline and lsp-mode’s breadcrumb trail wrestle with each other for space on that top line. Maybe someday I can figure out how to stack them. Until then, I like the modeline and its placement more than I like the breadcrumb.
+
+(use-package orderless
+  :init
+  ;; Tune the global completion style settings to your liking!
+  ;; This affects the minibuffer and non-lsp completion at point.
+  (setq completion-styles '(orderless partial-completion basic)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package lsp-mode
   :custom
@@ -492,21 +351,22 @@
   (lsp-completion-provider :none) ;; we use Corfu!
   :init
   (setq lsp-keymap-prefix "C-c C-l")
-  (add-hook 'lsp-completion-mode-hook
-            (lambda ()
-              (setf (alist-get 'lsp-capf completion-category-defaults)
-                    '((styles . (flex))))))
-  :hook ((ruby-mode
-          css-mode
-          js2-mode
+  (defun luda/lsp-mode-setup-completion ()
+    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+          '(orderless))) ;; Configure orderless
+  :hook ((ruby-ts-mode
+          css-ts-mode
+          js-ts-mode
+          tsx-ts-mode
           web-mode
           ) . lsp-deferred)
   (lsp-mode . lsp-enable-which-key-integration)
+  (lsp-completion-mode . luda/lsp-mode-setup-completion)
   :config
   (setq lsp-auto-guess-root t)
   (setq lsp-log-io nil)
   (setq lsp-restart 'auto-restart)
-  (setq lsp-enable-symbol-highlighting nil)
+  (setq lsp-enable-symbol-highlighting t)
   (setq lsp-enable-on-type-formatting nil)
   (setq lsp-signature-auto-activate nil)
   (setq lsp-signature-render-documentation nil)
@@ -535,10 +395,7 @@
   (setq lsp-ui-sideline-show-code-actions t)
   (setq lsp-ui-sideline-delay 0.05))
 
-(use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
-
 ; Which Key?
-;
 ; which-key adds a completion panel for commands. That helps me learn the many Emacs key maps.
 
 (use-package which-key
@@ -556,6 +413,7 @@
       (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
 
 (global-set-key (kbd "C-x $") 'ldi/save-word)
+(global-set-key (kbd "C-'") 'flyspell-auto-correct-previous-word)
 
 (use-package js2-mode
   :ensure t
@@ -600,28 +458,18 @@
 (use-package yaml-mode
   :ensure t)
 
-(straight-use-package 'tree-sitter)
-(straight-use-package 'tree-sitter-langs)
-
-(require 'tree-sitter)
-(require 'tree-sitter-langs)
-
-(global-tree-sitter-mode)
 (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
 
-(setq major-mode-remap-alist
- '(
-   (ruby-mode . ruby-ts-mode)
-   (js2-mode . js-ts-mode)
-   (lua-mode . lua-ts-mode)
-   (css-mode . css-ts-mode)))
+(use-package treesit-auto
+  :demand t
+  :config
+  (setq treesit-auto-install 'prompt)
+  (global-treesit-auto-mode))
 
 (use-package magit
   :commands magit-status
   :bind
-  (("C-x g" . 'magit-status))
-  :custom
-  (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+  (("C-x g" . 'magit-status)))
 
 ;; Code Completion
 (use-package corfu
@@ -631,7 +479,7 @@
   (corfu-cycle t)                 ; Allows cycling through candidates
   (corfu-auto t)                  ; Enable auto completion
   (corfu-auto-prefix 2)
-  (corfu-auto-delay 0.0)
+  (corfu-auto-delay 0.25)
   (corfu-popupinfo-delay '(0.5 . 0.2))
   (corfu-preview-current 'insert) ; Do not preview current candidate
   (corfu-preselect 'prompt)
@@ -649,12 +497,104 @@
 
   :init
   (global-corfu-mode)
+  (corfu-history-mode)
+  (corfu-popupinfo-mode) ; Popup completion info
   :config
   (add-hook 'eshell-mode-hook
             (lambda () (setq-local corfu-quit-at-boundary t
                               corfu-quit-no-match t
                               corfu-auto nil)
               (corfu-mode))))
+
+(use-package cape
+  :defer 10
+  :bind ("C-c f" . cape-file)
+  :init
+  ;; Add `completion-at-point-functions', used by `completion-at-point'.
+  (defalias 'dabbrev-after-2 (cape-capf-prefix-length #'cape-dabbrev 2))
+  (add-to-list 'completion-at-point-functions 'dabbrev-after-2 t)
+  (cl-pushnew #'cape-file completion-at-point-functions)
+  :init
+  ;; Add to the global default value of `completion-at-point-functions' which is
+  ;; used by `completion-at-point'.  The order of the functions matters, the
+  ;; first function returning a result wins.  Note that the list of buffer-local
+  ;; completion functions takes precedence over the global list.
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-elisp-block)
+  (add-to-list 'completion-at-point-functions #'cape-dict)
+    
+  :config
+  ;; Silence then pcomplete capf, no errors or messages!
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+
+  ;; Ensure that pcomplete does not write to the buffer
+  ;; and behaves as a pure `completion-at-point-function'.
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
+
+;; Enable vertico
+(use-package vertico
+  :custom
+  (setq vertico-scroll-margin 0)
+  (setq vertico-resize t)
+  (setq vertico-cycle t)
+  :config
+  (vertico-mode))
+
+(use-package consult
+  :ensure consult-lsp
+  :bind
+  (("M-x" . 'consult-recent-file)
+   ("C-x b" . 'consult-buffer)
+   ("C-x C-b" . 'consult-bookmark)
+   ("M-y" . 'consult-yank-pop)))
+
+;; Enable rich annotations using the Marginalia package
+(use-package marginalia
+  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+  ;; available in the *Completions* buffer, add it to the
+  ;; `completion-list-mode-map'.
+  :bind (:map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+
+  ;; The :init section is always executed.
+  :init
+
+  ;; Marginalia must be activated in the :init section of use-package such that
+  ;; the mode gets enabled right away. Note that this forces loading the
+  ;; package.
+  (marginalia-mode))
+
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
+
+;; A few more useful configurations...
+(use-package emacs
+  :init
+  ;; Add prompt indicator to `completing-read-multiple'.
+  ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
+  (defun crm-indicator (args)
+    (cons (format "[CRM%s] %s"
+                  (replace-regexp-in-string
+                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                   crm-separator)
+                  (car args))
+          (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+
+  ;; Do not allow the cursor in the minibuffer prompt
+  (setq minibuffer-prompt-properties
+        '(read-only t cursor-intangible t face minibuffer-prompt))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+
+  ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
+  ;; Vertico commands are hidden in normal buffers.
+  (setq read-extended-command-predicate #'command-completion-default-include-p)
+
+  ;; Enable recursive minibuffers
+  (setq enable-recursive-minibuffers t))
 
 (use-package rg
   :ensure t)
@@ -663,54 +603,77 @@
   :bind
   ("C-;" . avy-goto-char-2))
 
-(defun projectile-run-vterm ()
-  (interactive)
-  (let* ((project (projectile-ensure-project (projectile-project-root)))
-        (buffer "vterm"))
-    (require 'vterm)
-    (if (buffer-live-p (get-buffer buffer))
-        (switch-to-buffer buffer)
-      (vterm))
-    (vterm-send-string (concat "cd " project))
-    (vterm-send-return)))
-
 (use-package vterm
   :ensure t
   :bind
   ("C-x !" . projectile-run-vterm))
 
-(setq ivy-re-builders-alist
-      '((swiper . ivy--regex-plus)
-        (t      . ivy--regex-fuzzy)))
+; ;; Workaround for issue with typescript lsp server found here https://github.com/typescript-language-server/typescript-language-server/issues/559#issuecomment-1259470791
+; ;; Shouldn't be necessary after upgrading to Emacs v29
+; (advice-add 'json-parse-string :around
+;             (lambda (orig string &rest rest)
+;               (apply orig (s-replace "\\u0000" "" string)
+;                      rest)))
+;
+; ;; minor changes: saves excursion and uses search-forward instead of re-search-forward
+; (advice-add 'json-parse-buffer :around
+;             (lambda (oldfn &rest args)
+; 	      (save-excursion 
+;                 (while (search-forward "\\u0000" nil t)
+;                   (replace-match "" nil t)))
+; 		(apply oldfn args)))
 
-(with-eval-after-load 'ivy
-  (push (cons #'swiper (cdr (assq t ivy-re-builders-alist)))
-        ivy-re-builders-alist)
-  (push (cons t #'ivy--regex-fuzzy) ivy-re-builders-alist))
+(use-package objed
+  :ensure t
+  :bind
+  ("M-o" . objed-activate-object)
+  :config
+  (add-hook 'prog-mode-hook #'objed-local-mode))
 
+(defun toggle-window-split ()
+  (interactive)
+  (if (= (count-windows) 2)
+      (let* ((this-win-buffer (window-buffer))
+         (next-win-buffer (window-buffer (next-window)))
+         (this-win-edges (window-edges (selected-window)))
+         (next-win-edges (window-edges (next-window)))
+         (this-win-2nd (not (and (<= (car this-win-edges)
+                     (car next-win-edges))
+                     (<= (cadr this-win-edges)
+                     (cadr next-win-edges)))))
+         (splitter
+          (if (= (car this-win-edges)
+             (car (window-edges (next-window))))
+          'split-window-horizontally
+        'split-window-vertically)))
+    (delete-other-windows)
+    (let ((first-win (selected-window)))
+      (funcall splitter)
+      (if this-win-2nd (other-window 1))
+      (set-window-buffer (selected-window) this-win-buffer)
+      (set-window-buffer (next-window) next-win-buffer)
+      (select-window first-win)
+      (if this-win-2nd (other-window 1))))))
 
-;; NOTE: If you want to move everything out of the ~/.emacs.d folder
-;; reliably, set `user-emacs-directory` before loading no-littering!
-;(setq user-emacs-directory "~/.cache/emacs")
+(global-set-key (kbd "C-x |") 'toggle-window-split)
 
-(use-package no-littering)
+;; From: https://github.com/rougier/nano-emacs/issues/128
+(defun luda/kill-emacs ()
+  "Delete frame or kill Emacs if there is only one frame."
 
-;; no-littering doesn't set this by default so we must place
-;; auto save files in the same path as it uses for sessions
-(setq auto-save-file-name-transforms
-      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+  (interactive)
+  (condition-case nil
+      (delete-frame)
+    (error (save-buffers-kill-terminal))))
 
-;; Workaround for issue with typescript lsp server found here https://github.com/typescript-language-server/typescript-language-server/issues/559#issuecomment-1259470791
-;; Shouldn't be necessary after upgrading to Emacs v29
-(advice-add 'json-parse-string :around
-            (lambda (orig string &rest rest)
-              (apply orig (s-replace "\\u0000" "" string)
-                     rest)))
+(global-set-key (kbd "C-x C-c") 'luda/kill-emacs)
 
-;; minor changes: saves excursion and uses search-forward instead of re-search-forward
-(advice-add 'json-parse-buffer :around
-            (lambda (oldfn &rest args)
-	      (save-excursion 
-                (while (search-forward "\\u0000" nil t)
-                  (replace-match "" nil t)))
-		(apply oldfn args)))
+(setq visible-bell nil
+      ring-bell-function #'ignore)
+
+;; Hack in f-shortdoc.el that removes the error:
+(when (version<= "28.1" emacs-version)
+  (when t ;;(< emacs-major-version 29)
+    (require 'shortdoc)))
+
+(setf mode-line-format nil)

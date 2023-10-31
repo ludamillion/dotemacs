@@ -56,6 +56,12 @@ var/
 # directory configuration
 .dir-locals.el
 
+# Tree Sitter parsers
+tree-sitter/
+
+# AMX history items
+amx-items
+
 # network security
 /network-security.data
 
