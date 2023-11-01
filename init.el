@@ -327,12 +327,6 @@
         ("s-p" . projectile-command-map)
         ("C-c p" . projectile-command-map)))
 
-; lsp-mode and related for an IDE experience
-
-; lsp-mode adds support for Microsoft’s Language Server Protocol. Hypothetically that means easier setup of commonly desired features like linting and autocompletion.
-
-; lsp-mode uses YASnippet for abbreviation and expansion.
-
 (use-package yasnippet)
 
 ; nano-modeline and lsp-mode’s breadcrumb trail wrestle with each other for space on that top line. Maybe someday I can figure out how to stack them. Until then, I like the modeline and its placement more than I like the breadcrumb.
@@ -345,55 +339,17 @@
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
 
-(use-package lsp-mode
-  :custom
-  (lsp-headerline-breadcrumb-enable nil)
-  (lsp-completion-provider :none) ;; we use Corfu!
-  :init
-  (setq lsp-keymap-prefix "C-c C-l")
-  (defun luda/lsp-mode-setup-completion ()
-    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-          '(orderless))) ;; Configure orderless
-  :hook ((ruby-ts-mode
-          css-ts-mode
-          js-ts-mode
-          tsx-ts-mode
-          web-mode
-          ) . lsp-deferred)
-  (lsp-mode . lsp-enable-which-key-integration)
-  (lsp-completion-mode . luda/lsp-mode-setup-completion)
-  :config
-  (setq lsp-auto-guess-root t)
-  (setq lsp-log-io nil)
-  (setq lsp-restart 'auto-restart)
-  (setq lsp-enable-symbol-highlighting t)
-  (setq lsp-enable-on-type-formatting nil)
-  (setq lsp-signature-auto-activate nil)
-  (setq lsp-signature-render-documentation nil)
-  (setq lsp-eldoc-hook nil)
-  (setq lsp-modeline-code-actions-enable nil)
-  (setq lsp-modeline-diagnostics-enable nil)
-  (setq lsp-headerline-breadcrumb-enable nil)
-  (setq lsp-semantic-tokens-enable nil)
-  (setq lsp-enable-folding nil)
-  (setq lsp-enable-imenu nil)
-  (setq lsp-enable-snippet nil)
-  (setq read-process-output-max (* 1024 1024)) ;; 1MB
-  (setq lsp-idle-delay 0.5)
-  :commands lsp)
+(use-package jsonrpc
+  :ensure t)
 
-(with-eval-after-load 'lsp-mode
-  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\vendor\\'"))
-
-(use-package lsp-ui
-  :commands lsp-ui-mode
+(use-package eglot
+  :ensure t
+  :requires jsonrpc
   :config
-  (setq lsp-ui-doc-enable nil)
-  (setq lsp-ui-doc-header t)
-  (setq lsp-ui-doc-include-signature t)
-  (setq lsp-ui-doc-border (face-foreground 'default))
-  (setq lsp-ui-sideline-show-code-actions t)
-  (setq lsp-ui-sideline-delay 0.05))
+  (add-hook 'js-ts-mode-hook 'eglot-ensure))
+
+;; Prevents Eglot from over-expanding the minibuffer
+(setq eldoc-echo-area-use-multiline-p nil)
 
 ; Which Key?
 ; which-key adds a completion panel for commands. That helps me learn the many Emacs key maps.
@@ -415,6 +371,14 @@
 (global-set-key (kbd "C-x $") 'ldi/save-word)
 (global-set-key (kbd "C-'") 'flyspell-auto-correct-previous-word)
 
+(use-package flyspell
+  :bind
+  (("C-x $" . ldi/save-word)
+   ("C-'" . flyspell-auto-correct-previous-word))
+  :init
+  (add-hook 'text-mode-hook 'flyspell-mode)
+  (add-hook 'prog-mode-hook 'flyspell-prog-mode))
+  
 (use-package js2-mode
   :ensure t
   :init
@@ -534,12 +498,15 @@
 
 ;; Enable vertico
 (use-package vertico
+  :init
+  (vertico-mode)
+  :bind
+  (:map vertico-map
+        ("C-<backspace>" . vertico-directory-up))
   :custom
   (setq vertico-scroll-margin 0)
   (setq vertico-resize t)
-  (setq vertico-cycle t)
-  :config
-  (vertico-mode))
+  (setq vertico-cycle t))
 
 (use-package consult
   :ensure consult-lsp
@@ -628,7 +595,7 @@
   :bind
   ("M-o" . objed-activate-object)
   :config
-  (add-hook 'prog-mode-hook #'objed-local-mode))
+  (objed-mode))
 
 (defun toggle-window-split ()
   (interactive)
