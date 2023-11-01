@@ -1,8 +1,8 @@
 #+TITLE: Emacs literate configuration
-#+AUTHOR: Nicolas P. Rougier
-#+DATE: 04/2022
+#+AUTHOR: Luke D. Inglis 
+#+DATE: 11/2023
 #+STARTUP: show2levels indent hidestars
-#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/.config/emacs/init.el")))
+#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/code/dotemacs/init.el")))
 
 * Emacs Configuration
 
@@ -46,7 +46,7 @@ Each subsection may be tagged with:
 
 There is also a configuration mode defined in the section below to ease the writing.
 
-When tangled, the process will create the file [[file:~/.emacs.d/init.el][~/.config/emacs/init.el]]  [[file:~/.emacs.d/early-init.el][~/.config/emacs/early-init.el]] (from the [[Early init]] section). You can either copy these files to your ~emacs.d~ or you can use [[https://github.com/plexus/chemacs2][chemacs2]] and add ~.emacs.org~ as an alternative profile.
+When tangled, the process will create the file [[file:~/.emacs.d/init.el][~/code/dotemacs/init.el]]  [[file:~/.emacs.d/early-init.el][~/code/dotemacs/early-init.el]] (from the [[Early init]] section). You can either copy these files to your ~emacs.d~ or you can use [[https://github.com/plexus/chemacs2][chemacs2]] and add ~.emacs.org~ as an alternative profile.
 
 Note also that the first time you will start emacs using this configuration, *it will take a long time* because a lof of packages will be dowloaded, installed and possibly compiled (if you use Emacs 28 and above). At next restart, the process should be very fast (650 ms on my machine using OSX).
 
@@ -54,14 +54,14 @@ Note also that the first time you will start emacs using this configuration, *it
 
 #+begin_src emacs-lisp 
 
-(setq-default
- ad-redefinition-action 'accept         ; Silence warnings for redefinition
- custom-unlispify-menu-entries nil      ; Prefer kebab-case for titles
- custom-unlispify-tag-names nil         ; Prefer kebab-case for symbols
-(put 'downcase-region 'disabled nil)    ; Enable downcase-region
-(put 'upcase-region 'disabled nil)      ; Enable upcase-region
- native-comp-async-report-warnings-errors 'silent ; Skip compilation error buffers
- read-process-output-max (* 1024 1024)  ; Increase read size per process
+  (setq-default
+   ad-redefinition-action 'accept         ; Silence warnings for redefinition
+   custom-unlispify-menu-entries nil      ; Prefer kebab-case for titles
+   custom-unlispify-tag-names nil         ; Prefer kebab-case for symbols
+   (put 'downcase-region 'disabled nil)    ; Enable downcase-region
+   (put 'upcase-region 'disabled nil)      ; Enable upcase-region
+   native-comp-async-report-warnings-errors 'silent ; Skip compilation error buffers
+   read-process-output-max (* 1024 1024)  ; Increase read size per process
 
 #+end_src
 
@@ -76,26 +76,26 @@ Note also that the first time you will start emacs using this configuration, *it
 ** Early init :HOOK:OTHER:
 
 :PROPERTIES:
-:header-args:emacs-lisp: :tangle "~/.config/emacs/early-init.el"
+:header-args:emacs-lisp: :tangle "~/code/dotemacs/early-init.el"
 :END:
 
 This code is meant to go to the [[file:early-init.el][early-init.el]] file.
 
 #+begin_src emacs-lisp
 
-(setq
- site-run-file nil                         ; No site-wide run-time initializations. 
- inhibit-default-init t                    ; No site-wide default library
- gc-cons-threshold most-positive-fixnum    ; Very large threshold for garbage
-                                           ; collector during init
- package-enable-at-startup nil)            ; We'll use straight.el
+  (setq
+   site-run-file nil                         ; No site-wide run-time initializations. 
+   inhibit-default-init t                    ; No site-wide default library
+   gc-cons-threshold most-positive-fixnum    ; Very large threshold for garbage
+                                             ; collector during init
+   package-enable-at-startup nil)            ; We'll use straight.el
 
-(setq native-comp-eln-load-path
-      (list (expand-file-name "eln-cache" user-emacs-directory)))
+  (setq native-comp-eln-load-path
+        (list (expand-file-name "eln-cache" user-emacs-directory)))
 
-;; Reset garbage collector limit after init process has ended (8Mo)
-(add-hook 'after-init-hook
-          #'(lambda () (setq gc-cons-threshold (* 8 1024 1024))))
+  ;; Reset garbage collector limit after init process has ended (8Mo)
+  (add-hook 'after-init-hook
+            #'(lambda () (setq gc-cons-threshold (* 8 1024 1024))))
 
 #+end_src 
 
@@ -105,23 +105,24 @@ Using [[https://github.com/raxod502/straight.el][straight.el]] for package manag
 
 #+begin_src emacs-lisp
 
-(setq straight-check-for-modifications nil)
+  (setq straight-check-for-modifications nil)
 
 #+end_src
 
 #+begin_src emacs-lisp
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+
+  (defvar bootstrap-version)
+    (let ((bootstrap-file
+           (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+          (bootstrap-version 5))
+      (unless (file-exists-p bootstrap-file)
+        (with-current-buffer
+            (url-retrieve-synchronously
+             "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+             'silent 'inhibit-cookies)
+          (goto-char (point-max))
+          (eval-print-last-sexp)))
+      (load bootstrap-file nil 'nomessage))
 
 #+end_src
 
@@ -129,10 +130,10 @@ Library and theme load paths with a special case for mu4e (you may need to adapt
 
 #+begin_src emacs-lisp
 
-(add-to-list 'load-path
-             (expand-file-name "lisp" user-emacs-directory))
-(add-to-list 'custom-theme-load-path
-             (expand-file-name "theme" user-emacs-directory))
+  (add-to-list 'load-path
+               (expand-file-name "lisp" user-emacs-directory))
+  (add-to-list 'custom-theme-load-path
+               (expand-file-name "theme" user-emacs-directory))
 
 #+end_src
 
@@ -142,27 +143,27 @@ Packages used in this specific configuration. You may want to adapt this list. T
 
 #+begin_src emacs-lisp
 
-(setq package-list
-      '(cape                ; Completion At Point Extensions
-        orderless           ; Completion style for matching regexps in any order
-        vertico             ; VERTical Interactive COmpletion
-        marginalia          ; Enrich existing commands with completion annotations
-        consult             ; Consulting completing-read
-        corfu               ; Completion Overlay Region FUnction
-        f                   ; Modern API for working with files and directories
-        helpful             ; A better help buffer
-        imenu-list          ; Show imenu entries in a separate buffer
-        magit               ; A Git porcelain inside Emacs.
-        markdown-mode       ; Major mode for Markdown-formatted text
-        use-package         ; A configuration macro for simplifying your .emacs
-        yaml-mode           ; YAML mode
-        org-auto-tangle     ; Tangle org file when it is saved
-        exec-path-from-shell; Get environment variables such as $PATH from the shell 
-        which-key))         ; Display available keybindings in popup
+  (setq package-list
+        '(cape                ; Completion At Point Extensions
+          orderless           ; Completion style for matching regexps in any order
+          vertico             ; VERTical Interactive COmpletion
+          marginalia          ; Enrich existing commands with completion annotations
+          consult             ; Consulting completing-read
+          corfu               ; Completion Overlay Region FUnction
+          f                   ; Modern API for working with files and directories
+          helpful             ; A better help buffer
+          imenu-list          ; Show imenu entries in a separate buffer
+          magit               ; A Git porcelain inside Emacs.
+          markdown-mode       ; Major mode for Markdown-formatted text
+          use-package         ; A configuration macro for simplifying your .emacs
+          yaml-mode           ; YAML mode
+          org-auto-tangle     ; Tangle org file when it is saved
+          exec-path-from-shell; Get environment variables such as $PATH from the shell 
+          which-key))         ; Display available keybindings in popup
 
-;; Install packages that are not yet installed
-(dolist (package package-list)
-  (straight-use-package package))
+  ;; Install packages that are not yet installed
+  (dolist (package package-list)
+    (straight-use-package package))
 
 #+end_src
 
