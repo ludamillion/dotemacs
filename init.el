@@ -107,14 +107,15 @@
 
 ; visual-fill-column for a nice soft wrap
 
-(visual-line-mode t)
+
 
 (use-package visual-fill-column
   :commands visual-fill-column-mode
 
   :custom
   (fill-column-enable-sensible-window-split t)
-
+  :config
+  (visual-line-mode t)
   :bind
   (("C-x p" . 'visual-fill-column-mode)))
 
@@ -136,8 +137,6 @@
           160
         140))
 
-(setq nano-font-size (/ ldi/face-height-default 10))
-
 ; Configure nano
 ; Install nano and its dependencies
 
@@ -150,23 +149,29 @@
 
 (require 'nano-layout)
 
-; Set up font faces
-; I feel comfortable loading nano-faces for font rules now that I’ve defined my colors. Will need to fuss a bit more in a second though.
-
-(require 'nano-faces)
-(nano-faces)
-
 ; Let nano theme everything
 
 ; nano-theme maps those custom faces to pretty much everything everywhere. Pretty nice.
+(defun nano-theme-set-liminal-light ()
+  (setq nano-light-foreground "#353c3f")
+  (setq nano-light-background "#fffcfc")
+  (setq nano-light-highlight  "#fafafa")
+  (setq nano-light-critical   "#f7a7a4")
+  (setq nano-light-salient    "#90c2e5")
+  (setq nano-light-strong     "#353c3f")
+  (setq nano-light-popout     "#ffca87")
+  (setq nano-light-faded      "#59666b")
+  (setq nano-light-subtle     "#eef3f6"))
 
 (use-package nano-theme
-  :straight (:type git :host github :repo "rougier/nano-theme")
-  :config
+  :straight (:type nil :local-repo "~/code/nano-theme")
+  :init
   (setq nano-fonts-use t) ; Use theme font stack
-  (nano-light)            ; Use theme light version
+  (setq nano-font-size 16)
+  (nano-theme-set-liminal-light)
+  :config
   (nano-mode)             ; Recommended settings
-  )
+  (nano-light))
 
 ; Once I have my base established, I should be able to load the nano theme.
 ; Load nano defaults
@@ -293,7 +298,7 @@
   :config
   (setq-local org-fontify-whole-heading-line t))
 
-(require 'nano-writer)
+;; (require 'nano-writer)
 
 ; Additional Org tools
 ; Deft
@@ -345,9 +350,13 @@
 (use-package eglot
   :ensure t
   :requires jsonrpc
-  :config
-  (add-hook 'js-ts-mode-hook 'eglot-ensure))
-
+  :bind
+  ("M-k" . eglot-code-actions)
+  :hook
+  (eglot-managed-mode . eglot-inlay-hints-mode)
+  (typescript-ts-base-mode . eglot-ensure)
+  (ruby-ts-base-mode . eglot-ensure))
+  
 ;; Prevents Eglot from over-expanding the minibuffer
 (setq eldoc-echo-area-use-multiline-p nil)
 
@@ -379,23 +388,6 @@
   (add-hook 'text-mode-hook 'flyspell-mode)
   (add-hook 'prog-mode-hook 'flyspell-prog-mode))
   
-(use-package js2-mode
-  :ensure t
-  :init
-  (setq js-indent-level 2)
-  (setq-default js2-auto-indent-p t
-                js2-cleanup-whitespace t
-                js2-enter-indents-newline t
-                js2-indent-on-enter-key t
-                js2-global-externs (list "window" "module" "require" "buster" "sinon" "assert" "refute" "setTimeout" "clearTimeout" "setInterval" "clearInterval" "location" "__dirname" "console" "JSON" "jQuery" "$"))
-
-  (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode)))
-
-(use-package js2-refactor
-   :ensure t
-   :init   (add-hook 'js2-mode-hook 'js2-refactor-mode)
-   :config (js2r-add-keybindings-with-prefix "C-c ."))
-
 (use-package coffee-mode
    :ensure t
    :init
@@ -422,7 +414,43 @@
 (use-package yaml-mode
   :ensure t)
 
-(add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode)
+(use-package jtsx
+  :straight (:type git :host github :repo "llemaitre19/jtsx")
+  :mode (("\\.jsx?\\'" . jsx-mode)
+         ("\\.tsx?\\'" . tsx-mode))
+  :commands jtsx-install-treesit-language
+  :hook ((jsx-mode . hs-minor-mode)
+         (tsx-mode . hs-minor-mode))
+  :custom
+  (js-indent-level 2)
+  (typescript-ts-mode-indent-offset 2)
+  (jtsx-switch-indent-offset 0)
+  (jtsx-indent-statement-block-regarding-standalone-parent nil)
+  (jtsx-jsx-element-move-allow-step-out t)
+  (jtsx-enable-jsx-electric-closing-element t)
+  :config
+  (defun jtsx-bind-keys-to-mode-map (mode-map)
+    "Bind keys to MODE-MAP."
+    (define-key mode-map (kbd "C-c C-j") 'jtsx-jump-jsx-element-tag-dwim)
+    (define-key mode-map (kbd "C-c j o") 'jtsx-jump-jsx-opening-tag)
+    (define-key mode-map (kbd "C-c j c") 'jtsx-jump-jsx-closing-tag)
+    (define-key mode-map (kbd "C-c j r") 'jtsx-rename-jsx-element)
+    (define-key mode-map (kbd "C-c <down>") 'jtsx-move-jsx-element-tag-forward)
+    (define-key mode-map (kbd "C-c <up>") 'jtsx-move-jsx-element-tag-backward)
+    (define-key mode-map (kbd "C-c C-<down>") 'jtsx-move-jsx-element-forward)
+    (define-key mode-map (kbd "C-c C-<up>") 'jtsx-move-jsx-element-backward)
+    (define-key mode-map (kbd "C-c C-S-<down>") 'jtsx-move-jsx-element-step-in-forward)
+    (define-key mode-map (kbd "C-c C-S-<up>") 'jtsx-move-jsx-element-step-in-backward)
+    (define-key mode-map (kbd "C-c j w") 'jtsx-wrap-in-jsx-element))
+  
+  (defun jtsx-bind-keys-to-jsx-mode-map ()
+    (jtsx-bind-keys-to-mode-map jsx-mode-map))
+
+  (defun jtsx-bind-keys-to-tsx-mode-map ()
+    (jtsx-bind-keys-to-mode-map tsx-mode-map))
+
+  (add-hook 'jsx-mode-hook 'jtsx-bind-keys-to-jsx-mode-map)
+  (add-hook 'tsx-mode-hook 'jtsx-bind-keys-to-tsx-mode-map))
 
 (use-package treesit-auto
   :demand t
@@ -433,7 +461,7 @@
 (use-package magit
   :commands magit-status
   :bind
-  (("C-x g" . 'magit-status)))
+  (("C-M-;" . 'magit-status)))
 
 ;; Code Completion
 (use-package corfu
@@ -511,10 +539,10 @@
 (use-package consult
   :ensure consult-lsp
   :bind
-  (("M-x" . 'consult-recent-file)
-   ("C-x b" . 'consult-buffer)
-   ("C-x C-b" . 'consult-bookmark)
-   ("M-y" . 'consult-yank-pop)))
+  (("M-x"     . 'consult-buffer)
+   ("M-y"     . 'consult-yank-pop)
+   ("C-x b"   . 'consult-bookmark))
+  )
 
 ;; Enable rich annotations using the Marginalia package
 (use-package marginalia
@@ -531,11 +559,6 @@
   ;; the mode gets enabled right away. Note that this forces loading the
   ;; package.
   (marginalia-mode))
-
-;; Persist history over Emacs restarts. Vertico sorts by history position.
-(use-package savehist
-  :init
-  (savehist-mode))
 
 ;; A few more useful configurations...
 (use-package emacs
@@ -576,26 +599,35 @@
   ("C-x !" . projectile-run-vterm))
 
 ; ;; Workaround for issue with typescript lsp server found here https://github.com/typescript-language-server/typescript-language-server/issues/559#issuecomment-1259470791
-; ;; Shouldn't be necessary after upgrading to Emacs v29
-; (advice-add 'json-parse-string :around
-;             (lambda (orig string &rest rest)
-;               (apply orig (s-replace "\\u0000" "" string)
-;                      rest)))
-;
-; ;; minor changes: saves excursion and uses search-forward instead of re-search-forward
-; (advice-add 'json-parse-buffer :around
-;             (lambda (oldfn &rest args)
-; 	      (save-excursion 
-;                 (while (search-forward "\\u0000" nil t)
-;                   (replace-match "" nil t)))
-; 		(apply oldfn args)))
+;; Shouldn't be necessary after upgrading to Emacs v29
+;; (advice-add 'json-parse-string :around
+;;             (lambda (orig string &rest rest)
+;;               (apply orig (s-replace "\\u0000" "" string)
+;;                      rest)))
+
+;; ;; minor changes: saves excursion and uses search-forward instead of re-search-forward
+;; (advice-add 'json-parse-buffer :around
+;;             (lambda (oldfn &rest args)
+;; 	      (save-excursion 
+;;                 (while (search-forward "\\u0000" nil t)
+;;                   (replace-match "" nil t)))
+;; 		(apply oldfn args)))
 
 (use-package objed
   :ensure t
   :bind
-  ("M-o" . objed-activate-object)
+  ("M-<space>" . objed-activate-object)
+  :init
+  (objed-mode)
   :config
-  (objed-mode))
+  (setf objed-cursor-color nano-light-critical)
+  (set-face-attribute 'objed-hl nil
+            :background nano-light-subtle
+            :foreground nano-light-strong))
+
+(use-package rainbow-mode
+  :ensure t
+  :init (rainbow-mode))
 
 (defun toggle-window-split ()
   (interactive)
@@ -624,10 +656,11 @@
 
 (global-set-key (kbd "C-x |") 'toggle-window-split)
 
+(global-set-key (kbd "M-o") 'other-window)
+
 ;; From: https://github.com/rougier/nano-emacs/issues/128
 (defun luda/kill-emacs ()
   "Delete frame or kill Emacs if there is only one frame."
-
   (interactive)
   (condition-case nil
       (delete-frame)
@@ -638,9 +671,20 @@
 (setq visible-bell nil
       ring-bell-function #'ignore)
 
-;; Hack in f-shortdoc.el that removes the error:
-(when (version<= "28.1" emacs-version)
-  (when t ;;(< emacs-major-version 29)
-    (require 'shortdoc)))
-
 (setf mode-line-format nil)
+
+(use-package multiple-cursors
+  :ensure   t
+  :bind (("C-M-SPC" . set-rectangular-region-anchor)
+         ("C-M->" . mc/mark-next-like-this)
+         ("C-M-<" . mc/mark-previous-like-this)
+         ("C-c C->" . mc/mark-all-like-this)
+         ("C-c C-SPC" . mc/edit-lines)
+         ))
+
+(setq-default cursor-in-non-selected-windows nil ; Hide the cursor in inactive windows
+              cursor-type 'box                   ; box-shaped cursor
+              cursor-intangible-mode t           ; Enforce cursor intangibility
+              x-stretch-cursor nil)              ; Don't stretch cursor to the glyph width
+
+(blink-cursor-mode 0)
