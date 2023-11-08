@@ -1,50 +1,18 @@
-; Foundations
-; Give Emacs some breathing room
-;
-; max-specpdl-size sets the upper limit for how many variable bindings and unwind-protect Emacs allows. max-lisp-eval-depth says how deep we can get into a recursive function call.
+(setq
+ site-run-file nil                         ; No site-wide run-time initializations. 
+ inhibit-default-init t                    ; No site-wide default library
+ gc-cons-threshold most-positive-fixnum    ; Very large threshold for garbage
+                                           ; collector during init
+ package-enable-at-startup nil)            ; We'll use straight.el
 
-; I got the RAM so let’s go past the respective defaults of 1600 and 800.
+(setq native-comp-eln-load-path
+      (list (expand-file-name "eln-cache" user-emacs-directory)))
 
-(setq max-specpdl-size 3200)
-(setq max-lisp-eval-depth 3200)
+;; Reset garbage collector limit after init process has ended (8Mo)
+(add-hook 'after-init-hook
+          #'(lambda () (setq gc-cons-threshold (* 8 1024 1024))))
 
-; And of course I’m sure to screw something up so let’s make sure the debugger is enabled for when I do.
-
-(setq debug-on-error t)
-;
-; Enable local lisp
-
-(let ((default-directory  (expand-file-name "lisp" user-emacs-directory)))
-  (setq load-path
-        (append
-         (let ((load-path  (copy-sequence load-path))) ;; Shadow
-           (append
-            (copy-sequence (normal-top-level-add-to-load-path '(".")))
-            (normal-top-level-add-subdirs-to-load-path)))
-         load-path)))
-
-; Simplify reloading my config
-
-; I putter with this config marginally less than I did initially - progress! - but enough that restarting Emacs for every config tweak gets tedious.
-
-; One of the ideas I grabbed from Vianney Lebouteiller’s Emacs config.
-;
-(defun reload-init-file ()
-  "Reloads Emacs' configuration file"
-  (interactive)
-  (load-file user-init-file))
-
-(global-set-key (kbd "<f5>") 'reload-init-file)
-
-; Use straight.el to install packages
-
-; straight.el is my new friend.
-; early-init.el
-
-; But if I’m using straight.el I better disable package.el during the early init stage.
-
-; Bootstrap straight.el
-; Boilerplate from the straight.el documentation.
+(setq straight-check-for-modifications nil)
 
 (defvar bootstrap-version)
 (let ((bootstrap-file
@@ -688,3 +656,5 @@
               x-stretch-cursor nil)              ; Don't stretch cursor to the glyph width
 
 (blink-cursor-mode 0)
+
+
