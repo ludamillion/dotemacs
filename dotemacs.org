@@ -2,7 +2,7 @@
 #+AUTHOR: Luke D. Inglis 
 #+DATE: 11/2023
 #+STARTUP: show2levels indent hidestars
-#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/code/dotemacs/init.el")))
+#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/code/dotemacs/lit-init.el")))
 
 * Emacs Configuration
 
@@ -72,11 +72,10 @@ Note also that the first time you will start emacs using this configuration, *it
 - [X] Dim inactive entries in the sidebar
 - [X] Shift-tab to toggle sidebar (all entries)
 - [X] Filter sidebar (`f` key)
-
+  
 ** Early init :HOOK:OTHER:
-
 :PROPERTIES:
-:header-args:emacs-lisp: :tangle "~/code/dotemacs/early-init.el"
+:header-args:emacs-lisp: :tangle ~/code/dotemacs/early-init.el
 :END:
 
 This code is meant to go to the [[file:early-init.el][early-init.el]] file.
@@ -168,4 +167,39 @@ Packages used in this specific configuration. You may want to adapt this list. T
 #+end_src
 
 (add-hook 'org-mode-hook 'org-auto-tangle-mode)
+
+** Configuration Itself
+
+*** Bugfix :BUGFIX:
+
+*Temporary bugfix* for babel emacs-lisp that does not take into account prologue/epilogue.
+See https://list.orgmode.org/CA+G3_PNrdhx0Ejzw8UO7DgZ+ju1B7Ar_eTch5MMViEpKGwqq3w@mail.gmail.com/T/
+(November 2020)
+
+#+name: org-babel-expand-body:emacs-lisp
+#+begin_src emacs-lisp
+
+(defun my/org-babel-expand-body:emacs-lisp (orig-fun body params)
+  "Expand BODY according to PARAMS and call original function with new body"
+
+  (let* ((pro (or (cdr (assq :prologue params)) ""))
+         (epi (or (cdr (assq :epilogue params)) ""))
+         (body (concat pro body epi)))
+    (apply orig-fun `(,body ,params))))
+
+(advice-add 'org-babel-expand-body:emacs-lisp
+            :around
+            #'my/org-babel-expand-body:emacs-lisp)
+
+#+end_src
+
+*** Auto-tangle
+
+Automatically tangle org-mode files with the option #+auto_tangle: t
+
+#+begin_src emacs-lisp
+
+(add-hook 'org-mode-hook 'org-auto-tangle-mode)
+
+#+end_src
 
