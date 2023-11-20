@@ -1,48 +1,16 @@
-(setq
- site-run-file nil                         ; No site-wide run-time initializations. 
- inhibit-default-init t                    ; No site-wide default library
- gc-cons-threshold most-positive-fixnum    ; Very large threshold for garbage
-                                           ; collector during init
- package-enable-at-startup nil)            ; We'll use straight.el
-
-(setq native-comp-eln-load-path
-      (list (expand-file-name "eln-cache" user-emacs-directory)))
-
-;; Reset garbage collector limit after init process has ended (8Mo)
-(add-hook 'after-init-hook
-          #'(lambda () (setq gc-cons-threshold (* 8 1024 1024))))
-
-(setq straight-check-for-modifications nil)
-
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 6))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-   (load bootstrap-file nil 'nomessage))
+;; On the road to a literate configuration. For the moment my dotemacs.org file will
+;; output the lit-init.el file so that I can move things from this init file to the
+;; literate version piecemeal.
+(load (expand-file-name "lit-init.el" user-emacs-directory))
 
 ; Integrate with use-package
 
 ; I tried to avoid use-package here for a more “minimal” setup. That did not work. Since straight.el plays nice with use-package, let’s let it do that.
 
-(straight-use-package 'use-package)
-
-(use-package straight
-  :custom
-  (straight-use-package-by-default t))
-
-(use-package no-littering)
-
 ;; no-littering doesn't set this by default so we must place
 ;; auto save files in the same path as it uses for sessions
-(setq auto-save-file-name-transforms
-      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+;; (setq auto-save-file-name-transforms
+      ;; `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
 
 
 ; General Usability
@@ -64,14 +32,14 @@
 ; Make sure the macOS Emacs GUI app picks up environment variables.
 
 (use-package exec-path-from-shell
-  :ensure
   :init (exec-path-from-shell-initialize))
 
 ; macOS doesn’t use GNU Coreutils and of course its ls isn’t what dired expects. Adjust for that.
 
-(if (string-equal system-type "darwin")
-    (setq mac-option-modifier 'super)
-    (setq dired-use-ls-dired nil))
+(when (string-equal system-type "darwin")
+  (setq mac-option-modifier 'super)
+  (setq mac-command-modifier 'meta)
+  (setq dired-use-ls-dired nil))
 
 ; visual-fill-column for a nice soft wrap
 
@@ -90,20 +58,18 @@
 ; More pleasent (slightly evil) undo experience
 
 (use-package undo-fu
+  :bind
+  ("C-/" . undo-fu-only-undo)
+  ("C-M-/" . undo-fu-only-redo))
+
+(use-package undo-fu-session
+  :init
+  (undo-fu-session-global-mode)
   :config
-  (global-unset-key (kbd "C-z"))
-  (global-set-key (kbd "C-z")   'undo-fu-only-undo)
-  (global-set-key (kbd "C-S-z") 'undo-fu-only-redo))
+  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
 
 ; Aesthetics
 ; Fonts
-
-; The Roboto Mono font that NANO wants is not part of any *roboto* package I found in Pop! OS repositories. Ended up going to Font Library for a direct download.
-
-(setq ldi/face-height-default
-      (if (eq system-type 'darwin)
-          160
-        140))
 
 ; Configure nano
 ; Install nano and its dependencies
@@ -113,38 +79,12 @@
 (straight-use-package
  '(nano-emacs :type git :host github :repo "rougier/nano-emacs"))
 
-;; the Nano layout
-
-(require 'nano-layout)
-
-; Let nano theme everything
-
 ; nano-theme maps those custom faces to pretty much everything everywhere. Pretty nice.
-(defun nano-theme-set-liminal-light ()
-  (setq nano-light-foreground "#353c3f")
-  (setq nano-light-background "#fffcfc")
-  (setq nano-light-highlight  "#fafafa")
-  (setq nano-light-critical   "#f7a7a4")
-  (setq nano-light-salient    "#90c2e5")
-  (setq nano-light-strong     "#353c3f")
-  (setq nano-light-popout     "#ffca87")
-  (setq nano-light-faded      "#59666b")
-  (setq nano-light-subtle     "#eef3f6"))
 
-(use-package nano-theme
-  :straight (:type nil :local-repo "~/code/nano-theme")
-  :init
-  (setq nano-fonts-use t) ; Use theme font stack
-  (setq nano-font-size 16)
-  (nano-theme-set-liminal-light)
+(use-package liminal-theme
+  :straight (:type nil :local-repo "~/code/liminal-theme")
   :config
-  (nano-mode)             ; Recommended settings
-  (nano-light))
-
-; Once I have my base established, I should be able to load the nano theme.
-; Load nano defaults
-
-(require 'nano-defaults)
+  (liminal-mode))
 
 ; Enable nano session handling
 
@@ -154,16 +94,35 @@
 
 ; One of my favorite bits really.
 
+;; (use-package liminal-modeline
+;;   :straight (:type nil :local-repo "~/code/liminal-modeline")
+;;   :hook
+;;   (prog-mode            . liminal-modeline-prog-mode)
+;;   (text-mode            . liminal-modeline-text-mode)
+;;   (org-mode             . liminal-modeline-org-mode)
+;;   (term-mode            . liminal-modeline-term-mode)
+;;   (messages-buffer-mode . liminal-modeline-message-mode)
+;;   (org-capture-mode     . liminal-modeline-org-capture-mode)
+;;   (org-agenda-mode      . liminal-modeline-org-agenda-mode)
+;;   )
+
 (use-package nano-modeline
-  :ensure t
+  :straight (:type git :host github :repo "rougier/nano-modeline")
   :config
-  (add-hook 'prog-mode-hook            #'nano-modeline-prog-mode)
-  (add-hook 'text-mode-hook            #'nano-modeline-text-mode)
-  (add-hook 'org-mode-hook             #'nano-modeline-org-mode)
-  (add-hook 'term-mode-hook            #'nano-modeline-term-mode)
-  (add-hook 'messages-buffer-mode-hook #'nano-modeline-message-mode)
-  (add-hook 'org-capture-mode-hook     #'nano-modeline-org-capture-mode)
-  (add-hook 'org-agenda-mode-hook      #'nano-modeline-org-agenda-mode))
+  (setq-default mode-line-format nil)
+  :hook
+  (prog-mode            . nano-modeline-prog-mode)
+  (text-mode            . nano-modeline-text-mode)
+  (org-mode             . nano-modeline-org-mode)
+  (term-mode            . nano-modeline-term-mode)
+  (messages-buffer-mode . nano-modeline-message-mode)
+  (org-capture-mode     . nano-modeline-org-capture-mode)
+  (org-agenda-mode      . nano-modeline-org-agenda-mode)
+  )
+
+(use-package surround
+  :straight (:type git :host github :repo "mkleehammer/surround")
+  :bind-keymap ("M-'" . surround-keymap))
 
 ; Enable nano key bindings
 
@@ -183,8 +142,6 @@
 ; ; not sure if I like this one; it confuses org muscle memory, and if I want “maximized” I usually toggle tiling in the window manager
 
 (require 'nano-bindings)
-
-(use-package amx)
 
 (let ((inhibit-message t))
   (message "Welcome to GNU Emacs / N Λ N O edition")
@@ -266,8 +223,6 @@
   :config
   (setq-local org-fontify-whole-heading-line t))
 
-;; (require 'nano-writer)
-
 ; Additional Org tools
 ; Deft
 ;
@@ -292,17 +247,12 @@
 ; Projectile plus a .dir-locals.el file seems like the right way to handle development projects without bumping into everything else.
 
 (use-package projectile
-  :ensure t
   :init
   (projectile-mode +1)
   :bind
   (:map projectile-mode-map
         ("s-p" . projectile-command-map)
         ("C-c p" . projectile-command-map)))
-
-(use-package yasnippet)
-
-; nano-modeline and lsp-mode’s breadcrumb trail wrestle with each other for space on that top line. Maybe someday I can figure out how to stack them. Until then, I like the modeline and its placement more than I like the breadcrumb.
 
 (use-package orderless
   :init
@@ -312,21 +262,24 @@
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
 
-(use-package jsonrpc
-  :ensure t)
-
 (use-package eglot
-  :ensure t
-  :requires jsonrpc
   :bind
   ("M-k" . eglot-code-actions)
   :hook
   (eglot-managed-mode . eglot-inlay-hints-mode)
   (typescript-ts-base-mode . eglot-ensure)
-  (ruby-ts-base-mode . eglot-ensure))
+  (js-base-mode . eglot-ensure)
+  (ruby-ts-base-mode . eglot-ensure)
+  :config
+  (setq eldoc-echo-area-use-multiline-p nil))
+
+(use-package flycheck
+  :init (global-flycheck-mode))
   
-;; Prevents Eglot from over-expanding the minibuffer
-(setq eldoc-echo-area-use-multiline-p nil)
+(use-package flycheck-eglot
+  :after (flycheck eglot)
+  :init
+  (global-flycheck-eglot-mode 1))
 
 ; Which Key?
 ; which-key adds a completion panel for commands. That helps me learn the many Emacs key maps.
@@ -339,6 +292,8 @@
   (setq which-key-idle-delay 1))
 
 (defun ldi/save-word ()
+  "Mark a Flyspell reported error as acceptable."
+  
   (interactive)
   (let ((current-location (point))
          (word (flyspell-get-word)))
@@ -357,30 +312,18 @@
   (add-hook 'prog-mode-hook 'flyspell-prog-mode))
   
 (use-package coffee-mode
-   :ensure t
-   :init
-   (setq-default coffee-tab-width 2))
+  :init
+  (setq coffee-tab-width 2))
 
 (use-package web-mode
-  :ensure t
   :init
   (setq font-lock-maximum-decoration '((web-mode . t) (t . nil)))
   :config
   (add-to-list 'auto-mode-alist '("\\.haml$" . web-mode)))
 
-(use-package haml-mode
-  :ensure t)
-
-(use-package lua-mode
-  :ensure t)
-
 (use-package css-mode
-  :ensure t
   :config
   (setq css-indent-offset 2))
-
-(use-package yaml-mode
-  :ensure t)
 
 (use-package jtsx
   :straight (:type git :host github :repo "llemaitre19/jtsx")
@@ -429,11 +372,10 @@
 (use-package magit
   :commands magit-status
   :bind
-  (("C-M-;" . 'magit-status)))
+  (("C-M-;" . magit-status)))
 
 ;; Code Completion
 (use-package corfu
-  :ensure t
   ;; Optional customizations
   :custom
   (corfu-cycle t)                 ; Allows cycling through candidates
@@ -505,7 +447,6 @@
   (setq vertico-cycle t))
 
 (use-package consult
-  :ensure consult-lsp
   :bind
   (("M-x"     . 'consult-buffer)
    ("M-y"     . 'consult-yank-pop)
@@ -554,15 +495,9 @@
   ;; Enable recursive minibuffers
   (setq enable-recursive-minibuffers t))
 
-(use-package rg
-  :ensure t)
-
-(use-package avy
-  :bind
-  ("C-;" . avy-goto-char-2))
-
 (use-package vterm
-  :ensure t
+  :config
+  (setq vterm-max-scrollback 10000)
   :bind
   ("C-x !" . projectile-run-vterm))
 
@@ -583,21 +518,20 @@
 
 (use-package objed
   :ensure t
-  :bind
-  ("M-<space>" . objed-activate-object)
   :init
   (objed-mode)
   :config
-  (setf objed-cursor-color nano-light-critical)
-  (set-face-attribute 'objed-hl nil
-            :background nano-light-subtle
-            :foreground nano-light-strong))
+  (setq objed-modeline-hint nil)
+  :bind
+  ("M-SPC" . objed-activate-object))
 
 (use-package rainbow-mode
   :ensure t
-  :init (rainbow-mode))
+  :init (rainbow-mode t))
 
 (defun toggle-window-split ()
+  "Toggle dual window split between vertical to horizontal orientation."
+  
   (interactive)
   (if (= (count-windows) 2)
       (let* ((this-win-buffer (window-buffer))
@@ -650,11 +584,47 @@
          ("C-c C-SPC" . mc/edit-lines)
          ))
 
-(setq-default cursor-in-non-selected-windows nil ; Hide the cursor in inactive windows
-              cursor-type 'box                   ; box-shaped cursor
-              cursor-intangible-mode t           ; Enforce cursor intangibility
-              x-stretch-cursor nil)              ; Don't stretch cursor to the glyph width
+(defun reload-init-file ()
+  "Reload the file referenced by `user-init-file`."
+  
+  (interactive)
+  (load-file user-init-file))
 
-(blink-cursor-mode 0)
+(global-set-key (kbd "<f5>") 'reload-init-file)
 
+(use-package circadian
+  :config
+  (setq calendar-latitude 42.4)
+  (setq calendar-longitude -71.0)
+  (setq circadian-themes '((:sunrise . liminal-light)
+                           (:sunset  . liminal-dark)))
+  (circadian-setup))
 
+;; Cribbed from https://panadestein.github.io/emacsd/
+(use-package ediff
+  :straight nil
+  :preface
+  (defvar my-ediff-original-windows nil)
+  (defun my-store-pre-ediff-winconfig ()
+    "Stores the window arrangement before opening ediff."
+    (setq my-ediff-original-windows (current-window-configuration)))
+  (defun my-restore-pre-ediff-winconfig ()
+    "Resets original window arrangement"
+    (set-window-configuration my-ediff-original-windows))
+  :hook
+  ((ediff-before-setup . my-store-pre-ediff-winconfig)
+   (ediff-quit . my-restore-pre-ediff-winconfig))
+  :config
+  (setq ediff-window-setup-function 'ediff-setup-windows-plain
+        ediff-split-window-function 'split-window-horizontally))
+
+(defun switch-theme (theme)
+  "Load THEME after unloading previously loaded themes N.B. this will not remove any customization done outside of themes."
+  
+  (interactive
+   (list
+    (intern (completing-read "Load custom theme: "
+                             (mapcar 'symbol-name
+                                     (custom-available-themes))))))
+  (mapcar #'disable-theme custom-enabled-themes)
+  (load-theme theme t))

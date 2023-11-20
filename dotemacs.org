@@ -1,12 +1,11 @@
 #+TITLE: Emacs literate configuration
-#+AUTHOR: Luke D. Inglis 
+#+AUTHOR: Luke D. Inglis
 #+DATE: 11/2023
 #+STARTUP: show2levels indent hidestars
 #+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/code/dotemacs/lit-init.el")))
 
 * Emacs Configuration
-
-** About
+** Preface
 
 While learning Emacs I've tried a lot of different prepackaged 'distros'. Most notably, as an erstwhile (neo)vim user, Doom. After learning enough via that route and additionally deciding to try to give vanilla Emacs a solid try I'm leaving the prepackaged distros behind and building my own configuration.
 
@@ -14,12 +13,12 @@ It won't be 100% from scratch (are they ever?) as I really like the approach of 
 
 Naturally my config is built 'on the shoulders of giants' where much more experienced Emacs users have gone before. With the goal of learning in mind I aim to do my best to not put anything in this config unless I understand how it works.
 
-*** Hall of inspiration
 
-As mentioned most of my config at this point is taken from or inspired by other, smarter, people's configs. Here they are in no particular order.
+To wit, giants on whose shoulders I stand. In no particular order.
 
 + [[https://github.com/rememberYou/.emacs.d][Terencio Agozzino]] (=rememberYou=)
 + [[https://github.com/rougier/dotemacs][Nicolas Rougier (rougier) - Author of NANO]]
++ [[https://github.com/daviwil/dotfiles/blob/master/Emacs.org][David Wilson (daviwil) - System Crafter]]
 
 Big thanks to those from whom I have learned. (And copy and pasted from...)
 
@@ -46,9 +45,9 @@ Each subsection may be tagged with:
 
 There is also a configuration mode defined in the section below to ease the writing.
 
-When tangled, the process will create the file [[file:~/.emacs.d/init.el][~/code/dotemacs/init.el]]  [[file:~/.emacs.d/early-init.el][~/code/dotemacs/early-init.el]] (from the [[Early init]] section). You can either copy these files to your ~emacs.d~ or you can use [[https://github.com/plexus/chemacs2][chemacs2]] and add ~.emacs.org~ as an alternative profile.
+When tangled, the process will create the file [[file:~/.emacs.d/init.el][~/code/dotemacs/lit-init.el]]  [[file:~/.emacs.d/early-init.el][~/code/dotemacs/early-init.el]] (from the [[Early init]] section). You can either copy these files to your ~emacs.d~ or you can use [[https://github.com/plexus/chemacs2][chemacs2]] and add ~.emacs.org~ as an alternative profile.
 
-Note also that the first time you will start emacs using this configuration, *it will take a long time* because a lof of packages will be dowloaded, installed and possibly compiled (if you use Emacs 28 and above). At next restart, the process should be very fast (650 ms on my machine using OSX).
+Note also that the first time you will start emacs using this configuration, *it will take a long time* because a lof of packages will be dowloaded, installed and possibly compiled (if you use Emacs 28 and above).
 
 ** To sort :INACTIVE:
 
@@ -65,14 +64,6 @@ Note also that the first time you will start emacs using this configuration, *it
 
 #+end_src
 
-** To do [5/5] :INACTIVE:
-
-- [X] Tangle file when saving (org-auto-tangle)
-- [X] Hitting `space` on top node should open the node (instead of folding)
-- [X] Dim inactive entries in the sidebar
-- [X] Shift-tab to toggle sidebar (all entries)
-- [X] Filter sidebar (`f` key)
-  
 ** Early init :HOOK:OTHER:
 :PROPERTIES:
 :header-args:emacs-lisp: :tangle ~/code/dotemacs/early-init.el
@@ -100,17 +91,13 @@ This code is meant to go to the [[file:early-init.el][early-init.el]] file.
 
 ** Packages management :PERSONAL:
 
-Using [[https://github.com/raxod502/straight.el][straight.el]] for package management and disable checking (for speedup).
+Using [[https://github.com/raxod502/straight.el][straight.el]] for package management and disable checking (for speedup). Hook it up to =use-package= by default at least for the time being.
 
 #+begin_src emacs-lisp
 
-  (setq straight-check-for-modifications nil)
-
-#+end_src
-
-#+begin_src emacs-lisp
-
-  (defvar bootstrap-version)
+  (unless (featurep 'straight)
+    ;; Bootstrap straight.el
+    (defvar bootstrap-version)
     (let ((bootstrap-file
            (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
           (bootstrap-version 5))
@@ -121,55 +108,76 @@ Using [[https://github.com/raxod502/straight.el][straight.el]] for package manag
              'silent 'inhibit-cookies)
           (goto-char (point-max))
           (eval-print-last-sexp)))
-      (load bootstrap-file nil 'nomessage))
+      (load bootstrap-file nil 'nomessage)))
+
+  ;; Use straight.el for use-package expressions
+  (setq straight-check-for-modifications nil)
 
 #+end_src
 
-Library and theme load paths with a special case for mu4e (you may need to adapt this path).
+  Library load paths with a special case for mu4e (you may need to adapt this path).
 
-#+begin_src emacs-lisp
+  #+begin_src emacs-lisp
 
-  (add-to-list 'load-path
-               (expand-file-name "lisp" user-emacs-directory))
-  (add-to-list 'custom-theme-load-path
-               (expand-file-name "theme" user-emacs-directory))
+    (add-to-list 'load-path
+                 (expand-file-name "lisp" user-emacs-directory))
 
-#+end_src
+  #+end_src
 
 ** Packages installation
+
 
 Packages used in this specific configuration. You may want to adapt this list. The first time this sequence will be executed, *it will take a long time*. Then, at next restart, it should be very fast (less than 1 second because it won't install anything basically).
 
 #+begin_src emacs-lisp
 
   (setq package-list
-        '(cape                ; Completion At Point Extensions
-          orderless           ; Completion style for matching regexps in any order
-          vertico             ; VERTical Interactive COmpletion
-          marginalia          ; Enrich existing commands with completion annotations
-          consult             ; Consulting completing-read
-          corfu               ; Completion Overlay Region FUnction
-          f                   ; Modern API for working with files and directories
-          helpful             ; A better help buffer
-          imenu-list          ; Show imenu entries in a separate buffer
-          magit               ; A Git porcelain inside Emacs.
-          markdown-mode       ; Major mode for Markdown-formatted text
-          use-package         ; A configuration macro for simplifying your .emacs
-          yaml-mode           ; YAML mode
-          org-auto-tangle     ; Tangle org file when it is saved
-          exec-path-from-shell; Get environment variables such as $PATH from the shell 
-          which-key))         ; Display available keybindings in popup
+        '(
+          cape                 ; Completion At Point Extensions
+          circadian            ; Change my theme in rhythm with nature
+          coffee-mode          ; Sadly still have to deal with coffeescript sometimes
+          consult              ; Consulting completing-read
+          consult-lsp          ; LSP extras for consult to, well, consult
+          corfu                ; Completion Overlay Region FUnction
+          css-mode             ; If everything is !important than nothing is !important
+          deft                 ; Enhanced note taking with Org
+          exec-path-from-shell ; Get environment variables such as $PATH from the shell
+          f                    ; Modern API for working with files and directories
+          flycheck             ; Enhanced syntax checking suppposedly superior to flymake
+          flycheck-eglot       ; Allow Flycheck to understand Eglot as a checker
+          helpful              ; A better help buffer
+          imenu-list           ; Show imenu entries in a separate
+          lua-mode             ; Because it's a lovely little scripting/configuration language
+          magit                ; A Git porcelain inside Emacs.
+          marginalia           ; Enrich existing commands with completion annotations
+          markdown-mode        ; Major mode for Markdown-formatted text
+          multiple-cursors     ; Sometimes many cursors are better than one
+          no-littering         ; Keep our things clean and tidy
+          objed                ; Navigate and manipulate text objects
+          orderless            ; Completion style for matching regexps in any order
+          org-auto-tangle      ; Tangle org file when it is saved
+          projectile           ; Project scoped stuffness
+          rainbow-mode         ; Sometime you just need to see the colors
+          rg                   ; Ripgrep for speed and profit(?)
+          treesit-auto         ; Treesitter is native now but we can give it some help
+          undo-fu              ; Work around Emacs' clunky undo interface
+          undo-fu-session      ; Persistant undo across sessions
+          use-package          ; A configuration macro for simplifying your .emacs
+          vertico              ; VERTical Interactive COmpletion
+          visual-fill-column   ; Nicer wrapping mostly for text modes
+          vterm                ; A real terminal emulator running in Emacs
+          web-mode             ; Uber mode for web templating languages
+          which-key            ; Discovery method for key bindings
+          yaml-mode            ; YAML mode
+          ))
 
   ;; Install packages that are not yet installed
   (dolist (package package-list)
     (straight-use-package package))
 
-#+end_src
+  #+end_src
 
-(add-hook 'org-mode-hook 'org-auto-tangle-mode)
-
-** Configuration Itself
-
+** Core
 *** Bugfix :BUGFIX:
 
 *Temporary bugfix* for babel emacs-lisp that does not take into account prologue/epilogue.
@@ -203,3 +211,12 @@ Automatically tangle org-mode files with the option #+auto_tangle: t
 
 #+end_src
 
+*** Environmental Management
+
+Use [[https://github.com/emacscollective/no-littering][no-littering]] to keep my config directory tidier
+
+#+begin_src emacs-lisp
+
+    (require 'no-littering)
+
+#+end_src
