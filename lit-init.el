@@ -63,6 +63,27 @@
 (dolist (package package-list)
   (straight-use-package package))
 
+;; Install a selection of the N Λ N O suite of packages install straight from GitHub
+
+;; Modeline (eventually to be replace with my own)
+(straight-use-package
+ '(nano-modeline :type git :host github :repo "rougier/nano-modeline"))
+
+;; A cleaner, more minimal Org agenda
+(straight-use-package
+ '(nano-agenda :type git :host github :repo "rougier/nano-agenda"))
+
+;; An interesting looking approach to adding a sidebar to Emacs. I don't have a strong usecase for it yet but I like to the idea too much to not play around with.
+(straight-use-package
+ '(nano-sidebar :type git :host github :repo "rougier/nano-sidebar"))
+
+(straight-use-package
+  '(liminal-theme :type nil :local-repo "~/code/liminal-theme"))
+
+;; Trying out setup.el in place of use-package for a more minimal, streamlined configuration
+(straight-use-package
+ '(setup :type git :host nil :repo "https://git.sr.ht/~pkal/setup"))
+
 (defun my/org-babel-expand-body:emacs-lisp (orig-fun body params)
   "Expand BODY according to PARAMS and call original function with new body"
 
@@ -78,3 +99,66 @@
 (add-hook 'org-mode-hook 'org-auto-tangle-mode)
 
 (require 'no-littering)
+
+(use-package exec-path-from-shell
+  :init (exec-path-from-shell-initialize))
+
+(when (string-equal system-type "darwin")
+  (setq mac-option-modifier 'super)
+  (setq mac-command-modifier 'meta)
+  (setq dired-use-ls-dired nil))
+
+(require 'liminal-theme)
+(liminal-mode)
+
+(setup nano-modeline
+  (:option
+   mode-line-format nil)
+  (:with-mode prog-mode
+    (:hook nano-modeline-prog-mode))
+  (:with-mode text-mode
+    (:hook nano-modeline-text-mode))
+  (:with-mode messages-buffer-mode
+    (:hook nano-modeline-message-mode))
+  (:with-mode org-mode
+    (:hook nano-modeline-org-mode))
+  (:with-mode org-capture-mode
+    (:hook nano-modeline-org-capture-mode))
+  (:with-mode org-agenda-mode
+    (:hook nano-modeline-org-agenda-mode)))
+
+(setup circadian
+  (:option
+   calendar-latitude 42.4
+   calendar-longitude -71.0
+   circadian-themes '((:sunrise . liminal-light)
+                      (:sunset  . liminal-dark)))
+  (circadian-setup))
+
+(setup marginalia
+  (:with-map minibuffer-local-map
+    (:bind "M-A marginalia-cycle))
+(marginalia-mode))
+
+;; Add prompt indicator to `completing-read-multiple'.
+;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
+(defun crm-indicator (args)
+  (cons (format "[CRM%s] %s"
+                (replace-regexp-in-string
+                 "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                 crm-separator)
+                (car args))
+        (cdr args)))
+(advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+
+;; Do not allow the cursor in the minibuffer prompt
+(setq minibuffer-prompt-properties
+      '(read-only t cursor-intangible t face minibuffer-prompt))
+(add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+
+;; Emacs 28: Hide commands in M-x which do not work in the current mode.
+;; Vertico commands are hidden in normal buffers.
+(setq read-extended-command-predicate #'command-completion-default-include-p)
+
+;; Enable recursive minibuffers
+(setq enable-recursive-minibuffers t)

@@ -1,20 +1,7 @@
-;; On the road to a literate configuration. For the moment my dotemacs.org file will
+;; on the road to a literate configuration. For the moment my dotemacs.org file will
 ;; output the lit-init.el file so that I can move things from this init file to the
 ;; literate version piecemeal.
 (load (expand-file-name "lit-init.el" user-emacs-directory))
-
-; Integrate with use-package
-
-; I tried to avoid use-package here for a more “minimal” setup. That did not work. Since straight.el plays nice with use-package, let’s let it do that.
-
-;; no-littering doesn't set this by default so we must place
-;; auto save files in the same path as it uses for sessions
-;; (setq auto-save-file-name-transforms
-      ;; `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
-
-
-; General Usability
-; General guidelines for text handling
 
 ; Where to put the fill column marker for line wraps, how many pixels to put between lines, stuff like that.
 
@@ -27,23 +14,7 @@
 
 (global-set-key (kbd "C-x C-m") 'execute-extended-command)
 
-; Make a few adjustments for running on macOS
-
-; Make sure the macOS Emacs GUI app picks up environment variables.
-
-(use-package exec-path-from-shell
-  :init (exec-path-from-shell-initialize))
-
-; macOS doesn’t use GNU Coreutils and of course its ls isn’t what dired expects. Adjust for that.
-
-(when (string-equal system-type "darwin")
-  (setq mac-option-modifier 'super)
-  (setq mac-command-modifier 'meta)
-  (setq dired-use-ls-dired nil))
-
 ; visual-fill-column for a nice soft wrap
-
-
 
 (use-package visual-fill-column
   :commands visual-fill-column-mode
@@ -57,68 +28,6 @@
 
 ; More pleasent (slightly evil) undo experience
 
-(use-package undo-fu
-  :bind
-  ("C-/" . undo-fu-only-undo)
-  ("C-M-/" . undo-fu-only-redo))
-
-(use-package undo-fu-session
-  :init
-  (undo-fu-session-global-mode)
-  :config
-  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
-
-; Aesthetics
-; Fonts
-
-; Configure nano
-; Install nano and its dependencies
-
-; Installing via straight.el.
-
-(straight-use-package
- '(nano-emacs :type git :host github :repo "rougier/nano-emacs"))
-
-; nano-theme maps those custom faces to pretty much everything everywhere. Pretty nice.
-
-(use-package liminal-theme
-  :straight (:type nil :local-repo "~/code/liminal-theme")
-  :config
-  (liminal-mode))
-
-; Enable nano session handling
-
-(require 'nano-session)
-
-; Enable the nano modeline
-
-; One of my favorite bits really.
-
-;; (use-package liminal-modeline
-;;   :straight (:type nil :local-repo "~/code/liminal-modeline")
-;;   :hook
-;;   (prog-mode            . liminal-modeline-prog-mode)
-;;   (text-mode            . liminal-modeline-text-mode)
-;;   (org-mode             . liminal-modeline-org-mode)
-;;   (term-mode            . liminal-modeline-term-mode)
-;;   (messages-buffer-mode . liminal-modeline-message-mode)
-;;   (org-capture-mode     . liminal-modeline-org-capture-mode)
-;;   (org-agenda-mode      . liminal-modeline-org-agenda-mode)
-;;   )
-
-(use-package nano-modeline
-  :straight (:type git :host github :repo "rougier/nano-modeline")
-  :config
-  (setq-default mode-line-format nil)
-  :hook
-  (prog-mode            . nano-modeline-prog-mode)
-  (text-mode            . nano-modeline-text-mode)
-  (org-mode             . nano-modeline-org-mode)
-  (term-mode            . nano-modeline-term-mode)
-  (messages-buffer-mode . nano-modeline-message-mode)
-  (org-capture-mode     . nano-modeline-org-capture-mode)
-  (org-agenda-mode      . nano-modeline-org-agenda-mode)
-  )
 
 (use-package surround
   :straight (:type git :host github :repo "mkleehammer/surround")
@@ -141,13 +50,9 @@
 
 ; ; not sure if I like this one; it confuses org muscle memory, and if I want “maximized” I usually toggle tiling in the window manager
 
-(require 'nano-bindings)
-
 (let ((inhibit-message t))
   (message "Welcome to GNU Emacs / N Λ N O edition")
   (message (format "Initialization time: %s" (emacs-init-time))))
-
-(require 'nano-splash)
 
 ; Life management with Org
 
@@ -275,7 +180,7 @@
 
 (use-package flycheck
   :init (global-flycheck-mode))
-  
+
 (use-package flycheck-eglot
   :after (flycheck eglot)
   :init
@@ -293,11 +198,11 @@
 
 (defun ldi/save-word ()
   "Mark a Flyspell reported error as acceptable."
-  
+
   (interactive)
   (let ((current-location (point))
          (word (flyspell-get-word)))
-    (when (consp word)    
+    (when (consp word)
       (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
 
 (global-set-key (kbd "C-x $") 'ldi/save-word)
@@ -310,7 +215,7 @@
   :init
   (add-hook 'text-mode-hook 'flyspell-mode)
   (add-hook 'prog-mode-hook 'flyspell-prog-mode))
-  
+
 (use-package coffee-mode
   :init
   (setq coffee-tab-width 2))
@@ -353,7 +258,7 @@
     (define-key mode-map (kbd "C-c C-S-<down>") 'jtsx-move-jsx-element-step-in-forward)
     (define-key mode-map (kbd "C-c C-S-<up>") 'jtsx-move-jsx-element-step-in-backward)
     (define-key mode-map (kbd "C-c j w") 'jtsx-wrap-in-jsx-element))
-  
+
   (defun jtsx-bind-keys-to-jsx-mode-map ()
     (jtsx-bind-keys-to-mode-map jsx-mode-map))
 
@@ -425,7 +330,7 @@
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-elisp-block)
   (add-to-list 'completion-at-point-functions #'cape-dict)
-    
+
   :config
   ;; Silence then pcomplete capf, no errors or messages!
   (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
@@ -452,48 +357,6 @@
    ("M-y"     . 'consult-yank-pop)
    ("C-x b"   . 'consult-bookmark))
   )
-
-;; Enable rich annotations using the Marginalia package
-(use-package marginalia
-  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
-  ;; available in the *Completions* buffer, add it to the
-  ;; `completion-list-mode-map'.
-  :bind (:map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
-
-  ;; The :init section is always executed.
-  :init
-
-  ;; Marginalia must be activated in the :init section of use-package such that
-  ;; the mode gets enabled right away. Note that this forces loading the
-  ;; package.
-  (marginalia-mode))
-
-;; A few more useful configurations...
-(use-package emacs
-  :init
-  ;; Add prompt indicator to `completing-read-multiple'.
-  ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
-  (defun crm-indicator (args)
-    (cons (format "[CRM%s] %s"
-                  (replace-regexp-in-string
-                   "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
-                   crm-separator)
-                  (car args))
-          (cdr args)))
-  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
-
-  ;; Do not allow the cursor in the minibuffer prompt
-  (setq minibuffer-prompt-properties
-        '(read-only t cursor-intangible t face minibuffer-prompt))
-  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-
-  ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
-  ;; Vertico commands are hidden in normal buffers.
-  (setq read-extended-command-predicate #'command-completion-default-include-p)
-
-  ;; Enable recursive minibuffers
-  (setq enable-recursive-minibuffers t))
 
 (use-package vterm
   :config
@@ -531,7 +394,7 @@
 
 (defun toggle-window-split ()
   "Toggle dual window split between vertical to horizontal orientation."
-  
+
   (interactive)
   (if (= (count-windows) 2)
       (let* ((this-win-buffer (window-buffer))
@@ -573,8 +436,6 @@
 (setq visible-bell nil
       ring-bell-function #'ignore)
 
-(setf mode-line-format nil)
-
 (use-package multiple-cursors
   :ensure   t
   :bind (("C-M-SPC" . set-rectangular-region-anchor)
@@ -586,19 +447,11 @@
 
 (defun reload-init-file ()
   "Reload the file referenced by `user-init-file`."
-  
+
   (interactive)
   (load-file user-init-file))
 
 (global-set-key (kbd "<f5>") 'reload-init-file)
-
-(use-package circadian
-  :config
-  (setq calendar-latitude 42.4)
-  (setq calendar-longitude -71.0)
-  (setq circadian-themes '((:sunrise . liminal-light)
-                           (:sunset  . liminal-dark)))
-  (circadian-setup))
 
 ;; Cribbed from https://panadestein.github.io/emacsd/
 (use-package ediff
@@ -620,7 +473,7 @@
 
 (defun switch-theme (theme)
   "Load THEME after unloading previously loaded themes N.B. this will not remove any customization done outside of themes."
-  
+
   (interactive
    (list
     (intern (completing-read "Load custom theme: "
