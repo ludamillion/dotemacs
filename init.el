@@ -1,449 +1,115 @@
-;; on the road to a literate configuration. For the moment my dotemacs.org file will
-;; output the lit-init.el file so that I can move things from this init file to the
-;; literate version piecemeal.
-(load (expand-file-name "lit-init.el" user-emacs-directory))
+;;; dotemacs --- A literate Emacs configuration -*- lexical-binding: t -*-
+;;; This file has been generated from dotemacs.org file. DO NOT EDIT.
 
-; Where to put the fill column marker for line wraps, how many pixels to put between lines, stuff like that.
+;;; Copyright (C) 2023 Luke D. Inglis
 
-(setq fill-column 100)
-(setq-default line-spacing 1)
+;;; This file is free software; you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation; either version 3, or (at your option)
+;;; any later version.
 
-; invoke M-x without Alt
+;;; This file is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
 
-; I read Steve Yegge’s effective-emacs a long time ago — back when it was an internal Amazon blog. Applied his suggestion to invoke X-m with C-x C-m and that’s been part of my Emacs muscle memory ever since.
+;;; For a full copy of the GNU General Public License
+;;; see <https://www.gnu.org/licenses/>.
 
-(global-set-key (kbd "C-x C-m") 'execute-extended-command)
+;;; Code
 
-; visual-fill-column for a nice soft wrap
+(unless (featurep 'straight)
+  ;; Bootstrap straight.el
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+        (bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage)))
 
-(use-package visual-fill-column
-  :commands visual-fill-column-mode
+;; Use straight.el for use-package expressions
+(setq straight-check-for-modifications nil)
 
-  :custom
-  (fill-column-enable-sensible-window-split t)
-  :config
-  (visual-line-mode t)
-  :bind
-  (("C-x p" . 'visual-fill-column-mode)))
+(add-to-list 'load-path
+             (expand-file-name "lisp" user-emacs-directory))
 
-; More pleasent (slightly evil) undo experience
+(setq package-list
+      '(
+        cape                 ; Completion At Point Extensions
+        circadian            ; Change my theme in rhythm with nature
+        coffee-mode          ; Sadly still have to deal with coffeescript sometimes
+        consult              ; Consulting completing-read
+        consult-lsp          ; LSP extras for consult to, well, consult
+        corfu                ; Completion Overlay Region FUnction
+        css-mode             ; If everything is !important than nothing is !important
+        deft                 ; Enhanced note taking with Org
+        docker
+        dockerfile-mode
+        exec-path-from-shell ; Get environment variables such as $PATH from the shell
+        f                    ; Modern API for working with files and directories
+        flycheck             ; Enhanced syntax checking, more flexible than flymake
+        flycheck-eglot       ; Allow Flycheck to understand Eglot as a checker
+        haml-mode            ; Rails templates not covered by treesitter or web-mode
+        helpful              ; A better help buffer
+        imenu-list           ; Show imenu entries in a separate
+        magit                ; A Git porcelain inside Emacs.
+        marginalia           ; Enrich existing commands with completion annotations
+        markdown-mode        ; Major mode for Markdown-formatted text
+        multi-vterm
+        multiple-cursors     ; Sometimes many cursors are better than one
+        no-littering         ; Keep our things clean and tidy
+        objed                ; Navigate and manipulate text objects
+        orderless            ; Completion style for matching regexps in any order
+        org-auto-tangle
+        projectile           ; Project scoped stuffness
+        rainbow-mode         ; Sometime you just need to see the colors
+        rainbow-delimiters   ; Light up matching delimiters for shiny ease of reading
+        rg                   ; Ripgrep for speed and profit(?)
+        slim-mode
+        smartparens          ; Like parens but, you know, ...smarter
+        transpose-frame
+        treesit-auto
+        undo-fu              ; Work around Emacs' clunky undo interface
+        undo-fu-session      ; Persistant undo across sessions
+        vertico              ; VERTical Interactive COmpletion
+        vertico-posframe
+        visual-fill-column   ; Nicer wrapping mostly for text modes
+        vterm                ; A real terminal emulator running in Emacs
+        web-mode             ; Uber mode for web templating languages
+        which-key            ; Discovery method for key bindings
+        ))
 
+;; Install packages that are not yet installed
+(dolist (package package-list)
+  (straight-use-package package))
 
-(use-package surround
-  :straight (:type git :host github :repo "mkleehammer/surround")
-  :bind-keymap ("M-'" . surround-keymap))
+;; Install a selection of the N Λ N O suite of packages install straight from GitHub
 
-; Enable nano key bindings
+;; Modeline (eventually to be replace with my own)
+(straight-use-package
+ '(nano-modeline :type git :host github :repo "rougier/nano-modeline"))
 
-; C-x k
-;     ; kill current buffer without asking
-; ; M-n
-;     ; open a new frame
-; ; M-`
-;     ; switch to other frame
-; ; C-x C-c
-;     ; delete the current frame; exit if no frames remain
-; ; C-c r
-;     ; interactive select from recent files
-; ; <M-return>
-;     ; toggle maximization of current frame
+;; A cleaner, more minimal Org agenda
+(straight-use-package
+ '(nano-agenda :type git :host github :repo "rougier/nano-agenda"))
 
-; ; not sure if I like this one; it confuses org muscle memory, and if I want “maximized” I usually toggle tiling in the window manager
+(straight-use-package
+ '(jtsx :type git :host github :repo "llemaitre19/jtsx"))
+
+(straight-use-package
+ '(liminal-theme :type nil :local-repo "~/code/liminal-theme"))
+
+(straight-use-package '(org :type built-in))
 
 (let ((inhibit-message t))
-  (message "Welcome to GNU Emacs / N Λ N O edition")
+  (message "Welcome to GNU Emacs / Liminal edition")
   (message (format "Initialization time: %s" (emacs-init-time))))
-
-; Life management with Org
-
-; Okay here we go. Building up my org-roam experience while keeping Deft handy for the longer, more intentional notes.
-; File locations
-
-; I work this out piecemeal, as some of the files and folders build on what’s been defined before.
-;
-; First: what’s the top level of everything? That depends on whether I’m in a UNIX-like system or playing with the native Windows version of Emacs.
-
-(setq ldi/local-root "~/")
-
-; Trying an experiment where first we look for a local ~org/ folder and use that if found, otherwise going with my actual default of ~/Dropbox/org. Trying to shift over to git-synchronized Org files instead of Dropbox-synchronized, but that change will take a bit to percolate through all my systems.
-
-(setq ldi/default-org-directory (expand-file-name "org" ldi/local-root))
-(setq ldi/sync-org-directory (expand-file-name "Dropbox/org" ldi/local-root))
-
-(setq ldi/org-dir
-      (if (file-directory-p ldi/default-org-directory)
-          ldi/default-org-directory
-        ldi/sync-org-directory))
-
-; That’s enough to define most of the files I need.
-
-(setq
- ldi/current-journal (expand-file-name "journal.org" ldi/org-dir)
- ldi/org-id-locations-file (expand-file-name
-                            ".org-id-locations" ldi/org-dir))
-
-; Custom keywords
-;
-; A process vagiuely similar to GTD but my brain insists on its own task classifications.
-;
-; LATER
-;     I need to do it, but it can wait (or it’s waiting on something)
-; NOW
-;     I got everything I need to do this
-; MAYBE
-;     An idea, suggestion, or action that I may or may not want to to
-; PROJECT
-;     A multi-part task with notable dependencies
-; DONE
-;     I did it!
-; NOPE
-;     Never mind
-
-(setq ldi/todo-keywords
-      `((sequence
-         "LATER(l!)" "NOW(n!)" "MAYBE(m!)" "PROJECT(p!)"
-         "|"
-         "DONE(d!)" "NOPE(-!)")))
-
-(use-package org
-  :straight (:type built-in)
-  :ensure org-plus-contrib
-  :custom
-  (org-log-done 'time)
-  (org-log-reschedule 'time)
-  (org-log-into-drawer t)
-  (org-startup-indented t)
-  (org-startup-truncated nil)
-  (org-todo-keywords ldi/todo-keywords)
-  (org-id-track-globally t)
-  (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
-  (org-id-locations-file ldi/org-id-locations-file)
-  (org-id-locations-file-relative t)
-
-  :bind
-  ("C-c a" . org-agenda)
-  ("C-c c" . org-capture)
-  ("C-c l" . org-store-link)
-
-  :config
-  (setq-local org-fontify-whole-heading-line t))
-
-; Additional Org tools
-; Deft
-;
-; The perfect solution for knowledge management varies by context. But the core thing really needed: someplace to drop my notes where I can find them when I need them.
-;
-; Deft provides exactly that. And since Org mode is the main reason I load Emacs, my ~/org folder is where Deft will look for notes.
-
-(use-package deft
-  :custom (deft-extensions '("org")) (deft-directory ldi/org-dir)
-  (deft-recursive-ignore-dir-regexp "\\(?:\\.\\|\\.\\.\\|roam\\|brain\\)")
-  (deft-ignore-file-regexp "\\(?:~\\|py\\)$")
-  (deft-recursive t))
-
-; Helpful hint when enabling deft-recursive: =../ is one of the entries in your directory listing, and Deft will do its darndest to follow it if you forget to include it in deft-recursive-ignore-dir-regexp (set to "\\(?:\\.\\|\\.\\.\\)" by default).
-;
-; This can lead to all sorts of recursive headaches, so don’t forget!
-;
-; Of course I’ll end up tweaking it. But to get me started?
-
-; Project management with Projectile and friends
-
-; Projectile plus a .dir-locals.el file seems like the right way to handle development projects without bumping into everything else.
-
-(use-package projectile
-  :init
-  (projectile-mode +1)
-  :bind
-  (:map projectile-mode-map
-        ("s-p" . projectile-command-map)
-        ("C-c p" . projectile-command-map)))
-
-(use-package orderless
-  :init
-  ;; Tune the global completion style settings to your liking!
-  ;; This affects the minibuffer and non-lsp completion at point.
-  (setq completion-styles '(orderless partial-completion basic)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles partial-completion)))))
-
-(use-package eglot
-  :bind
-  ("M-k" . eglot-code-actions)
-  :hook
-  (eglot-managed-mode . eglot-inlay-hints-mode)
-  (typescript-ts-base-mode . eglot-ensure)
-  (js-base-mode . eglot-ensure)
-  (ruby-ts-base-mode . eglot-ensure)
-  :config
-  (setq eldoc-echo-area-use-multiline-p nil))
-
-(use-package flycheck
-  :init (global-flycheck-mode))
-
-(use-package flycheck-eglot
-  :after (flycheck eglot)
-  :init
-  (global-flycheck-eglot-mode 1))
-
-; Which Key?
-; which-key adds a completion panel for commands. That helps me learn the many Emacs key maps.
-
-(use-package which-key
-  :defer 0
-  :diminish which-key-mode
-  :config
-  (which-key-mode)
-  (setq which-key-idle-delay 1))
-
-(defun ldi/save-word ()
-  "Mark a Flyspell reported error as acceptable."
-
-  (interactive)
-  (let ((current-location (point))
-         (word (flyspell-get-word)))
-    (when (consp word)
-      (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
-
-(global-set-key (kbd "C-x $") 'ldi/save-word)
-(global-set-key (kbd "C-'") 'flyspell-auto-correct-previous-word)
-
-(use-package flyspell
-  :bind
-  (("C-x $" . ldi/save-word)
-   ("C-'" . flyspell-auto-correct-previous-word))
-  :init
-  (add-hook 'text-mode-hook 'flyspell-mode)
-  (add-hook 'prog-mode-hook 'flyspell-prog-mode))
-
-(use-package coffee-mode
-  :init
-  (setq coffee-tab-width 2))
-
-(use-package web-mode
-  :init
-  (setq font-lock-maximum-decoration '((web-mode . t) (t . nil)))
-  :config
-  (add-to-list 'auto-mode-alist '("\\.haml$" . web-mode)))
-
-(use-package css-mode
-  :config
-  (setq css-indent-offset 2))
-
-(use-package jtsx
-  :straight (:type git :host github :repo "llemaitre19/jtsx")
-  :mode (("\\.jsx?\\'" . jsx-mode)
-         ("\\.tsx?\\'" . tsx-mode))
-  :commands jtsx-install-treesit-language
-  :hook ((jsx-mode . hs-minor-mode)
-         (tsx-mode . hs-minor-mode))
-  :custom
-  (js-indent-level 2)
-  (typescript-ts-mode-indent-offset 2)
-  (jtsx-switch-indent-offset 0)
-  (jtsx-indent-statement-block-regarding-standalone-parent nil)
-  (jtsx-jsx-element-move-allow-step-out t)
-  (jtsx-enable-jsx-electric-closing-element t)
-  :config
-  (defun jtsx-bind-keys-to-mode-map (mode-map)
-    "Bind keys to MODE-MAP."
-    (define-key mode-map (kbd "C-c C-j") 'jtsx-jump-jsx-element-tag-dwim)
-    (define-key mode-map (kbd "C-c j o") 'jtsx-jump-jsx-opening-tag)
-    (define-key mode-map (kbd "C-c j c") 'jtsx-jump-jsx-closing-tag)
-    (define-key mode-map (kbd "C-c j r") 'jtsx-rename-jsx-element)
-    (define-key mode-map (kbd "C-c <down>") 'jtsx-move-jsx-element-tag-forward)
-    (define-key mode-map (kbd "C-c <up>") 'jtsx-move-jsx-element-tag-backward)
-    (define-key mode-map (kbd "C-c C-<down>") 'jtsx-move-jsx-element-forward)
-    (define-key mode-map (kbd "C-c C-<up>") 'jtsx-move-jsx-element-backward)
-    (define-key mode-map (kbd "C-c C-S-<down>") 'jtsx-move-jsx-element-step-in-forward)
-    (define-key mode-map (kbd "C-c C-S-<up>") 'jtsx-move-jsx-element-step-in-backward)
-    (define-key mode-map (kbd "C-c j w") 'jtsx-wrap-in-jsx-element))
-
-  (defun jtsx-bind-keys-to-jsx-mode-map ()
-    (jtsx-bind-keys-to-mode-map jsx-mode-map))
-
-  (defun jtsx-bind-keys-to-tsx-mode-map ()
-    (jtsx-bind-keys-to-mode-map tsx-mode-map))
-
-  (add-hook 'jsx-mode-hook 'jtsx-bind-keys-to-jsx-mode-map)
-  (add-hook 'tsx-mode-hook 'jtsx-bind-keys-to-tsx-mode-map))
-
-(use-package treesit-auto
-  :demand t
-  :config
-  (setq treesit-auto-install 'prompt)
-  (global-treesit-auto-mode))
-
-(use-package magit
-  :commands magit-status
-  :bind
-  (("C-M-;" . magit-status)))
-
-;; Code Completion
-(use-package corfu
-  ;; Optional customizations
-  :custom
-  (corfu-cycle t)                 ; Allows cycling through candidates
-  (corfu-auto t)                  ; Enable auto completion
-  (corfu-auto-prefix 2)
-  (corfu-auto-delay 0.25)
-  (corfu-popupinfo-delay '(0.5 . 0.2))
-  (corfu-preview-current 'insert) ; Do not preview current candidate
-  (corfu-preselect 'prompt)
-  (corfu-on-exact-match nil)      ; Don't auto expand tempel snippets
-
-  ;; Optionally use TAB for cycling, default is `corfu-complete'.
-  :bind (:map corfu-map
-              ("M-SPC"      . corfu-insert-separator)
-              ("TAB"        . corfu-next)
-              ([tab]        . corfu-next)
-              ("S-TAB"      . corfu-previous)
-              ([backtab]    . corfu-previous)
-              ("S-<return>" . corfu-insert)
-              ("RET"        . nil))
-
-  :init
-  (global-corfu-mode)
-  (corfu-history-mode)
-  (corfu-popupinfo-mode) ; Popup completion info
-  :config
-  (add-hook 'eshell-mode-hook
-            (lambda () (setq-local corfu-quit-at-boundary t
-                              corfu-quit-no-match t
-                              corfu-auto nil)
-              (corfu-mode))))
-
-(use-package cape
-  :defer 10
-  :bind ("C-c f" . cape-file)
-  :init
-  ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  (defalias 'dabbrev-after-2 (cape-capf-prefix-length #'cape-dabbrev 2))
-  (add-to-list 'completion-at-point-functions 'dabbrev-after-2 t)
-  (cl-pushnew #'cape-file completion-at-point-functions)
-  :init
-  ;; Add to the global default value of `completion-at-point-functions' which is
-  ;; used by `completion-at-point'.  The order of the functions matters, the
-  ;; first function returning a result wins.  Note that the list of buffer-local
-  ;; completion functions takes precedence over the global list.
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-elisp-block)
-  (add-to-list 'completion-at-point-functions #'cape-dict)
-
-  :config
-  ;; Silence then pcomplete capf, no errors or messages!
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-
-  ;; Ensure that pcomplete does not write to the buffer
-  ;; and behaves as a pure `completion-at-point-function'.
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
-
-;; Enable vertico
-(use-package vertico
-  :init
-  (vertico-mode)
-  :bind
-  (:map vertico-map
-        ("C-<backspace>" . vertico-directory-up))
-  :custom
-  (setq vertico-scroll-margin 0)
-  (setq vertico-resize t)
-  (setq vertico-cycle t))
-
-(use-package consult
-  :bind
-  (("M-x"     . 'consult-buffer)
-   ("M-y"     . 'consult-yank-pop)
-   ("C-x b"   . 'consult-bookmark))
-  )
-
-(use-package vterm
-  :config
-  (setq vterm-max-scrollback 10000)
-  :bind
-  ("C-x !" . projectile-run-vterm))
-
-; ;; Workaround for issue with typescript lsp server found here https://github.com/typescript-language-server/typescript-language-server/issues/559#issuecomment-1259470791
-;; Shouldn't be necessary after upgrading to Emacs v29
-;; (advice-add 'json-parse-string :around
-;;             (lambda (orig string &rest rest)
-;;               (apply orig (s-replace "\\u0000" "" string)
-;;                      rest)))
-
-;; ;; minor changes: saves excursion and uses search-forward instead of re-search-forward
-;; (advice-add 'json-parse-buffer :around
-;;             (lambda (oldfn &rest args)
-;; 	      (save-excursion 
-;;                 (while (search-forward "\\u0000" nil t)
-;;                   (replace-match "" nil t)))
-;; 		(apply oldfn args)))
-
-(use-package objed
-  :ensure t
-  :init
-  (objed-mode)
-  :config
-  (setq objed-modeline-hint nil)
-  :bind
-  ("M-SPC" . objed-activate-object))
-
-(use-package rainbow-mode
-  :ensure t
-  :init (rainbow-mode t))
-
-(defun toggle-window-split ()
-  "Toggle dual window split between vertical to horizontal orientation."
-
-  (interactive)
-  (if (= (count-windows) 2)
-      (let* ((this-win-buffer (window-buffer))
-         (next-win-buffer (window-buffer (next-window)))
-         (this-win-edges (window-edges (selected-window)))
-         (next-win-edges (window-edges (next-window)))
-         (this-win-2nd (not (and (<= (car this-win-edges)
-                     (car next-win-edges))
-                     (<= (cadr this-win-edges)
-                     (cadr next-win-edges)))))
-         (splitter
-          (if (= (car this-win-edges)
-             (car (window-edges (next-window))))
-          'split-window-horizontally
-        'split-window-vertically)))
-    (delete-other-windows)
-    (let ((first-win (selected-window)))
-      (funcall splitter)
-      (if this-win-2nd (other-window 1))
-      (set-window-buffer (selected-window) this-win-buffer)
-      (set-window-buffer (next-window) next-win-buffer)
-      (select-window first-win)
-      (if this-win-2nd (other-window 1))))))
-
-(global-set-key (kbd "C-x |") 'toggle-window-split)
-
-(global-set-key (kbd "M-o") 'other-window)
-
-;; From: https://github.com/rougier/nano-emacs/issues/128
-(defun luda/kill-emacs ()
-  "Delete frame or kill Emacs if there is only one frame."
-  (interactive)
-  (condition-case nil
-      (delete-frame)
-    (error (save-buffers-kill-terminal))))
-
-(global-set-key (kbd "C-x C-c") 'luda/kill-emacs)
-
-(setq visible-bell nil
-      ring-bell-function #'ignore)
-
-(use-package multiple-cursors
-  :ensure   t
-  :bind (("C-M-SPC" . set-rectangular-region-anchor)
-         ("C-M->" . mc/mark-next-like-this)
-         ("C-M-<" . mc/mark-previous-like-this)
-         ("C-c C->" . mc/mark-all-like-this)
-         ("C-c C-SPC" . mc/edit-lines)
-         ))
 
 (defun reload-init-file ()
   "Reload the file referenced by `user-init-file`."
@@ -453,25 +119,309 @@
 
 (global-set-key (kbd "<f5>") 'reload-init-file)
 
-;; Cribbed from https://panadestein.github.io/emacsd/
-(use-package ediff
-  :straight nil
-  :preface
-  (defvar my-ediff-original-windows nil)
-  (defun my-store-pre-ediff-winconfig ()
-    "Stores the window arrangement before opening ediff."
-    (setq my-ediff-original-windows (current-window-configuration)))
-  (defun my-restore-pre-ediff-winconfig ()
-    "Resets original window arrangement"
-    (set-window-configuration my-ediff-original-windows))
-  :hook
-  ((ediff-before-setup . my-store-pre-ediff-winconfig)
-   (ediff-quit . my-restore-pre-ediff-winconfig))
-  :config
-  (setq ediff-window-setup-function 'ediff-setup-windows-plain
-        ediff-split-window-function 'split-window-horizontally))
+(add-hook 'org-mode-hook 'org-auto-tangle-mode)
 
-(defun switch-theme (theme)
+(require 'no-littering)
+
+(use-package exec-path-from-shell
+  :init
+  (exec-path-from-shell-initialize))
+
+(setq luda/local-root "~/")
+
+(when (string-equal system-type "darwin")
+  (setq mac-option-modifier 'super)
+  (setq mac-command-modifier 'meta)
+  (setq dired-use-ls-dired nil))
+
+(defun luda/make-scratch-frame ()
+  "Create a new frame and switch to *scratch* buffer."
+
+  (interactive)
+  (select-frame (make-frame))
+  (switch-to-buffer "*scratch*"))
+
+(defun luda/make-vterm-frame ()
+  "Create a new frame and switch to *scratch* buffer."
+
+  (interactive)
+  (select-frame (make-frame))
+  (vterm))
+
+(global-set-key (kbd "M-o") 'other-window)
+(global-set-key (kbd "C-M-o") 'other-frame)
+
+(use-package liminal-theme
+  :init
+  (setq liminal-font-size 16)
+  :config
+  (liminal-mode))
+
+(use-package nano-modeline
+  :init
+  (setopt mode-line-format nil)
+  :hook
+  (prog-mode            . nano-modeline-prog-mode)
+  (text-mode            . nano-modeline-text-mode)
+  (org-mode             . nano-modeline-org-mode)
+  (term-mode            . nano-modeline-term-mode)
+  (messages-buffer-mode . nano-modeline-message-mode)
+  (org-capture-mode     . nano-modeline-org-capture-mode)
+  (org-agenda-mode      . nano-modeline-org-agenda-mode))
+
+(use-package circadian
+  :custom
+   (calendar-latitude 42.4)
+   (calendar-longitude -71.0)
+   (circadian-themes '((:sunrise . liminal-light)
+                       (:sunset  . liminal-dark)))
+   :config
+   (circadian-setup))
+
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+(setq-default line-spacing 1)
+
+(use-package vertico
+  :bind (:map vertico-map
+              ("C-<backspace>" . vertico-directory-up))
+  :custom
+  (vertico-scroll-margin 0 "Remove the top/bottom margins of the completion window")
+  (vertico-resize t "Let the completion window grow and shrink")
+  (vertico-cycle t "Let the curson loop back to the begining on reaching the end")
+  :init
+  (vertico-mode))
+
+(use-package consult
+  :bind (
+         ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+         ("M-s c" . consult-locate)
+         ("M-s g" . consult-grep)
+         ("M-s G" . consult-git-grep)
+         ("M-s r" . consult-ripgrep)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
+         ("M-s k" . consult-keep-lines)
+         ("M-s u" . consult-focus-lines)
+         ("M-x"   . consult-buffer)
+         ("M-y"   . consult-nk-pop)
+         ("M-g g" . consult-goto-line)
+         ("M-g i" . consult-imenu)
+         ("M-g o" . consult-outline)
+         ("C-x b" . consult-bookmark)))
+
+(use-package orderless
+  :config
+   (setq completion-styles '(orderless partial-completion basic))
+   (setq completion-category-defaults nil)
+   (setq completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package corfu
+  :config
+  (defun corfu-x-eshell-hook ()
+    (setq-local corfu-auto nil)
+    (corfu-mode))
+  (add-hook 'eshell-mode-hook 'corfu-x-eshell-hook)
+  (setq corfu-cycle t)
+  (setq corfu-auto t)
+  (setq corfu-auto-prefix 2)
+  (setq corfu-auto-delay 0.25)
+  (setq corfu-popupinfo-delay '(0.5 . 0.2))
+  (setq corfu-preview-current 'insert)
+  (setq corfu-preselect 'prompt)
+  (setq corfu-on-exact-match nil)
+
+  :bind
+  (:map corfu-map
+        ("M-SPC" . corfu-insert-separator)
+        ("C-n"   . corfu-next)
+        ("C-p"   . corfu-previous)
+        ("TAB"   . corfu-insert)
+        ("RET"   . nil))
+
+  :init
+  (corfu-popupinfo-mode)
+  (corfu-history-mode)
+  (global-corfu-mode))
+
+(use-package cape
+  :bind
+  (("C-c f" .  cape-file))
+
+  :config
+  ;; Add `completion-at-point-functions', used by `completion-at-point'.
+  (defalias 'dabbrev-after-2 (cape-capf-prefix-length #'cape-dabbrev 2))
+  (add-to-list 'completion-at-point-functions 'dabbrev-after-2 t)
+
+  (cl-pushnew #'cape-file completion-at-point-functions)
+
+  ;; Add to the global default value of `completion-at-point-functions' which is
+  ;; used by `completion-at-point'.  The order of the functions matters, the
+  ;; first function returning a result wins.  Note that the list of buffer-local
+  ;; completion functions takes precedence over the global list.
+
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-elisp-block)
+  (add-to-list 'completion-at-point-functions #'cape-dict)
+
+  ;; Silence then pcomplete capf, no errors or messages!
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+
+  ;; Ensure that pcomplete does not write to the buffer
+  ;; and behaves as a pure `completion-at-point-function'.
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
+
+(use-package marginalia
+  :config
+  (marginalia-mode)
+  :bind (:map minibuffer-local-map
+              ("M-A" . marginalia-cycle)))
+
+;; Add prompt indicator to `completing-read-multiple'.
+;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
+(defun crm-indicator (args)
+  (cons (format "[CRM%s] %s"
+                (replace-regexp-in-string
+                 "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+                 crm-separator)
+                (car args))
+        (cdr args)))
+(advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+
+;; Do not allow the cursor in the minibuffer prompt
+(setq minibuffer-prompt-properties
+      '(read-only t cursor-intangible t face minibuffer-prompt))
+(add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+
+;; Emacs 28: Hide commands in M-x which do not work in the current mode.
+;; Vertico commands are hidden in normal buffers.
+(setq read-extended-command-predicate #'command-completion-default-include-p)
+
+;; Enable recursive minibuffers
+(setq enable-recursive-minibuffers t)
+
+(use-package which-key
+  :config
+  (setq which-key-idle-delay 0.75)
+  (which-key-mode))
+
+(use-package eglot
+  :bind
+  ("M-k" . eglot-code-actions)
+  :hook ((eglot-managed-mode . eglot-inlay-hints-mode)
+         (typescript-ts-base-mode . eglot-ensure)
+         (js-base-mode . eglot-ensure)
+         (ruby-ts-base-mode . eglot-ensure)
+         (scss-ts-base-mode . eglot-ensure))
+  :config
+  (setq eldoc-echo-area-use-multiline-p nil))
+
+(use-package flycheck
+  :config
+  (global-flycheck-mode))
+
+(use-package flycheck-eglot
+  :config
+  (global-flycheck-eglot-mode)
+  :after (flycheck eglot))
+
+(defun luda/save-word ()
+  "Mark a Flyspell reported error as acceptable."
+
+  (interactive)
+
+  (let ((current-location (point))
+        (word (flyspell-get-word)))
+    (when (consp word)
+      (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
+
+(use-package flyspell
+  :bind
+   ("C-x $" . 'luda/save-word)
+   ("C-'" . 'flyspell-auto-correct-previous-word)
+  :hook ((text-mode . flyspell-mode)
+         (prog-mode . flyspell-prog-mode)))
+
+(setq treesit-language-source-alist
+      '((css "https://github.com/tree-sitter/tree-sitter-css")
+        (lua "https://github.com/MunifTanjim/tree-sitter-lua")
+        (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
+        (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+        (scss "https://github.com/serenadeai/tree-sitter-scss")
+        (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+        (go "https://github.com/tree-sitter/tree-sitter-go")
+        (html "https://github.com/tree-sitter/tree-sitter-html")
+        (json "https://github.com/tree-sitter/tree-sitter-json")
+        (make "https://github.com/alemuller/tree-sitter-make")
+        (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+        (toml "https://github.com/tree-sitter/tree-sitter-toml")
+        (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+
+(dolist (ts-pair treesit-language-source-alist)
+  (let ((language (car ts-pair)) (repo (cadr ts-pair)))
+    (unless (treesit-language-available-p language)
+      (message "Installing parser for %s from %s" language repo)
+      (treesit-install-language-grammar language))))
+
+;; (use-package treesit-auto
+;;   :custom
+;;   (treesit-auto-install 'prompt)
+;;   :config
+;;   (treesit-auto-add-to-auto-mode-alist 'all)
+;;   (global-treesit-auto-mode))
+
+(use-package projectile
+  :config
+  (projectile-global-mode)
+  :bind
+  ("s-p" . projectile-command-map)
+  ("C-c p" . projectile-command-map))
+
+(use-package surround
+  :bind-keymap
+  ("M-'" . surround-keymap))
+
+(use-package objed
+  :config
+  (setq objed-modeline-hint nil)
+  (objed-mode)
+  :bind
+  ("M-SPC" . objed-activate-object))
+
+;; Clean and straightforward undo/redo
+(use-package undo-fu
+  :bind
+  ("C-/" . undo-fu-only-undo)
+  ("C-M-/" . undo-fu-only-redo))
+
+;; Persist undo history across sessions
+(use-package undo-fu-session
+  :config
+  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+  (undo-fu-session-global-mode))
+
+(setq visible-bell nil
+      ring-bell-function #'ignore)
+
+(setq switch-to-buffer-obey-display-actions t)
+
+(use-package vterm
+  :init
+  (setq vterm-max-scrollback 10000)
+  :bind
+  ("C-x !" . projectile-run-vterm))
+
+(use-package multi-vterm
+  :bind
+  ("M-v" . multi-vterm-dedicated-toggle)
+  :init
+  (setopt multi-vterm-dedicated-window-height-percent 30))
+
+(global-set-key (kbd "C-x C-m") 'execute-extended-command)
+
+(defun luda/switch-theme (theme)
   "Load THEME after unloading previously loaded themes N.B. this will not remove any customization done outside of themes."
 
   (interactive
@@ -481,3 +431,108 @@
                                      (custom-available-themes))))))
   (mapcar #'disable-theme custom-enabled-themes)
   (load-theme theme t))
+
+(defun luda/kill-frame ()
+  "Delete frame or kill Emacs if there is only one frame."
+  (interactive)
+  (condition-case nil
+      (delete-frame)
+    (error (save-buffers-kill-terminal))))
+
+(global-set-key (kbd "C-x C-c") 'luda/kill-frame)
+
+(use-package transpose-frame
+  :bind
+  ("C-x |" . transpose-frame))
+
+(use-package coffee-mode
+  :config
+  (setq coffee-tab-width 2))
+
+(use-package web-mode
+  :mode "\\.erb\\'")
+
+(use-package haml-mode
+  :defer t)
+
+(use-package jtsx
+  :mode (("\\.jsx?\\'" . jsx-mode)
+         ("\\.tsx?\\'" . tsx-mode))
+  :config
+  (setq js-indent-level 2)
+  (setq typescript-ts-mode-indent-offset 2)
+  (setq jtsx-switch-indent-offset 0)
+  (setq jtsx-indent-statement-block-regarding-standalone-parent nil)
+  (setq jtsx-jsx-element-move-allow-step-out t)
+  (setq jtsx-enable-jsx-electric-closing-element t))
+
+(use-package docker
+  :bind ("C-c d" . docker))
+
+(use-package dockerfile-mode)
+
+(setq luda/default-org-directory (expand-file-name "org" luda/local-root))
+(setq luda/sync-org-directory (expand-file-name "Dropbox/org" luda/local-root))
+
+(setq luda/org-dir
+      (if (file-directory-p luda/default-org-directory)
+          luda/default-org-directory
+        luda/sync-org-directory))
+
+(setq luda/current-journal (expand-file-name "journal.org" luda/org-dir))
+(setq luda/org-id-locations-file (expand-file-name ".org-id-locations" luda/org-dir))
+
+(setq luda/todo-keywords
+      `((sequence
+         "CALENDAR(c!)" "SHORT(s!)" "LONG(l!)" "|" "DONE(d!)" "NOPE(-!)")))
+
+(use-package org
+  :config
+  (setq org-log-done 'time)
+  (setq org-log-reschedule 'time)
+  (setq org-log-into-drawer t)
+  (setq org-startup-indented t)
+  (setq org-startup-truncated nil)
+  (setq org-todo-keywords luda/todo-keywords)
+  (setq org-id-track-globally t)
+  (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
+  (setq org-id-locations-file luda/org-id-locations-file)
+  (setq org-id-locations-file-relative t)
+  (setq org-fontify-whole-heading-line t)
+  ;; One of my big uses for Org is my literate config so having elisp as a template is a must
+  (add-to-list 'org-structure-template-alist '("sl" . "src emacs-lisp"))
+  :bind
+  ("C-c a" . org-agenda)
+  ("C-c c" . org-capture)
+  ("C-c l" . org-store-link))
+
+
+
+(use-package deft
+  :config
+  (setq deft-extensions '("org"))
+  (setq deft-directory luda/org-dir)
+  (setq deft-recursive-ignore-dir-regexp "\\(?:\\.\\|\\.\\.\\|roam\\|brain\\)")
+  (setq deft-ignore-file-regexp "\\(?:~\\|py\\)$")
+  (setq deft-recursive t))
+
+(use-package magit
+  :bind
+   ("C-M-;" . magit-status))
+
+(defvar luda/ediff-original-windows nil)
+
+(defun luda/store-pre-ediff-winconfig ()
+  "Stores the window arrangement before opening ediff."
+  (setq luda/ediff-original-windows (current-window-configuration)))
+
+(defun luda/restore-pre-ediff-winconfig ()
+  "Resets original window arrangement"
+  (set-window-configuration luda/ediff-original-windows))
+
+(use-package ediff
+  :hook ((ediff-before-setup . 'luda/store-pre-ediff-winconfig)
+         (ediff-quit . 'luda/restore-pre-ediff-winconfig))
+  :config
+  (setq ediff-window-setup-function 'ediff-setup-windows-plain)
+  (setq ediff-split-window-function 'split-window-horizontally))
