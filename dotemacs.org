@@ -242,30 +242,7 @@ Display a message to the *Messages* buffer showing the Emacs init time.
 
 #+end_src
 
-** Bugfix                                                  :BUGFIX:INACTIVE:
-
-*Temporary bugfix* for babel emacs-lisp that does not take into account prologue/epilogue.
-See https://list.orgmode.org/CA+G3_PNrdhx0Ejzw8UO7DgZ+ju1B7Ar_eTch5MMViEpKGwqq3w@mail.gmail.com/T/
-(November 2020)
-
-#+name: org-babel-expand-body:emacs-lisp
-#+begin_src emacs-lisp
-
-  (defun my/org-babel-expand-body:emacs-lisp (orig-fun body params)
-    "Expand BODY according to PARAMS and call original function with new body"
-
-    (let* ((pro (or (cdr (assq :prologue params)) ""))
-           (epi (or (cdr (assq :epilogue params)) ""))
-           (body (concat pro body epi)))
-      (apply orig-fun `(,body ,params))))
-
-  (advice-add 'org-babel-expand-body:emacs-lisp
-              :around
-              #'my/org-babel-expand-body:emacs-lisp)
-
-#+end_src
-
-** Auto-tangle
+*** Auto-tangle
 
 Automatically tangle org-mode files with the option #+auto_tangle: t
 
@@ -446,25 +423,16 @@ A variation on =make-frame= that opens to the =*scratch*= buffer rather than the
     (select-frame (make-frame))
     (switch-to-buffer "*scratch*"))
 
-  (defun luda/make-mvterm-frame ()
-    "Create a new frame and switch to *scratch* buffer."
-
-    (interactive)
-    (select-frame (make-frame))
-    (multi-vterm))
-
   (defvar-keymap liminal-new-frame-map
     :doc "Liminal prefix map for creating frames."
     "c" #'make-frame
-    "s" #'luda/make-scratch-frame
-    "t" #'luda/make-mvterm-frame)
+    "s" #'luda/make-scratch-frame)
 
   (defvar-keymap liminal-frame-map
     :doc "Liminal prefix key maps for frames."
     "n" liminal-new-frame-map)
 
   (keymap-set global-map "M-n" liminal-frame-map)
-
 
 #+end_src
 
