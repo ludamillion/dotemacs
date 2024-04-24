@@ -1,7 +1,7 @@
 ;;; dotemacs --- A literate Emacs configuration -*- lexical-binding: t -*-
 ;;; This file has been generated from dotemacs.org file. DO NOT EDIT.
 
-;;; Copyright (C) 2023 Luke D. Inglis
+;;; Copyright (C) 2024 Luke D. Inglis
 
 ;;; This file is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@
         (eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage)))
 
-;; Use straight.el for use-package expressions
 (setq straight-check-for-modifications nil)
 
 (add-to-list 'load-path
@@ -41,16 +40,17 @@
 
 (setq package-list
       '(
+        avy                  ; Jump to things (but really much, much more...)
         cape                 ; Completion At Point Extensions
+        charmap              ; Explorable Unicode table
         circadian            ; Change my theme in rhythm with nature
         coffee-mode          ; Sadly still have to deal with coffeescript sometimes
         consult              ; Consulting completing-read
         consult-lsp          ; LSP extras for consult to, well, consult
         corfu                ; Completion Overlay Region FUnction
-        css-mode             ; If everything is !important than nothing is !important
         deft                 ; Enhanced note taking with Org
-        docker
-        dockerfile-mode
+        embark
+        embark-consult
         exec-path-from-shell ; Get environment variables such as $PATH from the shell
         f                    ; Modern API for working with files and directories
         flycheck             ; Enhanced syntax checking, more flexible than flymake
@@ -58,21 +58,22 @@
         haml-mode            ; Rails templates not covered by treesitter or web-mode
         helpful              ; A better help buffer
         imenu-list           ; Show imenu entries in a separate
+        language-id
+        lua-mode
         magit                ; A Git porcelain inside Emacs.
         marginalia           ; Enrich existing commands with completion annotations
         markdown-mode        ; Major mode for Markdown-formatted text
-        multi-vterm
-        multiple-cursors     ; Sometimes many cursors are better than one
         no-littering         ; Keep our things clean and tidy
-        objed                ; Navigate and manipulate text objects
         orderless            ; Completion style for matching regexps in any order
         org-auto-tangle
         projectile           ; Project scoped stuffness
         rainbow-mode         ; Sometime you just need to see the colors
-        rainbow-delimiters   ; Light up matching delimiters for shiny ease of reading
         rg                   ; Ripgrep for speed and profit(?)
         slim-mode
+        smartscan            ; A little package to quick hop to 
         smartparens          ; Like parens but, you know, ...smarter
+        tempel               ; A tiny template package. Emacs' venerable Tempo for a new age
+        tempel-collection    ; A young and growing collection of templates for Tempel
         transpose-frame
         treesit-auto
         undo-fu              ; Work around Emacs' clunky undo interface
@@ -83,6 +84,7 @@
         vterm                ; A real terminal emulator running in Emacs
         web-mode             ; Uber mode for web templating languages
         which-key            ; Discovery method for key bindings
+        zetteldeft           ; Put your deft notes in little slip boxen
         ))
 
 ;; Install packages that are not yet installed
@@ -91,10 +93,6 @@
 
 ;; Install a selection of the N Λ N O suite of packages install straight from GitHub
 
-;; Modeline (eventually to be replace with my own)
-(straight-use-package
- '(nano-modeline :type git :host github :repo "rougier/nano-modeline"))
-
 ;; A cleaner, more minimal Org agenda
 (straight-use-package
  '(nano-agenda :type git :host github :repo "rougier/nano-agenda"))
@@ -102,8 +100,18 @@
 (straight-use-package
  '(jtsx :type git :host github :repo "llemaitre19/jtsx"))
 
+;; (straight-use-package
+;;  '(liminal-theme :local-repo "~/code/liminal-theme"))
+
+;; ;; Modeline (eventually to be replace with my own)
+;; (straight-use-package
+;;  '(liminal-modeline :local-repo "~/code/liminal-modeline"))
+
 (straight-use-package
- '(liminal-theme :type nil :local-repo "~/code/liminal-theme"))
+ '(asdf :type git :host github :repo "tabfugnic/asdf.el"))
+
+(straight-use-package
+ '(eglot-ltex :type git :host github :repo "emacs-languagetool/eglot-ltex"))
 
 (straight-use-package '(org :type built-in))
 
@@ -121,11 +129,75 @@
 
 (add-hook 'org-mode-hook 'org-auto-tangle-mode)
 
-(require 'no-littering)
+(setq vc-make-backup-files nil     ; No backup of files under version contr
+      backup-by-copying t          ; Don't clobber symlinks
+      version-control t            ; Version numbers for backup files
+      delete-old-versions t        ; Delete excess backup files silently
+      kept-old-versions 3          ; Number of old versions to keep
+      kept-new-versions 6          ; Number of new versions to keep
+      delete-by-moving-to-trash t  ; Delete files to trash
+      create-lockfiles nil)        ; More trouble than worth
+
+(use-package no-littering
+  :init
+  (setq no-littering-etc-directory "~/.cache/emacs/etc/"
+        no-littering-var-directory "~/.cache/emacs/var/")
+  (when (fboundp 'startup-redirect-eln-cache)
+    (startup-redirect-eln-cache
+     (convert-standard-filename
+      (expand-file-name  "eln-cache/" no-littering-var-directory))))
+  :config
+  (setq
+   backup-directory-alist
+   `((".*" . ,(no-littering-expand-var-file-name "backup/")))
+   auto-save-file-name-transforms
+   `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
+
+(defun unpropertize-kill-ring ()
+  (setq kill-ring (mapcar 'substring-no-properties kill-ring)))
+
+(add-hook 'kill-emacs-hook 'unpropertize-kill-ring)
+
+(require 'savehist)
+
+(setq kill-ring-max 50
+      history-length 50)
+
+(setq savehist-additional-variables
+      '(kill-ring
+        command-history
+        set-variable-value-history
+        custom-variable-history   
+        query-replace-history     
+        read-expression-history   
+        minibuffer-history        
+        read-char-history         
+        face-name-history         
+        bookmark-history
+        file-name-history))
+
+ (put 'minibuffer-history         'history-length 50)
+ (put 'file-name-history          'history-length 50)
+ (put 'set-variable-value-history 'history-length 25)
+ (put 'custom-variable-history    'history-length 25)
+ (put 'query-replace-history      'history-length 25)
+ (put 'read-expression-history    'history-length 25)
+ (put 'read-char-history          'history-length 25)
+ (put 'face-name-history          'history-length 25)
+ (put 'bookmark-history           'history-length 25)
+
+(setq history-delete-duplicates t)
+
+(let (message-log-max)
+  (savehist-mode))
 
 (use-package exec-path-from-shell
   :init
   (exec-path-from-shell-initialize))
+
+(use-package asdf
+  :config
+  (asdf-enable))
 
 (setq luda/local-root "~/")
 
@@ -134,6 +206,11 @@
   (setq mac-command-modifier 'meta)
   (setq dired-use-ls-dired nil))
 
+(require 'server)
+
+(unless (server-running-p)
+  (start-server))
+
 (defun luda/make-scratch-frame ()
   "Create a new frame and switch to *scratch* buffer."
 
@@ -141,33 +218,53 @@
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
 
-(defun luda/make-vterm-frame ()
+(defun luda/make-mvterm-frame ()
   "Create a new frame and switch to *scratch* buffer."
 
   (interactive)
   (select-frame (make-frame))
-  (vterm))
+  (multi-vterm))
+
+(defvar-keymap liminal-new-frame-map
+  :doc "Liminal prefix map for creating frames."
+  "c" #'make-frame
+  "s" #'luda/make-scratch-frame
+  "t" #'luda/make-mvterm-frame)
+
+(defvar-keymap liminal-frame-map
+  :doc "Liminal prefix key maps for frames."
+  "n" liminal-new-frame-map)
+
+(keymap-set global-map "M-n" liminal-frame-map)
 
 (global-set-key (kbd "M-o") 'other-window)
-(global-set-key (kbd "C-M-o") 'other-frame)
+(global-set-key (kbd "s-o") 'other-frame)
 
 (use-package liminal-theme
+  :load-path "~/code/liminal-theme"
   :init
-  (setq liminal-font-size 16)
+  (setopt liminal-manage-cursor t
+          liminal-manage-fonts t
+          liminal-manage-ui t
+          liminal-manage-ux t
+          liminal-font-size 18)
   :config
   (liminal-mode))
 
-(use-package nano-modeline
+(use-package liminal-modeline
+  :after liminal-theme
+  :load-path "~/code/liminal-modeline"
   :init
   (setopt mode-line-format nil)
   :hook
-  (prog-mode            . nano-modeline-prog-mode)
-  (text-mode            . nano-modeline-text-mode)
-  (org-mode             . nano-modeline-org-mode)
-  (term-mode            . nano-modeline-term-mode)
-  (messages-buffer-mode . nano-modeline-message-mode)
-  (org-capture-mode     . nano-modeline-org-capture-mode)
-  (org-agenda-mode      . nano-modeline-org-agenda-mode))
+  (prog-mode            . liminal-modeline-prog-mode)
+  (text-mode            . liminal-modeline-text-mode)
+  (org-mode             . liminal-modeline-org-mode)
+  (term-mode            . liminal-modeline-term-mode)
+  (vterm-mode           . liminal-modeline-term-mode)
+  (messages-buffer-mode . liminal-modeline-message-mode)
+  (org-capture-mode     . liminal-modeline-org-capture-mode)
+  (org-agenda-mode      . liminal-modeline-org-agenda-mode))
 
 (use-package circadian
   :custom
@@ -178,10 +275,14 @@
    :config
    (circadian-setup))
 
-(use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
-
 (setq-default line-spacing 1)
+(global-visual-line-mode)
+
+(use-package display-line-numbers
+  :custom
+  (display-line-numbers-widen t)
+  :hook
+  ((prog-mode conf-mode) . display-line-numbers-mode))
 
 (use-package vertico
   :bind (:map vertico-map
@@ -189,17 +290,44 @@
   :custom
   (vertico-scroll-margin 0 "Remove the top/bottom margins of the completion window")
   (vertico-resize t "Let the completion window grow and shrink")
-  (vertico-cycle t "Let the curson loop back to the begining on reaching the end")
+  (vertico-multiform-categories ; Choose a multiform
+   '((file reverse)
+     (consult-location)
+     (imenu buffer)
+     (library reverse indexed)
+     (org-roam-node reverse indexed)
+     (t reverse)
+     ))
+  (vertico-multiform-commands
+   '(("flyspell-correct-*" grid reverse)
+     (org-refile grid reverse indexed)
+     (consult-yank-pop indexed)
+     (consult-flycheck)
+     (consult-lsp-diagnostics)
+     ))
   :init
   (vertico-mode))
 
+(defun wrapper/consult-ripgrep (&optional dir given-initial)
+  "Pass the region to consult-ripgrep if available.
+
+DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
+  (interactive "P")
+  (let ((initial
+         (or given-initial
+             (when (use-region-p)
+               (buffer-substring-no-properties (region-beginning) (region-end))))))
+    (consult-ripgrep dir initial)))
+
 (use-package consult
+  :config
+  (recentf-mode)
   :bind (
          ("M-s d" . consult-find)                  ;; Alternative: consult-fd
          ("M-s c" . consult-locate)
          ("M-s g" . consult-grep)
          ("M-s G" . consult-git-grep)
-         ("M-s r" . consult-ripgrep)
+         ("M-s r" . wrapper/consult-ripgrep)
          ("M-s l" . consult-line)
          ("M-s L" . consult-line-multi)
          ("M-s k" . consult-keep-lines)
@@ -223,23 +351,17 @@
     (setq-local corfu-auto nil)
     (corfu-mode))
   (add-hook 'eshell-mode-hook 'corfu-x-eshell-hook)
-  (setq corfu-cycle t)
-  (setq corfu-auto t)
-  (setq corfu-auto-prefix 2)
-  (setq corfu-auto-delay 0.25)
-  (setq corfu-popupinfo-delay '(0.5 . 0.2))
-  (setq corfu-preview-current 'insert)
-  (setq corfu-preselect 'prompt)
-  (setq corfu-on-exact-match nil)
-
+  (setq corfu-cycle t
+        corfu-popupinfo-delay '(1.0 . 0.5)
+        corfu-preview-current 'insert
+        corfu-on-exact-match 'insert)
   :bind
   (:map corfu-map
-        ("M-SPC" . corfu-insert-separator)
-        ("C-n"   . corfu-next)
-        ("C-p"   . corfu-previous)
-        ("TAB"   . corfu-insert)
-        ("RET"   . nil))
-
+        ("SPC" . corfu-insert-separator)
+        ("C-n" . corfu-next)
+        ("C-p" . corfu-previous)
+        ("TAB" . corfu-insert)
+        ("RET" . nil))
   :init
   (corfu-popupinfo-mode)
   (corfu-history-mode)
@@ -271,13 +393,48 @@
 
   ;; Ensure that pcomplete does not write to the buffer
   ;; and behaves as a pure `completion-at-point-function'.
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
+  ;; Bust the Corfu completion cache when using Eglot to ensure fresh completions
+  (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster))
 
 (use-package marginalia
-  :config
+  :init
   (marginalia-mode)
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle)))
+
+(use-package embark
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("M-." . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc. You may adjust the
+  ;; Eldoc strategy, if you want to see the documentation from
+  ;; multiple providers. Beware that using this can be a little
+  ;; jarring since the message shown in the minibuffer can be more
+  ;; than one line, causing the modeline to move up and down:
+
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 
 ;; Add prompt indicator to `completing-read-multiple'.
 ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
@@ -307,16 +464,35 @@
   (setq which-key-idle-delay 0.75)
   (which-key-mode))
 
+(defun luda/eglot-capf ()
+  (setq-local completion-at-point-functions
+              (list (cape-capf-super
+                     #'eglot-completion-at-point
+                     #'cape-file))))
+
 (use-package eglot
-  :bind
-  ("M-k" . eglot-code-actions)
-  :hook ((eglot-managed-mode . eglot-inlay-hints-mode)
-         (typescript-ts-base-mode . eglot-ensure)
-         (js-base-mode . eglot-ensure)
-         (ruby-ts-base-mode . eglot-ensure)
-         (scss-ts-base-mode . eglot-ensure))
+  :bind (:map eglot-mode-map
+              ("C-x l r" . eglot-rename))
+  ;; ("M-k" . eglot-code-actions)
+  :hook ((eglot-managed-mode . luda/eglot-capf)
+         (ruby-ts-mode . eglot-ensure)
+         (jsx-mode . eglot-ensure)
+         (css-mode . eglot-ensure)
+         (org-mode . eglot-ensure))
   :config
-  (setq eldoc-echo-area-use-multiline-p nil))
+  (setq eldoc-echo-area-use-multiline-p nil)
+  (add-to-list 'eglot-server-programs
+               '(ruby-base-mode . ("solargraph" "stdio")))
+  (add-to-list 'eglot-server-programs
+               '(org-mode . ("efm-langserver"))))
+
+(use-package eglot-ltex
+  :hook (text-mode . (lambda ()
+                       (require 'eglot-ltex)
+                       (eglot-ensure)))
+  :init
+  (setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"
+        eglot-ltex-communication-channel 'stdio))
 
 (use-package flycheck
   :config
@@ -326,23 +502,6 @@
   :config
   (global-flycheck-eglot-mode)
   :after (flycheck eglot))
-
-(defun luda/save-word ()
-  "Mark a Flyspell reported error as acceptable."
-
-  (interactive)
-
-  (let ((current-location (point))
-        (word (flyspell-get-word)))
-    (when (consp word)
-      (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
-
-(use-package flyspell
-  :bind
-   ("C-x $" . 'luda/save-word)
-   ("C-'" . 'flyspell-auto-correct-previous-word)
-  :hook ((text-mode . flyspell-mode)
-         (prog-mode . flyspell-prog-mode)))
 
 (setq treesit-language-source-alist
       '((css "https://github.com/tree-sitter/tree-sitter-css")
@@ -365,12 +524,11 @@
       (message "Installing parser for %s from %s" language repo)
       (treesit-install-language-grammar language))))
 
-;; (use-package treesit-auto
-;;   :custom
-;;   (treesit-auto-install 'prompt)
-;;   :config
-;;   (treesit-auto-add-to-auto-mode-alist 'all)
-;;   (global-treesit-auto-mode))
+(use-package treesit-auto
+  :custom
+  (treesit-auto-install 'prompt)
+  :config
+  (global-treesit-auto-mode))
 
 (use-package projectile
   :config
@@ -379,19 +537,86 @@
   ("s-p" . projectile-command-map)
   ("C-c p" . projectile-command-map))
 
+(use-package avy
+  :bind ("M-j" . avy-goto-char-timer))
+
+(use-package occur
+  :bind (:map isearch-mode-map ("C-o" . isearch-occur)))
+
 (use-package surround
   :bind-keymap
   ("M-'" . surround-keymap))
 
 (use-package objed
+  :load-path "~/code/objed"
   :config
   (setq objed-modeline-hint nil)
   (objed-mode)
   :bind
   ("M-SPC" . objed-activate-object))
 
+(use-package multiple-cursors
+  :bind (("C-M-SPC" . set-rectangular-region-anchor)
+         ("C->" . mc/mark-next-like-this)
+         ("C-<" . mc/mark-previous-like-this)
+         ("C-c C->" . mc/mark-all-like-this)
+         ("C-c C-SPC" . mc/edit-lines)))
+
+(use-package re-builder
+  :bind (("M-s %" . #'re-builder)
+         :map reb-mode-map ("RET" . #'reb-replace-regexp)
+         :map reb-lisp-mode-map ("RET" . #'reb-replace-regexp))
+  :config
+  (defvar my/re-builder-positions nil
+    "Store point and region bounds before calling re-builder")
+
+  (advice-add 're-builder
+              :before
+              (defun my/re-builder-save-state (&rest _)
+                "Save into `my/re-builder-positions' the point and region
+positions before calling `re-builder'."
+                (setq my/re-builder-positions
+                      (cons (point)
+                            (when (region-active-p)
+                              (list (region-beginning)
+                                    (region-end)))))
+                (message "Set positions to: %s" my/re-builder-positions)))
+
+  (defun reb-replace-regexp (&optional delimited)
+    "Run `query-replace-regexp' with the contents of re-builder. With
+non-nil optional argument DELIMITED, only replace matches
+surrounded by word boundaries."
+    (interactive "P")
+    (reb-update-regexp)
+    (let* ((re (reb-target-value 'reb-regexp))
+           (replacement (query-replace-read-to
+                         re
+                         (concat "Query replace"
+                                 (if current-prefix-arg
+                                     (if (eq current-prefix-arg '-) " backward" " word")
+                                   "")
+                                 " regexp"
+                                 (if (with-selected-window reb-target-window
+                                       (region-active-p)) " in region" ""))
+                         t))
+           (pnt (car my/re-builder-positions))
+           (beg (cadr my/re-builder-positions))
+           (end (caddr my/re-builder-positions)))
+      (with-selected-window reb-target-window
+        (goto-char pnt) ; replace with (goto-char (match-beginning 0)) if you want
+                                        ; to control where in the buffer the replacement starts
+                                        ; with re-builder
+        (setq my/re-builder-positions nil)
+        (reb-quit)
+        (query-replace-regexp re replacement delimited beg end)))))
+
+(global-set-key (kbd "C-z") 'zap-up-to-char)
+(global-set-key (kbd "C-M-z") 'zap-to-char)
+
 ;; Clean and straightforward undo/redo
 (use-package undo-fu
+  :config
+  (setopt undo-fu-allow-undo-in-region t)
   :bind
   ("C-/" . undo-fu-only-undo)
   ("C-M-/" . undo-fu-only-redo))
@@ -413,16 +638,13 @@
   :bind
   ("C-x !" . projectile-run-vterm))
 
-(use-package multi-vterm
-  :bind
-  ("M-v" . multi-vterm-dedicated-toggle)
-  :init
-  (setopt multi-vterm-dedicated-window-height-percent 30))
-
 (global-set-key (kbd "C-x C-m") 'execute-extended-command)
 
 (defun luda/switch-theme (theme)
-  "Load THEME after unloading previously loaded themes N.B. this will not remove any customization done outside of themes."
+  "Load THEME after unloading previously loaded themes.
+
+Unloading themes in this manned does not remove any
+customization done outside of themes."
 
   (interactive
    (list
@@ -437,7 +659,10 @@
   (interactive)
   (condition-case nil
       (delete-frame)
-    (error (save-buffers-kill-terminal))))
+    (error
+     (if (y-or-n-p (format "Are you sure you want to close the last frame?"))
+         (save-buffers-kill-terminal)
+       (message "Great, back to what you were doing then.")))))
 
 (global-set-key (kbd "C-x C-c") 'luda/kill-frame)
 
@@ -445,9 +670,29 @@
   :bind
   ("C-x |" . transpose-frame))
 
+(keymap-set global-map "C-x k" 'kill-this-buffer)
+(keymap-set global-map "C-x C-k" 'kill-buffer)
+
+(defun luda/hop-buffer ()
+  (interactive)
+  (if (= (length (window-list)) 1)
+      (switch-to-buffer nil)
+    (other-window 1)))
+
+(global-set-key (kbd "M-o") 'luda/hop-buffer)
+
 (use-package coffee-mode
   :config
   (setq coffee-tab-width 2))
+
+(use-package css-mode
+  :custom
+  (css-indent-offset 2))
+
+(use-package rainbow-mode
+  :custom
+  (rainbow-html-colors nil)
+  :hook (css-mode . rainbow-mode))
 
 (use-package web-mode
   :mode "\\.erb\\'")
@@ -466,28 +711,38 @@
   (setq jtsx-jsx-element-move-allow-step-out t)
   (setq jtsx-enable-jsx-electric-closing-element t))
 
-(use-package docker
-  :bind ("C-c d" . docker))
+(use-package ruby-ts-mode
+  :mode "\\.rb\\'"
+  :mode "\\.pryrc\\'"
+  :mode "Rakefile\\'"
+  :mode "Gemfile\\'")
 
-(use-package dockerfile-mode)
+(use-package yaml-ts-mode
+  :mode "\\.y[a]?ml")
 
 (setq luda/default-org-directory (expand-file-name "org" luda/local-root))
 (setq luda/sync-org-directory (expand-file-name "Dropbox/org" luda/local-root))
+(setq luda/beorg-directory (expand-file-name "Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org" luda/local-root))
 
 (setq luda/org-dir
       (if (file-directory-p luda/default-org-directory)
           luda/default-org-directory
         luda/sync-org-directory))
 
-(setq luda/current-journal (expand-file-name "journal.org" luda/org-dir))
+(setq luda/journal-file (expand-file-name "journal.org" luda/org-dir))
+(setq luda/projects-file (expand-file-name "projects.org" luda/org-dir))
 (setq luda/org-id-locations-file (expand-file-name ".org-id-locations" luda/org-dir))
 
 (setq luda/todo-keywords
       `((sequence
-         "CALENDAR(c!)" "SHORT(s!)" "LONG(l!)" "|" "DONE(d!)" "NOPE(-!)")))
+         "CALENDAR(c!)" "SHORT(s!)" "LONG(l!)" "WAIT(!w)" "|" "DONE(d!)" "NOPE(-!)")))
 
 (use-package org
+  :init
+  (setq org-export-backends
+        '(ascii md html icalendar latex odt))
   :config
+  (setq org-default-notes-file (expand-file-name "todo.org" luda/org-dir))
   (setq org-log-done 'time)
   (setq org-log-reschedule 'time)
   (setq org-log-into-drawer t)
@@ -499,8 +754,21 @@
   (setq org-id-locations-file luda/org-id-locations-file)
   (setq org-id-locations-file-relative t)
   (setq org-fontify-whole-heading-line t)
+  (setq org-agenda-files `(,luda/org-dir ,luda/beorg-directory))
+  (setq org-latex-pdf-process
+        '("tectonic %f"))
+
+  (setq org-capture-templates
+        `(("t" "Todo" entry (file+headline ,luda/projects-file "Tasks")
+           "* TODO %?\n  %i\n  %a")
+          ("pn" "Project Note" entry (file+headline ,luda/projects-file "Notes")
+           "* Bench Note %?\n  %i\n  %a")
+          ("j" "Journal" entry (file+olp+datetree ,luda/journal-file)
+           "* %?\nEntered on %U\n  %i\n  %a")))
+
   ;; One of my big uses for Org is my literate config so having elisp as a template is a must
   (add-to-list 'org-structure-template-alist '("sl" . "src emacs-lisp"))
+
   :bind
   ("C-c a" . org-agenda)
   ("C-c c" . org-capture)
@@ -508,17 +776,62 @@
 
 
 
+(require 'f)
+
+(defun deft-sidebar ()
+  (interactive)
+  (let ((sidebar-buf (generate-new-buffer deft-buffer)))
+    (with-current-buffer sidebar-buf
+      (deft-mode))
+    (display-buffer-in-side-window sidebar-buf
+                                   '((slot . 1)
+                                     (dedicated . t)
+                                     (window-height . 0.35)))))
+
 (use-package deft
+  :commands deft
+  :init
+  (setq deft-directory (f-expand "notes/" luda/org-dir)
+        deft-default-extension "org"
+        deft-use-filename-as-title nil
+        deft-use-filter-string-for-filename t
+        deft-auto-save-interval -1.0
+        deft-file-naming-rules
+        '((noslash . "-")
+          (nospace . "-")
+          (case-fn . downcase)))
   :config
-  (setq deft-extensions '("org"))
-  (setq deft-directory luda/org-dir)
-  (setq deft-recursive-ignore-dir-regexp "\\(?:\\.\\|\\.\\.\\|roam\\|brain\\)")
-  (setq deft-ignore-file-regexp "\\(?:~\\|py\\)$")
-  (setq deft-recursive t))
+  (add-to-list 'deft-extensions "tex"))
+
+(use-package zetteldeft
+  :init (zetteldeft-set-classic-keybindings))
 
 (use-package magit
   :bind
-   ("C-M-;" . magit-status))
+  ("C-M-;" . magit-status))
+
+(defvar-keymap liminal-vc-branch-map
+  :doc "Liminal prefix map for version control branch actions."
+  "b" #'magit-checkout
+  "c" #'magit-branch-create)
+
+(defvar-keymap liminal-vc-pull-map
+  :doc "Liminal prefix map for version control pull/fetch actions."
+  "p" #'magit-pull-from-pushremote
+  "u" #'magit-pull-from-upstream
+  "e" #'magit-pull-branch)
+
+(defvar-keymap liminal-vc-file-map
+  :doc "Liminal prefix map for version control file actions."
+  "r" #'magit-file-rename)
+
+(defvar-keymap liminal-vc-map
+  :doc "Liminal prefix key maps version control operations ."
+  "b" liminal-vc-branch-map
+  "F" liminal-vc-pull-map
+  "f" liminal-vc-file-map)
+
+(keymap-set global-map "C-x g" liminal-vc-map)
 
 (defvar luda/ediff-original-windows nil)
 
