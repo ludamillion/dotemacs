@@ -42,9 +42,7 @@
       '(
         avy                  ; Jump to things (but really much, much more...)
         cape                 ; Completion At Point Extensions
-        charmap              ; Explorable Unicode table
         circadian            ; Change my theme in rhythm with nature
-        coffee-mode          ; Sadly still have to deal with coffeescript sometimes
         consult              ; Consulting completing-read
         consult-lsp          ; LSP extras for consult to, well, consult
         corfu                ; Completion Overlay Region FUnction
@@ -55,6 +53,7 @@
         f                    ; Modern API for working with files and directories
         flycheck             ; Enhanced syntax checking, more flexible than flymake
         flycheck-eglot       ; Allow Flycheck to understand Eglot as a checker
+        flyspell
         haml-mode            ; Rails templates not covered by treesitter or web-mode
         helpful              ; A better help buffer
         imenu-list           ; Show imenu entries in a separate
@@ -72,8 +71,6 @@
         slim-mode
         smartscan            ; A little package to quick hop to 
         smartparens          ; Like parens but, you know, ...smarter
-        tempel               ; A tiny template package. Emacs' venerable Tempo for a new age
-        tempel-collection    ; A young and growing collection of templates for Tempel
         transpose-frame
         treesit-auto
         undo-fu              ; Work around Emacs' clunky undo interface
@@ -129,14 +126,7 @@
 
 (add-hook 'org-mode-hook 'org-auto-tangle-mode)
 
-(setq vc-make-backup-files nil     ; No backup of files under version contr
-      backup-by-copying t          ; Don't clobber symlinks
-      version-control t            ; Version numbers for backup files
-      delete-old-versions t        ; Delete excess backup files silently
-      kept-old-versions 3          ; Number of old versions to keep
-      kept-new-versions 6          ; Number of new versions to keep
-      delete-by-moving-to-trash t  ; Delete files to trash
-      create-lockfiles nil)        ; More trouble than worth
+
 
 (use-package no-littering
   :init
@@ -146,12 +136,18 @@
     (startup-redirect-eln-cache
      (convert-standard-filename
       (expand-file-name  "eln-cache/" no-littering-var-directory))))
-  :config
-  (setq
-   backup-directory-alist
-   `((".*" . ,(no-littering-expand-var-file-name "backup/")))
-   auto-save-file-name-transforms
-   `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
+  (setq vc-make-backup-files nil     ; No backup of files under version contr
+        backup-by-copying t          ; Don't clobber symlinks
+        version-control t            ; Version numbers for backup files
+        delete-old-versions t        ; Delete excess backup files silently
+        kept-old-versions 3          ; Number of old versions to keep
+        kept-new-versions 6          ; Number of new versions to keep
+        delete-by-moving-to-trash t  ; Delete files to trash
+        create-lockfiles nil)        ; More trouble than worth
+  (setq backup-directory-alist
+        `((".*" . ,(no-littering-expand-var-file-name "backup/")))
+        auto-save-file-name-transforms
+        `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
 
 (defun unpropertize-kill-ring ()
   (setq kill-ring (mapcar 'substring-no-properties kill-ring)))
@@ -218,18 +214,10 @@
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
 
-(defun luda/make-mvterm-frame ()
-  "Create a new frame and switch to *scratch* buffer."
-
-  (interactive)
-  (select-frame (make-frame))
-  (multi-vterm))
-
 (defvar-keymap liminal-new-frame-map
   :doc "Liminal prefix map for creating frames."
   "c" #'make-frame
-  "s" #'luda/make-scratch-frame
-  "t" #'luda/make-mvterm-frame)
+  "s" #'luda/make-scratch-frame)
 
 (defvar-keymap liminal-frame-map
   :doc "Liminal prefix key maps for frames."
@@ -247,7 +235,7 @@
           liminal-manage-fonts t
           liminal-manage-ui t
           liminal-manage-ux t
-          liminal-font-size 18)
+          liminal-font-size 16)
   :config
   (liminal-mode))
 
@@ -352,9 +340,13 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
     (corfu-mode))
   (add-hook 'eshell-mode-hook 'corfu-x-eshell-hook)
   (setq corfu-cycle t
-        corfu-popupinfo-delay '(1.0 . 0.5)
+        corfu-auto t
+        corfu-auto-prefix 2
+        corfu-auto-delay 0.25
+        corfu-popupinfo-delay '(0.5 . 0.2)
         corfu-preview-current 'insert
-        corfu-on-exact-match 'insert)
+        corfu-preselect 'prompt
+        corfu-on-exact-match nil)
   :bind
   (:map corfu-map
         ("SPC" . corfu-insert-separator)
@@ -386,7 +378,6 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-elisp-block)
-  (add-to-list 'completion-at-point-functions #'cape-dict)
 
   ;; Silence then pcomplete capf, no errors or messages!
   (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
@@ -543,25 +534,6 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
 (use-package occur
   :bind (:map isearch-mode-map ("C-o" . isearch-occur)))
 
-(use-package surround
-  :bind-keymap
-  ("M-'" . surround-keymap))
-
-(use-package objed
-  :load-path "~/code/objed"
-  :config
-  (setq objed-modeline-hint nil)
-  (objed-mode)
-  :bind
-  ("M-SPC" . objed-activate-object))
-
-(use-package multiple-cursors
-  :bind (("C-M-SPC" . set-rectangular-region-anchor)
-         ("C->" . mc/mark-next-like-this)
-         ("C-<" . mc/mark-previous-like-this)
-         ("C-c C->" . mc/mark-all-like-this)
-         ("C-c C-SPC" . mc/edit-lines)))
-
 (use-package re-builder
   :bind (("M-s %" . #'re-builder)
          :map reb-mode-map ("RET" . #'reb-replace-regexp)
@@ -612,6 +584,27 @@ surrounded by word boundaries."
 
 (global-set-key (kbd "C-z") 'zap-up-to-char)
 (global-set-key (kbd "C-M-z") 'zap-to-char)
+
+(defun current-line-empty-p ()
+  "Return true is the point is in an empty line, false otherwise."
+
+  (save-excursion
+    (beginning-of-line)
+    (looking-at-p "[[:blank:]]*$")))
+
+(defun delete-blank-space-dwim ()
+  "Delete surrounding whitespace in do-what-I-mean manner.
+
+When point is in a blank line invoke (delete-blank-lines).
+When point is in whitespace between non-whitespace invoke (delete-horizontal-space)."
+
+  (interactive)
+
+  (if (current-line-empty-p)
+      (delete-blank-lines)
+    (delete-horizontal-space)))
+
+(global-set-key (kbd "M-\\") 'delete-blank-space-dwim)
 
 ;; Clean and straightforward undo/redo
 (use-package undo-fu
@@ -680,10 +673,6 @@ customization done outside of themes."
     (other-window 1)))
 
 (global-set-key (kbd "M-o") 'luda/hop-buffer)
-
-(use-package coffee-mode
-  :config
-  (setq coffee-tab-width 2))
 
 (use-package css-mode
   :custom

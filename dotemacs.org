@@ -30,14 +30,34 @@ This document is a literate configuration for GNU Emacs written in [[https://org
 
 #+end_quote
 
-ToDo [1/6]                                                    :INACTIVE:
+*** To Do [1/3]                                                  :INACTIVE:
+
+Simply put a list of concrete actions to take to enchance or solve issues with this configuration.
 
 - [ ] Change underlying Coreutils on MacOS to be the GNU version and adjust config accordingly if necessary.
 - [ ] Extract the non-theme related settings from the =liminal-mode= settings
 - [X] Switch to my own fork of the modeline
-- [ ] Investigate [[https://github.com/mickeynp/combobulate][Combobulate]] as an alternative to Objed
-- [ ] Try [[https://github.com/radian-software/prescient.el][prescient]] for completion sorting and filtering
-- [ ] Try out Embark. Looks super cool. Maybe able to combine with Objed or Combobulate.
+
+*** Research [0/5]                                               :INACTIVE:
+
+List of less tasks to do that are more theoretical or investigative than the concrete, actionable items above. N.B. the output of these tasks should include two things, one necessary and one conditional. The necessary item is a note with the result of investigating. The conditional item is a To Do added to the list above if the result of the research is an actionable item.
+
+- [ ] [[https://github.com/mickeynp/combobulate][Combobulate]] - Structure navigation and editing. Leverages tree-sitter. An alternative to Objed.
+- [ ] [[Https://github.com/radian-software/prescient.el][Prescient]] - An extra layer of intelligence for completion sorting and filtering
+- [ ] [[https://github.com/oantolin/embark][Embark]]. Looks super cool. Maybe able to combine with Objed or Combobulate.
+  Note: I've already added Embark but have yet to use it for much. Spend some time getting to know it.
+- [0/2] [[https://protesilaos.com/emacs/denote][Denote]] - Look into as an alternative to Deft + Zetteldeft for note taking.
+  - [ ] How does it compare to (Zettel)Deft
+  - [ ] Can it be massaged to work with [[https://logseq.com/][LogSeq]]
+- [ ] [[https://www.orgroam.com/][Org Roam]] - Much heavier than Denote but might also fit with how I think about how I'd like to use Org mode. Additionally can be configured in such a way as to work well with [[https://logseq.com/][LogSeq]] which seems appealing
+- [ ] As per the last two items look into various ways in which [[https://logseq.com/][LogSeq]] and Emacs/OrgMode can talk to each other and determine the best way of syncing the two.
+
+*** Possible packages to add                                     :INACTIVE:
+
+Listed separately from the above To Do list a holding place for packages that I've come across or seen/heard mention of that look worth investigating but maybe not enough that I need to 'To Do' them.
+
++ [[https://github.com/progfolio/doct][Doct]] - from its GitHub page is '...a function that provides an alternative, declarative syntax for describing Org capture templates.'
++ [[https://github.com/namilus/denote-menu][Denote Menu]] - If I end up using Denote this looks like a nice addon to it
 
 * Core
 ** Header 
@@ -137,9 +157,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
         '(
           avy                  ; Jump to things (but really much, much more...)
           cape                 ; Completion At Point Extensions
-          charmap              ; Explorable Unicode table
           circadian            ; Change my theme in rhythm with nature
-          coffee-mode          ; Sadly still have to deal with coffeescript sometimes
           consult              ; Consulting completing-read
           consult-lsp          ; LSP extras for consult to, well, consult
           corfu                ; Completion Overlay Region FUnction
@@ -150,6 +168,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
           f                    ; Modern API for working with files and directories
           flycheck             ; Enhanced syntax checking, more flexible than flymake
           flycheck-eglot       ; Allow Flycheck to understand Eglot as a checker
+          flyspell
           haml-mode            ; Rails templates not covered by treesitter or web-mode
           helpful              ; A better help buffer
           imenu-list           ; Show imenu entries in a separate
@@ -167,8 +186,6 @@ Packages used in this specific configuration. You may want to adapt this list. T
           slim-mode
           smartscan            ; A little package to quick hop to 
           smartparens          ; Like parens but, you know, ...smarter
-          tempel               ; A tiny template package. Emacs' venerable Tempo for a new age
-          tempel-collection    ; A young and growing collection of templates for Tempel
           transpose-frame
           treesit-auto
           undo-fu              ; Work around Emacs' clunky undo interface
@@ -258,14 +275,7 @@ Automatically tangle org-mode files with the option #+auto_tangle: t
 
 #+begin_src emacs-lisp
 
-  (setq vc-make-backup-files nil     ; No backup of files under version contr
-        backup-by-copying t          ; Don't clobber symlinks
-        version-control t            ; Version numbers for backup files
-        delete-old-versions t        ; Delete excess backup files silently
-        kept-old-versions 3          ; Number of old versions to keep
-        kept-new-versions 6          ; Number of new versions to keep
-        delete-by-moving-to-trash t  ; Delete files to trash
-        create-lockfiles nil)        ; More trouble than worth
+  
 
 #+end_src
 
@@ -281,12 +291,18 @@ Use [[https://github.com/emacscollective/no-littering][no-littering]] to keep my
       (startup-redirect-eln-cache
        (convert-standard-filename
         (expand-file-name  "eln-cache/" no-littering-var-directory))))
-    :config
-    (setq
-     backup-directory-alist
-     `((".*" . ,(no-littering-expand-var-file-name "backup/")))
-     auto-save-file-name-transforms
-     `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
+    (setq vc-make-backup-files nil     ; No backup of files under version contr
+          backup-by-copying t          ; Don't clobber symlinks
+          version-control t            ; Version numbers for backup files
+          delete-old-versions t        ; Delete excess backup files silently
+          kept-old-versions 3          ; Number of old versions to keep
+          kept-new-versions 6          ; Number of new versions to keep
+          delete-by-moving-to-trash t  ; Delete files to trash
+          create-lockfiles nil)        ; More trouble than worth
+    (setq backup-directory-alist
+          `((".*" . ,(no-littering-expand-var-file-name "backup/")))
+          auto-save-file-name-transforms
+          `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
 
 #+end_src
 
@@ -463,7 +479,7 @@ As part of it's setup it is running the =liminal-mode= function which sets a num
             liminal-manage-fonts t
             liminal-manage-ui t
             liminal-manage-ux t
-            liminal-font-size 18)
+            liminal-font-size 16)
     :config
     (liminal-mode))
 
@@ -621,25 +637,6 @@ Orderless enhances completion functions allowing for searching by space delimite
 
 #+end_src
 
-*** Tempel                                                       :INACTIVE:
-
-Tempel is a /"Tempel is a tiny template package for Emacs"/ from Minad (that wizard of Emacs packages). It takes much of its inspiration and its template syntax from the venerable old =Tempo= library.
-
-#+begin_src emacs-lisp
-
-  ;; Configure Tempel
-  (use-package tempel
-    ;; Require trigger prefix before template name when completing.
-    :custom
-    (tempel-trigger-prefix "<"))
-
-  ;; Optional: Add tempel-collection.
-  ;; The package is young and doesn't have comprehensive coverage.
-  (use-package tempel-collection
-    :after tempel)
-
-#+end_src
-
 *** Corfu
 
 Another package from =minad= (author of Vertico and Consult) Corfu is the 'in-buffer completion counterpart' to Vertico. Similarly it provides a minimalist wrapper around native bahaviors to provide an enhanced experience. Corfu hooks into Emacs' native =complete-in-region= and leverages whatever sources are available from =completion-at-point-functions= as sources for completion options.
@@ -653,9 +650,13 @@ Another package from =minad= (author of Vertico and Consult) Corfu is the 'in-bu
       (corfu-mode))
     (add-hook 'eshell-mode-hook 'corfu-x-eshell-hook)
     (setq corfu-cycle t
-          corfu-popupinfo-delay '(1.0 . 0.5)
+          corfu-auto t
+          corfu-auto-prefix 2
+          corfu-auto-delay 0.25
+          corfu-popupinfo-delay '(0.5 . 0.2)
           corfu-preview-current 'insert
-          corfu-on-exact-match 'insert)
+          corfu-preselect 'prompt
+          corfu-on-exact-match nil)
     :bind
     (:map corfu-map
           ("SPC" . corfu-insert-separator)
@@ -695,7 +696,6 @@ Yet another package from =minad=. As mentioned Corfu leverages the =completion-a
     (add-to-list 'completion-at-point-functions #'cape-dabbrev)
     (add-to-list 'completion-at-point-functions #'cape-file)
     (add-to-list 'completion-at-point-functions #'cape-elisp-block)
-    (add-to-list 'completion-at-point-functions #'cape-dict)
 
     ;; Silence then pcomplete capf, no errors or messages!
     (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
@@ -989,55 +989,6 @@ Yet another builtin I'm slowly learning to make the most of.
 
 #+end_src
 
-** Surround
-
-Vim itself has some handy built in commands for dealing with surrounding elements. There are several lovely plugins for extending that behavior. Emacs is lacking in this department. At least as far as I can tell. So bring in =surround.el= which is relatively new and behaves much like the plugins I'm used to from Neovim.
-
-Being new it has some rough edges but I like it. Maybe I'll try to pitch in and fix some of the issues I have.
-
-#+begin_src emacs-lisp
-
-  (use-package surround
-    :bind-keymap
-    ("M-'" . surround-keymap))
-
-#+end_src
-
-** Objed
-
-I haven't missed modal Vim's modal editing as much as I thought I might when I switched to vanilla Emacs. What I do miss is the concept of /text objects/. They are such a natural way of thinking about things for me that I needed a way to bring that idea into Emacs in an intuitive feeling way. Thankfully =objed-mode= exists. It has some rough edges I haven't worked around yet but it does the job quite well for now.
-
-#+begin_src emacs-lisp
-
-  (use-package objed
-    :load-path "~/code/objed"
-    :config
-    (setq objed-modeline-hint nil)
-    (objed-mode)
-    :bind
-    ("M-SPC" . objed-activate-object))
-
-#+end_src
-
-** Multiple Cursors
-
-Having multiple cursors is an interesting enough approach that I'm playing
-around with it to see if I can make it fit into my workflow. There might be way
-to accomplish similar behavior with something like Objed this not having to add
-multiple packages but for the time being I'll see if the actual
-=multiple=cursors= package does the trick.
-
-#+begin_src emacs-lisp
-
-  (use-package multiple-cursors
-    :bind (("C-M-SPC" . set-rectangular-region-anchor)
-           ("C->" . mc/mark-next-like-this)
-           ("C-<" . mc/mark-previous-like-this)
-           ("C-c C->" . mc/mark-all-like-this)
-           ("C-c C-SPC" . mc/edit-lines)))
-
-#+end_src
-
 ** Regexen + Search and replace
 :PROPERTIES:
 :ID:       1739F061-BA7D-4A55-AD41-5A5B0FD810C5
@@ -1109,6 +1060,33 @@ I generally find that when I want to use a `zap` command I'm using it to close s
 
   (global-set-key (kbd "C-z") 'zap-up-to-char)
   (global-set-key (kbd "C-M-z") 'zap-to-char)
+
+#+end_src
+
+Emacs has two similar functions for deleting surrounding white space, =delete-horizontal-space= which deletes all whitespace surrounding the point on the current line and =delete-blank-lines= which deletes either blank lines above and below the current line if it is blank or deletes the current line if it is blank and the the lines surrounding lines are not. Below is a utility function to smartly combine the two.
+
+#+begin_src emacs-lisp
+
+  (defun current-line-empty-p ()
+    "Return true is the point is in an empty line, false otherwise."
+
+    (save-excursion
+      (beginning-of-line)
+      (looking-at-p "[[:blank:]]*$")))
+
+  (defun delete-blank-space-dwim ()
+    "Delete surrounding whitespace in do-what-I-mean manner.
+
+  When point is in a blank line invoke (delete-blank-lines).
+  When point is in whitespace between non-whitespace invoke (delete-horizontal-space)."
+
+    (interactive)
+
+    (if (current-line-empty-p)
+        (delete-blank-lines)
+      (delete-horizontal-space)))
+
+  (global-set-key (kbd "M-\\") 'delete-blank-space-dwim)
 
 #+end_src
 
@@ -1249,18 +1227,6 @@ One thing I miss a little from my Vim days was a quick keyboard shortcut for swi
 * Specific Language Support
 
 TreeSitter support covers a fair bit of territory for language support. There are however some gaps that need to be filled.
-
-** Coffeescript
-
-Unfortunately I still have to support some legacy =coffeescript= at my day job. Sensibly TreeSitter doesn't include a coffeescript parser. Ergo =coffee-mode=
-
-#+begin_src emacs-lisp
-
-  (use-package coffee-mode
-    :config
-    (setq coffee-tab-width 2))
-
-#+end_src
 
 ** CSS
 
