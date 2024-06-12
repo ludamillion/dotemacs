@@ -10,7 +10,7 @@
 
 While learning Emacs I've tried a lot of different prepackaged 'distros'. Most notably, as an erstwhile (neo)vim user, Doom. After learning enough via that route and additionally deciding to try to give vanilla Emacs a solid try I'm leaving the prepackaged distros behind and building my own configuration.
 
-It won't be 100% from scratch (are they ever?) as I really like the approach of the NΛNO configuration project and have built from that. Over all I aim for a practically minimalist approach. 
+It won't be 100% from scratch (are they ever?) as I really like the approach of the NΛNO configuration project and have built from that. Over all I aim for a practically minimalist approach.
 
 Naturally my config is built 'on the shoulders of giants' where much more experienced Emacs users have gone before. With the goal of learning in mind I aim to do my best to not put anything in this config unless I understand how it works.
 
@@ -30,15 +30,16 @@ This document is a literate configuration for GNU Emacs written in [[https://org
 
 #+end_quote
 
-*** To Do [1/3]                                                  :INACTIVE:
+*** To Do [1/4]                                                  :INACTIVE:
 
 Simply put a list of concrete actions to take to enchance or solve issues with this configuration.
 
 - [ ] Change underlying Coreutils on MacOS to be the GNU version and adjust config accordingly if necessary.
 - [ ] Extract the non-theme related settings from the =liminal-mode= settings
 - [X] Switch to my own fork of the modeline
+- [ ] [[id:C3E38617-59A2-4BB9-8E0D-04047CE5FB5B][Read up on =cycle-spacing=]]
 
-*** Research [0/5]                                               :INACTIVE:
+*** Research [0/6]                                               :INACTIVE:
 
 List of less tasks to do that are more theoretical or investigative than the concrete, actionable items above. N.B. the output of these tasks should include two things, one necessary and one conditional. The necessary item is a note with the result of investigating. The conditional item is a To Do added to the list above if the result of the research is an actionable item.
 
@@ -46,6 +47,7 @@ List of less tasks to do that are more theoretical or investigative than the con
 - [ ] [[Https://github.com/radian-software/prescient.el][Prescient]] - An extra layer of intelligence for completion sorting and filtering
 - [ ] [[https://github.com/oantolin/embark][Embark]]. Looks super cool. Maybe able to combine with Objed or Combobulate.
   Note: I've already added Embark but have yet to use it for much. Spend some time getting to know it.
+- [ ] [[https://github.com/kickingvegas/casual-dired][Casual Dired]] - A transient window based 'porcelain' for Dired aimed at simplifying the UX.
 - [0/2] [[https://protesilaos.com/emacs/denote][Denote]] - Look into as an alternative to Deft + Zetteldeft for note taking.
   - [ ] How does it compare to (Zettel)Deft
   - [ ] Can it be massaged to work with [[https://logseq.com/][LogSeq]]
@@ -60,7 +62,7 @@ Listed separately from the above To Do list a holding place for packages that I'
 + [[https://github.com/namilus/denote-menu][Denote Menu]] - If I end up using Denote this looks like a nice addon to it
 
 * Core
-** Header 
+** Header
 
 This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
 
@@ -135,7 +137,7 @@ Using [[https://github.com/raxod502/straight.el][straight.el]] for package manag
       (load bootstrap-file nil 'nomessage)))
 
   (setq straight-check-for-modifications nil)
-  
+
   #+end_src
 
   Library load paths with a special case for mu4e (you may need to adapt this path).
@@ -155,6 +157,9 @@ Packages used in this specific configuration. You may want to adapt this list. T
 
   (setq package-list
         '(
+          accent               ; Easier access to accented characters
+          ace-window           ; Easier moving between windows
+          apheleia             ; Code formatting with the pain and blocking
           avy                  ; Jump to things (but really much, much more...)
           cape                 ; Completion At Point Extensions
           circadian            ; Change my theme in rhythm with nature
@@ -184,7 +189,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
           rainbow-mode         ; Sometime you just need to see the colors
           rg                   ; Ripgrep for speed and profit(?)
           slim-mode
-          smartscan            ; A little package to quick hop to 
+          smartscan            ; A little package to quick hop to
           smartparens          ; Like parens but, you know, ...smarter
           transpose-frame
           treesit-auto
@@ -212,18 +217,14 @@ Packages used in this specific configuration. You may want to adapt this list. T
   (straight-use-package
    '(jtsx :type git :host github :repo "llemaitre19/jtsx"))
 
-  ;; (straight-use-package
-  ;;  '(liminal-theme :local-repo "~/code/liminal-theme"))
-
-  ;; ;; Modeline (eventually to be replace with my own)
-  ;; (straight-use-package
-  ;;  '(liminal-modeline :local-repo "~/code/liminal-modeline"))
-
   (straight-use-package
    '(asdf :type git :host github :repo "tabfugnic/asdf.el"))
 
   (straight-use-package
    '(eglot-ltex :type git :host github :repo "emacs-languagetool/eglot-ltex"))
+
+  (straight-use-package
+   '(eglot-booster :type git :host github :repo "jdtsmith/eglot-booster"))
 
   (straight-use-package '(org :type built-in))
 
@@ -271,14 +272,6 @@ Automatically tangle org-mode files with the option #+auto_tangle: t
 
 ** Backups Etc.
 
-=no-littering= below takes care of some of this type of stuff automatically but still fix things up before invoking that.
-
-#+begin_src emacs-lisp
-
-  
-
-#+end_src
-
 Use [[https://github.com/emacscollective/no-littering][no-littering]] to keep my config directory tidier. Configured using the settings advised by [[https://rossabaker.com/configs/emacs/][Ross A. Baker]].
 
 #+begin_src emacs-lisp
@@ -306,11 +299,41 @@ Use [[https://github.com/emacscollective/no-littering][no-littering]] to keep my
 
 #+end_src
 
+#+begin_src emacs-lisp
+
+  (setq bookmark-default-file (expand-file-name "bookmark" user-emacs-directory))
+
+#+end_src
+
+Enable and tweak =recentf-mode= to keep track of files recently operated on.
+
+#+begin_src emacs-lisp
+
+  (use-package recentf
+    :custom
+    (recentf-max-menu-items 10)
+    (recentf-max-saved-items 100)
+    :init
+    (recentf-mode t))
+
+#+end_src
+
+Preservre cursor position per file across sessions.
+
+#+begin_src emacs-lisp
+
+  (use-package saveplace
+    :custom
+    (save-place-file (expand-file-name "saveplace" user-emacs-directory))
+    (save-place-forget-unreadable-files t))
+
+#+end_src
+
 ** History :HOOK:
 
 Remove text properties for kill ring entries (see https://emacs.stackexchange.com/questions/4187). This saves a lot of time when loading it.
 
- #+begin_src emacs-lisp 
+ #+begin_src emacs-lisp
 
 (defun unpropertize-kill-ring ()
   (setq kill-ring (mapcar 'substring-no-properties kill-ring)))
@@ -321,46 +344,47 @@ Remove text properties for kill ring entries (see https://emacs.stackexchange.co
 
 We save every possible history we can think of.
 
-#+begin_src emacs-lisp 
+#+begin_src emacs-lisp
 
-(require 'savehist)
-
-(setq kill-ring-max 50
-      history-length 50)
-
-(setq savehist-additional-variables
-      '(kill-ring
-        command-history
-        set-variable-value-history
-        custom-variable-history   
-        query-replace-history     
-        read-expression-history   
-        minibuffer-history        
-        read-char-history         
-        face-name-history         
-        bookmark-history
-        file-name-history))
-
- (put 'minibuffer-history         'history-length 50)
- (put 'file-name-history          'history-length 50)
- (put 'set-variable-value-history 'history-length 25)
- (put 'custom-variable-history    'history-length 25)
- (put 'query-replace-history      'history-length 25)
- (put 'read-expression-history    'history-length 25)
- (put 'read-char-history          'history-length 25)
- (put 'face-name-history          'history-length 25)
- (put 'bookmark-history           'history-length 25)
+  (use-package savehist
+    :init
+    (savehist-mode t)
+    :custom
+    (kill-ring-max 50)
+    (history-length 50)
+    (savehist-additional-variables
+     '(kill-ring
+       command-history
+       set-variable-value-history
+       custom-variable-history
+       query-replace-history
+       read-expression-history
+       minibuffer-history
+       read-char-history
+       face-name-history
+       bookmark-history
+       file-name-history))
+    :config
+    (put 'minibuffer-history         'history-length 50)
+    (put 'file-name-history          'history-length 50)
+    (put 'set-variable-value-history 'history-length 25)
+    (put 'custom-variable-history    'history-length 25)
+    (put 'query-replace-history      'history-length 25)
+    (put 'read-expression-history    'history-length 25)
+    (put 'read-char-history          'history-length 25)
+    (put 'face-name-history          'history-length 25)
+    (put 'bookmark-history           'history-length 25))
 
 #+end_src
 
 No duplicates in history
-  
+
 #+begin_src emacs-lisp
 
 (setq history-delete-duplicates t)
 
 #+end_src
-  
+
 Start history mode.
 
 #+begin_src emacs-lisp
@@ -422,7 +446,7 @@ In theory the server should be running via a Homebrew installed Plist via =launc
   (require 'server)
 
   (unless (server-running-p)
-    (start-server))
+    (server-start))
 
 #+end_src
 
@@ -439,25 +463,12 @@ A variation on =make-frame= that opens to the =*scratch*= buffer rather than the
     (select-frame (make-frame))
     (switch-to-buffer "*scratch*"))
 
-  (defvar-keymap liminal-new-frame-map
-    :doc "Liminal prefix map for creating frames."
-    "c" #'make-frame
-    "s" #'luda/make-scratch-frame)
-
   (defvar-keymap liminal-frame-map
-    :doc "Liminal prefix key maps for frames."
-    "n" liminal-new-frame-map)
+    :doc "Liminal prefix map for frame operations."
+    "m" #'make-frame
+    "n" #'luda/make-scratch-frame)
 
   (keymap-set global-map "M-n" liminal-frame-map)
-
-#+end_src
-
-Frame/window navigation bindings
-
-#+begin_src emacs-lisp
-
-  (global-set-key (kbd "M-o") 'other-window)
-  (global-set-key (kbd "s-o") 'other-frame)
 
 #+end_src
 
@@ -484,11 +495,12 @@ As part of it's setup it is running the =liminal-mode= function which sets a num
     (liminal-mode))
 
 #+end_src
+
 ** Liminal Mode
 
-The =nano-theme= package on which my Liminal theme is based has a =liminal-mode= function which sets a number of variables settings to make Emacs conform to Rougier's presentation goals. While I like most of his choices I don't necessarily think all of the settings would be set by the theme itself. Here I'm extracting them. 
+The =nano-theme= package on which my Liminal theme is based has a =liminal-mode= function which sets a number of variables settings to make Emacs conform to Rougier's presentation goals. While I like most of his choices I don't necessarily think all of the settings would be set by the theme itself. Here I'm extracting them.
 
-** N Λ N O modeline
+** Liminal modeline
 
 I like the idea and the behavior of this modeline but there are a few more things that I would have present that are missing from it. I have forked it but haven't made any useful changes made.
 
@@ -539,22 +551,21 @@ Nicer display of text lines visually.
 
 #+end_src
 
-Always waffle on how minimal to be. Right now line numbers in prog modes are useful enough to allow within my minimal aesthetic.
+Always waffle on how minimal to be. Right now line numbers in prog modes are useful enough to allow within my minimal aesthetic. Or maybe not. For now.
 
 #+begin_src emacs-lisp
 
-  (use-package display-line-numbers
-    :custom
-    (display-line-numbers-widen t)
-    :hook
-    ((prog-mode conf-mode) . display-line-numbers-mode))
+  ;; (use-package display-line-numbers
+  ;;   :custom
+  ;;   (display-line-numbers-widen t)
+  ;;   :hook
+  ;;   ((prog-mode conf-mode) . display-line-numbers-mode))
 
 #+end_src
 
-* Completion
-*** Vertico
+* Vertico
 
-Building on Emacs own =completing-read= function Vertico provides a minimalist UI for completion in the minibuffer. It can be thought of as a sleeker, more minimalist alternative to [[https://github.com/abo-abo/swiper][Ivy]] or [[https://github.com/emacs-helm/helm][Helm]]. 
+Building on Emacs own =completing-read= function Vertico provides a minimalist UI for completion in the minibuffer. It can be thought of as a sleeker, more minimalist alternative to [[https://github.com/abo-abo/swiper][Ivy]] or [[https://github.com/emacs-helm/helm][Helm]].
 
 #+begin_src emacs-lisp
 
@@ -562,14 +573,12 @@ Building on Emacs own =completing-read= function Vertico provides a minimalist U
     :bind (:map vertico-map
                 ("C-<backspace>" . vertico-directory-up))
     :custom
-    (vertico-scroll-margin 0 "Remove the top/bottom margins of the completion window")
-    (vertico-resize t "Let the completion window grow and shrink")
+    (vertico-resize t)
     (vertico-multiform-categories ; Choose a multiform
      '((file reverse)
        (consult-location)
        (imenu buffer)
        (library reverse indexed)
-       (org-roam-node reverse indexed)
        (t reverse)
        ))
     (vertico-multiform-commands
@@ -584,7 +593,7 @@ Building on Emacs own =completing-read= function Vertico provides a minimalist U
 
 #+end_src
 
-*** Consult
+* Consult
 
 What Vertico is to Ivy [[https://github.com/minad/consult][Consult]] is to Ivy's =counsel-mode=. It provides searchable replacements to many common Emacs commands.
 
@@ -615,7 +624,7 @@ What Vertico is to Ivy [[https://github.com/minad/consult][Consult]] is to Ivy's
            ("M-s k" . consult-keep-lines)
            ("M-s u" . consult-focus-lines)
            ("M-x"   . consult-buffer)
-           ("M-y"   . consult-nk-pop)
+           ("M-y"   . consult-yank-pop)
            ("M-g g" . consult-goto-line)
            ("M-g i" . consult-imenu)
            ("M-g o" . consult-outline)
@@ -623,7 +632,7 @@ What Vertico is to Ivy [[https://github.com/minad/consult][Consult]] is to Ivy's
 
 #+end_src
 
-*** Orderless
+* Orderless
 
 Orderless enhances completion functions allowing for searching by space delimited terms. The order of these terms does not matter, hence the name.
 
@@ -637,78 +646,60 @@ Orderless enhances completion functions allowing for searching by space delimite
 
 #+end_src
 
-*** Corfu
+* Corfu
 
 Another package from =minad= (author of Vertico and Consult) Corfu is the 'in-buffer completion counterpart' to Vertico. Similarly it provides a minimalist wrapper around native bahaviors to provide an enhanced experience. Corfu hooks into Emacs' native =complete-in-region= and leverages whatever sources are available from =completion-at-point-functions= as sources for completion options.
 
 #+begin_src emacs-lisp
 
-  (use-package corfu
-    :config
     (defun corfu-x-eshell-hook ()
+      "Set up Corfu behaviors in a shell friendly way."
       (setq-local corfu-auto nil)
       (corfu-mode))
-    (add-hook 'eshell-mode-hook 'corfu-x-eshell-hook)
-    (setq corfu-cycle t
-          corfu-auto t
-          corfu-auto-prefix 2
-          corfu-auto-delay 0.25
-          corfu-popupinfo-delay '(0.5 . 0.2)
-          corfu-preview-current 'insert
-          corfu-preselect 'prompt
-          corfu-on-exact-match nil)
-    :bind
-    (:map corfu-map
-          ("SPC" . corfu-insert-separator)
-          ("C-n" . corfu-next)
-          ("C-p" . corfu-previous)
-          ("TAB" . corfu-insert)
-          ("RET" . nil))
-    :init
-    (corfu-popupinfo-mode)
-    (corfu-history-mode)
-    (global-corfu-mode))
+
+    (use-package corfu
+      :config
+      (setq corfu-cycle t
+            corfu-auto t
+            corfu-on-exact-match nil)
+      :hook
+      (eshell-mode . corfu-x-eshell-hook)
+      :init
+      (corfu-history-mode)
+      (global-corfu-mode))
 
   #+end_src
 
-*** Cape
+* Cape
 
 Yet another package from =minad=. As mentioned Corfu leverages the =completion-at-point-functions= to populate its options. Cape complements it by providing a suite of such functions, usually referred to as Capfs.
 
 #+begin_src emacs-lisp
 
   (use-package cape
-    :bind
-    (("C-c f" .  cape-file))
+    :init
+    ;; LSP
+    (defun luda/cape-capf-setup-lsp ()
+      "Replace the default `lsp-completion-at-point' with its
+  `cape-capf-buster' version."
+      (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
+            (cape-capf-buster #'eglot-completion-at-point))
+      (add-to-list 'completion-at-point-functions #'cape-dabbrev t))
 
-    :config
-    ;; Add `completion-at-point-functions', used by `completion-at-point'.
-    (defalias 'dabbrev-after-2 (cape-capf-prefix-length #'cape-dabbrev 2))
-    (add-to-list 'completion-at-point-functions 'dabbrev-after-2 t)
+    (defun luda/cape-capf-setup-org ()
+      (add-to-list 'completion-at-point-functions (cape-super-capf #'cape-dict #'cape-dabbrev)))
 
-    (cl-pushnew #'cape-file completion-at-point-functions)
-
-    ;; Add to the global default value of `completion-at-point-functions' which is
-    ;; used by `completion-at-point'.  The order of the functions matters, the
-    ;; first function returning a result wins.  Note that the list of buffer-local
-    ;; completion functions takes precedence over the global list.
-
-    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-    (add-to-list 'completion-at-point-functions #'cape-file)
-    (add-to-list 'completion-at-point-functions #'cape-elisp-block)
-
-    ;; Silence then pcomplete capf, no errors or messages!
-    (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-
-    ;; Ensure that pcomplete does not write to the buffer
-    ;; and behaves as a pure `completion-at-point-function'.
-    (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
-    ;; Bust the Corfu completion cache when using Eglot to ensure fresh completions
-    (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster))
+    (defun luda/cape-capf-setup-git-commit ()
+      (let ((result))
+        (dolist (element '(cape-dabbrev cape-symbol) result)
+          (add-to-list 'completion-at-point-functions element))))
+    :hook
+    ((eglot-managed-mode . luda/cape-capf-setup-lsp)
+     (org-mode . luda/cape-capf-setup-org)
+     (git-commit-mode . luda/cape-capf-setup-git-commit)))
 
 #+end_src
-
-*** Marginalia
+* Marginalia
 
 Marginalia adds rich annotations to the minibuffer completions. Good for quick reference and discoverability.
 
@@ -722,7 +713,7 @@ Marginalia adds rich annotations to the minibuffer completions. Good for quick r
 
 #+end_src
 
-*** Embark
+* Embark
 
 #+begin_src emacs-lisp
 
@@ -761,6 +752,7 @@ Marginalia adds rich annotations to the minibuffer completions. Good for quick r
 
 #+end_src
 
+* Ace Window
 * Minibuffer
 
 #+begin_src emacs-lisp
@@ -781,28 +773,26 @@ Marginalia adds rich annotations to the minibuffer completions. Good for quick r
         '(read-only t cursor-intangible t face minibuffer-prompt))
   (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
-  ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
-  ;; Vertico commands are hidden in normal buffers.
-  (setq read-extended-command-predicate #'command-completion-default-include-p)
-
   ;; Enable recursive minibuffers
   (setq enable-recursive-minibuffers t)
 
 #+end_src
 
-* Which key for discoverability
+* Modes Meta
 
-Add =which-key= for discoverability and because I can only ever remember my most used key bindings.
+Stuff related, at least philosophically to the management of modes themselves.
 
 #+begin_src emacs-lisp
 
-  (use-package which-key
-    :config
-    (setq which-key-idle-delay 0.75)
-    (which-key-mode))
+  (defvar-keymap liminal-modes-toggle-map
+    :doc "Liminal prefix key maps | mode toggling."
+    "w" #'whitespace-mode)
+
+  (keymap-set global-map "C-x m" liminal-modes-toggle-map)
 
 #+end_src
 
+* Which key for discoverability
 * LSP
 
 Use Eglot for LSP integration. Fewer options than =lsp-mode= but it's built-in and covers the ground that I need it for right noe
@@ -814,11 +804,10 @@ Use Eglot for LSP integration. Fewer options than =lsp-mode= but it's built-in a
                 (list (cape-capf-super
                        #'eglot-completion-at-point
                        #'cape-file))))
-
   (use-package eglot
     :bind (:map eglot-mode-map
-                ("C-x l r" . eglot-rename))
-    ;; ("M-k" . eglot-code-actions)
+                ("C-x l r" . eglot-rename)
+                ("M-k" . eglot-code-actions))
     :hook ((eglot-managed-mode . luda/eglot-capf)
            (ruby-ts-mode . eglot-ensure)
            (jsx-mode . eglot-ensure)
@@ -831,21 +820,25 @@ Use Eglot for LSP integration. Fewer options than =lsp-mode= but it's built-in a
     (add-to-list 'eglot-server-programs
                  '(org-mode . ("efm-langserver"))))
 
+  (use-package eglot-booster
+    :after eglot
+    :config
+    (eglot-booster-mode))
 
 #+end_src
 
 #+begin_src emacs-lisp
 
   (use-package eglot-ltex
-    :hook (text-mode . (lambda ()
-                         (require 'eglot-ltex)
-                         (eglot-ensure)))
+    :hook
+    (text-mode . (lambda ()
+                   (require 'eglot-ltex)
+                   (eglot-ensure)))
     :init
-    (setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"
-          eglot-ltex-communication-channel 'stdio))
+    (setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"))
 
 #+end_src
-* Code analysis
+* Code analysis:
 ** Flycheck
 
 Flycheck to run checkers, linters, etc. Also hook Flycheck and Eglot together so that errors, warnings. etc. returned from language servers are piped through Flycheck.
@@ -863,7 +856,7 @@ Flycheck to run checkers, linters, etc. Also hook Flycheck and Eglot together so
 
 #+end_src
 
-** Flyspell                                                       :INACTIVE:
+** Flyspell
 
 Another Fly, this time Flyspell. Spellchecking everywhere/everywhen because I am dyslexic and I type quickly. Add my own =save-word= function as I use a fair number of domain terms etc. that aren't in general purpose dictionaries.
 
@@ -889,7 +882,7 @@ Another Fly, this time Flyspell. Spellchecking everywhere/everywhen because I am
     ;; Configure `LANG`, otherwise ispell.el cannot find a 'default
     ;; dictionary' even though multiple dictionaries will be configured
     ;; in next line.
-    
+
     (setenv "LANG" "en_US.UTF-8")
     (setq ispell-program-name "hunspell")
     ;; Configure German, Swiss German, and two variants of English.
@@ -905,9 +898,6 @@ Another Fly, this time Flyspell. Spellchecking everywhere/everywhen because I am
 #+end_src
 
 * Treesitter
-:PROPERTIES:
-:ID:       6C614835-66FB-4D2D-A1E9-B1042C786694
-:END:
 
 I tried the =treesit-auto= package for automagically handling installation and activation of Treesitter parsers/modes but it wasn't working as smoothly as I'd hoped so I'm going to just handle things manually for the time being.
 
@@ -959,6 +949,24 @@ The de facto standard for project scoped actions bring in =projectile= with no a
 
 #+end_src
 
+* Formatting
+
+  I played around with using Eglot and the LSP for formatting and I might still do that but it was going to take some configuration to get it to not do annoying things with the formatting like always using actual tabs and defaulting to width 8 tabs. Both of those being 'issues' with how the LSP spec defines tabSize and what Emacs considers a tab and what it considers indentation.
+
+  So for the time being I am using [[https://github.com/radian-software/apheleia][Apheleia]]. Currentinly only set up for Javascript.
+
+  #+begin_src emacs-lisp
+
+    (use-package apheleia
+      :custom
+      ((alist-get 'prettier apheleia-formatters)
+       '(npx "prettier" "--print-width" "100" file))
+      :config
+      (add-to-list 'apheleia-mode-alist '(jsx-mode . prettier))
+      (add-to-list 'apheleia-mode-alist '(ruby-ts-mode . rubocop)))
+
+  #+end_src
+
 * Text editing and navigation
 
 For a very long time I was a Vim/Neovim user. I love Vim but I've really gotten absorbed into the world of Emacs. Neovim in particular feels like a great tool to use but Emacs feels more like an extension of my brain. I'm pretty all in at this point.
@@ -973,7 +981,55 @@ I'm taking his lead and trying it out as the power tools he makes it out to be.
 
 #+begin_src emacs-lisp
 
+  (defun avy-action-embark (pt)
+    (unwind-protect
+        (save-excursion
+          (goto-char pt)
+          (embark-act))
+      (select-window
+       (cdr (ring-ref avy-ring 0))))
+    t)
+
+  (defun avy-action-copy-whole-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (cl-destructuring-bind (start . end)
+          (bounds-of-thing-at-point 'line)
+        (copy-region-as-kill start end)))
+    (select-window
+     (cdr
+      (ring-ref avy-ring 0)))
+    t)
+
+  (defun avy-action-yank-whole-line (pt)
+    (avy-action-copy-whole-line pt)
+    (save-excursion (yank))
+    t)
+
+  (defun avy-action-kill-whole-line (pt)
+    (save-excursion
+      (goto-char pt)
+      (kill-whole-line))
+    (select-window
+     (cdr
+      (ring-ref avy-ring 0)))
+    t)
+
+  (defun avy-action-teleport-whole-line (pt)
+    (avy-action-kill-whole-line pt)
+    (save-excursion (yank)) t)
+
   (use-package avy
+    :config
+    (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark
+          (alist-get ?k avy-dispatch-alist) 'avy-action-kill-stay
+          (alist-get ?K avy-dispatch-alist) 'avy-action-kill-whole-line
+          (alist-get ?t avy-dispatch-alist) 'avy-action-teleport
+          (alist-get ?T avy-dispatch-alist) 'avy-action-teleport-whole-line
+          (alist-get ?y avy-dispatch-alist) 'avy-action-yank
+          (alist-get ?w avy-dispatch-alist) 'avy-action-copy
+          (alist-get ?W avy-dispatch-alist) 'avy-action-copy-whole-line
+          (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line)
     :bind ("M-j" . avy-goto-char-timer))
 
 #+end_src
@@ -1052,18 +1108,26 @@ The follow is code that is taken from Karthik Chikmagalur's fantastic blog entry
 
 #+end_src
 
-** Miscellaneous Enhancements
+** Easier accents
 
-I generally find that when I want to use a `zap` command I'm using it to close space.
+At work I sometimes have to write in French. On top of that I'm attempting to learn both French and Spanish. As such I need a nicer way to insert accented characters than Emacs' default =C-x 8= flow.
 
 #+begin_src emacs-lisp
 
-  (global-set-key (kbd "C-z") 'zap-up-to-char)
-  (global-set-key (kbd "C-M-z") 'zap-to-char)
+  (use-package accent
+    :bind
+    ("C-x e" . 'accent-menu))
 
 #+end_src
 
+** Miscellaneous Enhancements
+:PROPERTIES:
+:ID:       C3E38617-59A2-4BB9-8E0D-04047CE5FB5B
+:END:
+
 Emacs has two similar functions for deleting surrounding white space, =delete-horizontal-space= which deletes all whitespace surrounding the point on the current line and =delete-blank-lines= which deletes either blank lines above and below the current line if it is blank or deletes the current line if it is blank and the the lines surrounding lines are not. Below is a utility function to smartly combine the two.
+
+Read up on =cycle-spacing= command. It looks like it might do much of what I'm doing here.
 
 #+begin_src emacs-lisp
 
@@ -1087,6 +1151,38 @@ Emacs has two similar functions for deleting surrounding white space, =delete-ho
       (delete-horizontal-space)))
 
   (global-set-key (kbd "M-\\") 'delete-blank-space-dwim)
+
+#+end_src
+
+A couple of quick functions to move lines up/down quickly.
+
+#+begin_src emacs-lisp
+
+  (defun move-line-up ()
+    "Move up the current line."
+    (interactive)
+    (transpose-lines 1)
+    (forward-line -2)
+    (indent-according-to-mode))
+
+  (defun move-line-down ()
+    "Move down the current line."
+    (interactive)
+    (forward-line 1)
+    (transpose-lines 1)
+    (forward-line -1)
+    (indent-according-to-mode))
+
+  (global-set-key [(super up)]  'move-line-up)
+  (global-set-key [(super down)]  'move-line-down)
+
+#+end_src
+
+As probably want to zap up to a character as often as I want to zap the character too. I certainly want to zap up to a character far more often than I want to minimize the frame I'm working in. So commandeer the =C-z= binding for that purpose.
+
+#+begin_src emacs-lisp
+
+  (global-set-key (kbd "C-z") 'zap-up-to-char)
 
 #+end_src
 
@@ -1146,6 +1242,30 @@ Probably most this to a more sensible place when I come up with one; Swap out =M
 #+begin_src emacs-lisp
 
   (global-set-key (kbd "C-x C-m") 'execute-extended-command)
+
+#+end_src
+
+Make Emacs' already helpful **Help** system even more helpful. In addition to adding the =helpful= package to enhance certain queries set a rule to open help buffer's in a side window.
+
+#+begin_src emacs-lisp
+
+  (use-package helpful
+    :bind
+    ("C-h f" . #'helpful-callable)
+    ("C-c F" . #'helpful-function)
+    ("C-h v" . #'helpful-variable)
+    ("C-h k" . #'helpful-key)
+    ("C-h x" . #'helpful-command)
+    ("C-c C-d" . #'helpful-at-point))
+
+  (add-to-list 'display-buffer-alist
+   '("\\*Help\\*\\|\\*helpful.*\\*"
+     (display-buffer-in-side-window)
+     (side . right)
+     (slot . 0)
+     (window-width . 80)
+     (window-parameters
+      (no-delete-other-windows . t))))
 
 #+end_src
 
@@ -1210,20 +1330,6 @@ When I want to kill a buffer I almost always want to kill the buffer I'm in. Occ
 
 #+end_src
 
-One thing I miss a little from my Vim days was a quick keyboard shortcut for switching to the last buffer I visited, the 'alternate file' in Vim terms. In emacs this can be accomplished via call the =switch-to-buffer= function with a =nil= argument. This switches to whatever buffer is returned by =other-buffer=. I use this type of command when bouncing back and forth between two related files. This is also the use case I most commonly use for split windows. As such it makes sense to overload the =M-o= keymap to switch between splits if there are any and bounce between buffers if there aren't.
-
-#+begin_src emacs-lisp
-
-  (defun luda/hop-buffer ()
-    (interactive)
-    (if (= (length (window-list)) 1)
-        (switch-to-buffer nil)
-      (other-window 1)))
-
-  (global-set-key (kbd "M-o") 'luda/hop-buffer)
-
-#+end_src
-
 * Specific Language Support
 
 TreeSitter support covers a fair bit of territory for language support. There are however some gaps that need to be filled.
@@ -1238,6 +1344,7 @@ I also need to figure out what to set up for SCSS as we lean on that heavily at 
 
   (use-package css-mode
     :custom
+    (tab-width 2)
     (css-indent-offset 2))
 
 #+end_src
@@ -1289,15 +1396,18 @@ A Rails codebase also means HAML and Slim templates too. Sadly for my config's d
 #+begin_src emacs-lisp
 
   (use-package jtsx
-    :mode (("\\.jsx?\\'" . jsx-mode)
-           ("\\.tsx?\\'" . tsx-mode))
+    :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
+           ("\\.tsx\\'" . jtsx-tsx-mode)
+           ("\\.ts\\'" . jtsx-typescript-mode))
+    :custom
+    (js-indent-level 2)
+    (typescript-ts-mode-indent-offset 2)
+    (jtsx-switch-indent-offset 0)
+    (jtsx-indent-statement-block-regarding-standalone-parent nil)
+    (jtsx-jsx-element-move-allow-step-out t)
+    (jtsx-enable-jsx-electric-closing-element t)
     :config
-    (setq js-indent-level 2)
-    (setq typescript-ts-mode-indent-offset 2)
-    (setq jtsx-switch-indent-offset 0)
-    (setq jtsx-indent-statement-block-regarding-standalone-parent nil)
-    (setq jtsx-jsx-element-move-allow-step-out t)
-    (setq jtsx-enable-jsx-electric-closing-element t))
+    (apheleia-mode t))
 
 #+end_src
 
@@ -1309,7 +1419,9 @@ A Rails codebase also means HAML and Slim templates too. Sadly for my config's d
     :mode "\\.rb\\'"
     :mode "\\.pryrc\\'"
     :mode "Rakefile\\'"
-    :mode "Gemfile\\'")
+    :mode "Gemfile\\'"
+    :config
+    (apheleia-mode t))
 
 #+end_src
 
@@ -1407,7 +1519,7 @@ Personal overlay for org mode to 'beautify' it a bit. There are plenty of packag
 
 #+begin_src emacs-lisp
 
-  
+
 
 #+end_src
 

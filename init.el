@@ -40,6 +40,9 @@
 
 (setq package-list
       '(
+        accent               ; Easier access to accented characters
+        ace-window           ; Easier moving between windows
+        apheleia             ; Code formatting with the pain and blocking
         avy                  ; Jump to things (but really much, much more...)
         cape                 ; Completion At Point Extensions
         circadian            ; Change my theme in rhythm with nature
@@ -69,7 +72,7 @@
         rainbow-mode         ; Sometime you just need to see the colors
         rg                   ; Ripgrep for speed and profit(?)
         slim-mode
-        smartscan            ; A little package to quick hop to 
+        smartscan            ; A little package to quick hop to
         smartparens          ; Like parens but, you know, ...smarter
         transpose-frame
         treesit-auto
@@ -97,18 +100,14 @@
 (straight-use-package
  '(jtsx :type git :host github :repo "llemaitre19/jtsx"))
 
-;; (straight-use-package
-;;  '(liminal-theme :local-repo "~/code/liminal-theme"))
-
-;; ;; Modeline (eventually to be replace with my own)
-;; (straight-use-package
-;;  '(liminal-modeline :local-repo "~/code/liminal-modeline"))
-
 (straight-use-package
  '(asdf :type git :host github :repo "tabfugnic/asdf.el"))
 
 (straight-use-package
  '(eglot-ltex :type git :host github :repo "emacs-languagetool/eglot-ltex"))
+
+(straight-use-package
+ '(eglot-booster :type git :host github :repo "jdtsmith/eglot-booster"))
 
 (straight-use-package '(org :type built-in))
 
@@ -125,8 +124,6 @@
 (global-set-key (kbd "<f5>") 'reload-init-file)
 
 (add-hook 'org-mode-hook 'org-auto-tangle-mode)
-
-
 
 (use-package no-littering
   :init
@@ -149,38 +146,53 @@
         auto-save-file-name-transforms
         `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
 
+(setq bookmark-default-file (expand-file-name "bookmark" user-emacs-directory))
+
+(use-package recentf
+  :custom
+  (recentf-max-menu-items 10)
+  (recentf-max-saved-items 100)
+  :init
+  (recentf-mode t))
+
+(use-package saveplace
+  :custom
+  (save-place-file (expand-file-name "saveplace" user-emacs-directory))
+  (save-place-forget-unreadable-files t))
+
 (defun unpropertize-kill-ring ()
   (setq kill-ring (mapcar 'substring-no-properties kill-ring)))
 
 (add-hook 'kill-emacs-hook 'unpropertize-kill-ring)
 
-(require 'savehist)
-
-(setq kill-ring-max 50
-      history-length 50)
-
-(setq savehist-additional-variables
-      '(kill-ring
-        command-history
-        set-variable-value-history
-        custom-variable-history   
-        query-replace-history     
-        read-expression-history   
-        minibuffer-history        
-        read-char-history         
-        face-name-history         
-        bookmark-history
-        file-name-history))
-
- (put 'minibuffer-history         'history-length 50)
- (put 'file-name-history          'history-length 50)
- (put 'set-variable-value-history 'history-length 25)
- (put 'custom-variable-history    'history-length 25)
- (put 'query-replace-history      'history-length 25)
- (put 'read-expression-history    'history-length 25)
- (put 'read-char-history          'history-length 25)
- (put 'face-name-history          'history-length 25)
- (put 'bookmark-history           'history-length 25)
+(use-package savehist
+  :init
+  (savehist-mode t)
+  :custom
+  (kill-ring-max 50)
+  (history-length 50)
+  (savehist-additional-variables
+   '(kill-ring
+     command-history
+     set-variable-value-history
+     custom-variable-history
+     query-replace-history
+     read-expression-history
+     minibuffer-history
+     read-char-history
+     face-name-history
+     bookmark-history
+     file-name-history))
+  :config
+  (put 'minibuffer-history         'history-length 50)
+  (put 'file-name-history          'history-length 50)
+  (put 'set-variable-value-history 'history-length 25)
+  (put 'custom-variable-history    'history-length 25)
+  (put 'query-replace-history      'history-length 25)
+  (put 'read-expression-history    'history-length 25)
+  (put 'read-char-history          'history-length 25)
+  (put 'face-name-history          'history-length 25)
+  (put 'bookmark-history           'history-length 25))
 
 (setq history-delete-duplicates t)
 
@@ -205,7 +217,7 @@
 (require 'server)
 
 (unless (server-running-p)
-  (start-server))
+  (server-start))
 
 (defun luda/make-scratch-frame ()
   "Create a new frame and switch to *scratch* buffer."
@@ -214,19 +226,12 @@
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
 
-(defvar-keymap liminal-new-frame-map
-  :doc "Liminal prefix map for creating frames."
-  "c" #'make-frame
-  "s" #'luda/make-scratch-frame)
-
 (defvar-keymap liminal-frame-map
-  :doc "Liminal prefix key maps for frames."
-  "n" liminal-new-frame-map)
+  :doc "Liminal prefix map for frame operations."
+  "m" #'make-frame
+  "n" #'luda/make-scratch-frame)
 
 (keymap-set global-map "M-n" liminal-frame-map)
-
-(global-set-key (kbd "M-o") 'other-window)
-(global-set-key (kbd "s-o") 'other-frame)
 
 (use-package liminal-theme
   :load-path "~/code/liminal-theme"
@@ -266,24 +271,22 @@
 (setq-default line-spacing 1)
 (global-visual-line-mode)
 
-(use-package display-line-numbers
-  :custom
-  (display-line-numbers-widen t)
-  :hook
-  ((prog-mode conf-mode) . display-line-numbers-mode))
+;; (use-package display-line-numbers
+;;   :custom
+;;   (display-line-numbers-widen t)
+;;   :hook
+;;   ((prog-mode conf-mode) . display-line-numbers-mode))
 
 (use-package vertico
   :bind (:map vertico-map
               ("C-<backspace>" . vertico-directory-up))
   :custom
-  (vertico-scroll-margin 0 "Remove the top/bottom margins of the completion window")
-  (vertico-resize t "Let the completion window grow and shrink")
+  (vertico-resize t)
   (vertico-multiform-categories ; Choose a multiform
    '((file reverse)
      (consult-location)
      (imenu buffer)
      (library reverse indexed)
-     (org-roam-node reverse indexed)
      (t reverse)
      ))
   (vertico-multiform-commands
@@ -321,7 +324,7 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
          ("M-s k" . consult-keep-lines)
          ("M-s u" . consult-focus-lines)
          ("M-x"   . consult-buffer)
-         ("M-y"   . consult-nk-pop)
+         ("M-y"   . consult-yank-pop)
          ("M-g g" . consult-goto-line)
          ("M-g i" . consult-imenu)
          ("M-g o" . consult-outline)
@@ -333,60 +336,43 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
    (setq completion-category-defaults nil)
    (setq completion-category-overrides '((file (styles partial-completion)))))
 
+(defun corfu-x-eshell-hook ()
+  "Set up Corfu behaviors in a shell friendly way."
+  (setq-local corfu-auto nil)
+  (corfu-mode))
+
 (use-package corfu
   :config
-  (defun corfu-x-eshell-hook ()
-    (setq-local corfu-auto nil)
-    (corfu-mode))
-  (add-hook 'eshell-mode-hook 'corfu-x-eshell-hook)
   (setq corfu-cycle t
         corfu-auto t
-        corfu-auto-prefix 2
-        corfu-auto-delay 0.25
-        corfu-popupinfo-delay '(0.5 . 0.2)
-        corfu-preview-current 'insert
-        corfu-preselect 'prompt
         corfu-on-exact-match nil)
-  :bind
-  (:map corfu-map
-        ("SPC" . corfu-insert-separator)
-        ("C-n" . corfu-next)
-        ("C-p" . corfu-previous)
-        ("TAB" . corfu-insert)
-        ("RET" . nil))
+  :hook
+  (eshell-mode . corfu-x-eshell-hook)
   :init
-  (corfu-popupinfo-mode)
   (corfu-history-mode)
   (global-corfu-mode))
 
 (use-package cape
-  :bind
-  (("C-c f" .  cape-file))
+  :init
+  ;; LSP
+  (defun luda/cape-capf-setup-lsp ()
+    "Replace the default `lsp-completion-at-point' with its
+`cape-capf-buster' version."
+    (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
+          (cape-capf-buster #'eglot-completion-at-point))
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev t))
 
-  :config
-  ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  (defalias 'dabbrev-after-2 (cape-capf-prefix-length #'cape-dabbrev 2))
-  (add-to-list 'completion-at-point-functions 'dabbrev-after-2 t)
+  (defun luda/cape-capf-setup-org ()
+    (add-to-list 'completion-at-point-functions (cape-super-capf #'cape-dict #'cape-dabbrev)))
 
-  (cl-pushnew #'cape-file completion-at-point-functions)
-
-  ;; Add to the global default value of `completion-at-point-functions' which is
-  ;; used by `completion-at-point'.  The order of the functions matters, the
-  ;; first function returning a result wins.  Note that the list of buffer-local
-  ;; completion functions takes precedence over the global list.
-
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-file)
-  (add-to-list 'completion-at-point-functions #'cape-elisp-block)
-
-  ;; Silence then pcomplete capf, no errors or messages!
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-
-  ;; Ensure that pcomplete does not write to the buffer
-  ;; and behaves as a pure `completion-at-point-function'.
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
-  ;; Bust the Corfu completion cache when using Eglot to ensure fresh completions
-  (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster))
+  (defun luda/cape-capf-setup-git-commit ()
+    (let ((result))
+      (dolist (element '(cape-dabbrev cape-symbol) result)
+        (add-to-list 'completion-at-point-functions element))))
+  :hook
+  ((eglot-managed-mode . luda/cape-capf-setup-lsp)
+   (org-mode . luda/cape-capf-setup-org)
+   (git-commit-mode . luda/cape-capf-setup-git-commit)))
 
 (use-package marginalia
   :init
@@ -443,28 +429,24 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
       '(read-only t cursor-intangible t face minibuffer-prompt))
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
-;; Emacs 28: Hide commands in M-x which do not work in the current mode.
-;; Vertico commands are hidden in normal buffers.
-(setq read-extended-command-predicate #'command-completion-default-include-p)
-
 ;; Enable recursive minibuffers
 (setq enable-recursive-minibuffers t)
 
-(use-package which-key
-  :config
-  (setq which-key-idle-delay 0.75)
-  (which-key-mode))
+(defvar-keymap liminal-modes-toggle-map
+  :doc "Liminal prefix key maps | mode toggling."
+  "w" #'whitespace-mode)
+
+(keymap-set global-map "C-x m" liminal-modes-toggle-map)
 
 (defun luda/eglot-capf ()
   (setq-local completion-at-point-functions
               (list (cape-capf-super
                      #'eglot-completion-at-point
                      #'cape-file))))
-
 (use-package eglot
   :bind (:map eglot-mode-map
-              ("C-x l r" . eglot-rename))
-  ;; ("M-k" . eglot-code-actions)
+              ("C-x l r" . eglot-rename)
+              ("M-k" . eglot-code-actions))
   :hook ((eglot-managed-mode . luda/eglot-capf)
          (ruby-ts-mode . eglot-ensure)
          (jsx-mode . eglot-ensure)
@@ -477,13 +459,18 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   (add-to-list 'eglot-server-programs
                '(org-mode . ("efm-langserver"))))
 
+(use-package eglot-booster
+  :after eglot
+  :config
+  (eglot-booster-mode))
+
 (use-package eglot-ltex
-  :hook (text-mode . (lambda ()
-                       (require 'eglot-ltex)
-                       (eglot-ensure)))
+  :hook
+  (text-mode . (lambda ()
+                 (require 'eglot-ltex)
+                 (eglot-ensure)))
   :init
-  (setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"
-        eglot-ltex-communication-channel 'stdio))
+  (setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"))
 
 (use-package flycheck
   :config
@@ -493,6 +480,39 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   :config
   (global-flycheck-eglot-mode)
   :after (flycheck eglot))
+
+(defun luda/save-word ()
+  "Mark a Flyspell reported error as acceptable."
+
+  (interactive)
+
+  (let ((current-location (point))
+        (word (flyspell-get-word)))
+    (when (consp word)
+      (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
+
+(use-package flyspell
+  :bind
+   ("C-x $" . 'luda/save-word)
+   ("C-'" . 'flyspell-auto-correct-previous-word)
+  :hook ((text-mode . flyspell-mode)
+         (prog-mode . flyspell-prog-mode))
+  :config
+  ;; Configure `LANG`, otherwise ispell.el cannot find a 'default
+  ;; dictionary' even though multiple dictionaries will be configured
+  ;; in next line.
+
+  (setenv "LANG" "en_US.UTF-8")
+  (setq ispell-program-name "hunspell")
+  ;; Configure German, Swiss German, and two variants of English.
+  (setq ispell-dictionary "en_US,en_CA,fr_FR")
+  ;; ispell-set-spellchecker-params has to be called
+  ;; before ispell-hunspell-add-multi-dic will work
+  (ispell-set-spellchecker-params)
+  (ispell-hunspell-add-multi-dic "en_US,en_CA,fr_FR")
+  ;; For saving words to the personal dictionary, don't infer it from
+  ;; the locale, otherwise it would save to ~/.hunspell_de_DE.
+  (setq ispell-personal-dictionary "~/.hunspell_personal"))
 
 (setq treesit-language-source-alist
       '((css "https://github.com/tree-sitter/tree-sitter-css")
@@ -528,7 +548,63 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   ("s-p" . projectile-command-map)
   ("C-c p" . projectile-command-map))
 
+(use-package apheleia
+  :custom
+  ((alist-get 'prettier apheleia-formatters)
+   '(npx "prettier" "--print-width" "100" file))
+  :config
+  (add-to-list 'apheleia-mode-alist '(jsx-mode . prettier))
+  (add-to-list 'apheleia-mode-alist '(ruby-ts-mode . rubocop)))
+
+(defun avy-action-embark (pt)
+  (unwind-protect
+      (save-excursion
+        (goto-char pt)
+        (embark-act))
+    (select-window
+     (cdr (ring-ref avy-ring 0))))
+  t)
+
+(defun avy-action-copy-whole-line (pt)
+  (save-excursion
+    (goto-char pt)
+    (cl-destructuring-bind (start . end)
+        (bounds-of-thing-at-point 'line)
+      (copy-region-as-kill start end)))
+  (select-window
+   (cdr
+    (ring-ref avy-ring 0)))
+  t)
+
+(defun avy-action-yank-whole-line (pt)
+  (avy-action-copy-whole-line pt)
+  (save-excursion (yank))
+  t)
+
+(defun avy-action-kill-whole-line (pt)
+  (save-excursion
+    (goto-char pt)
+    (kill-whole-line))
+  (select-window
+   (cdr
+    (ring-ref avy-ring 0)))
+  t)
+
+(defun avy-action-teleport-whole-line (pt)
+  (avy-action-kill-whole-line pt)
+  (save-excursion (yank)) t)
+
 (use-package avy
+  :config
+  (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark
+        (alist-get ?k avy-dispatch-alist) 'avy-action-kill-stay
+        (alist-get ?K avy-dispatch-alist) 'avy-action-kill-whole-line
+        (alist-get ?t avy-dispatch-alist) 'avy-action-teleport
+        (alist-get ?T avy-dispatch-alist) 'avy-action-teleport-whole-line
+        (alist-get ?y avy-dispatch-alist) 'avy-action-yank
+        (alist-get ?w avy-dispatch-alist) 'avy-action-copy
+        (alist-get ?W avy-dispatch-alist) 'avy-action-copy-whole-line
+        (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line)
   :bind ("M-j" . avy-goto-char-timer))
 
 (use-package occur
@@ -582,8 +658,9 @@ surrounded by word boundaries."
         (reb-quit)
         (query-replace-regexp re replacement delimited beg end)))))
 
-(global-set-key (kbd "C-z") 'zap-up-to-char)
-(global-set-key (kbd "C-M-z") 'zap-to-char)
+(use-package accent
+  :bind
+  ("C-x e" . 'accent-menu))
 
 (defun current-line-empty-p ()
   "Return true is the point is in an empty line, false otherwise."
@@ -605,6 +682,26 @@ When point is in whitespace between non-whitespace invoke (delete-horizontal-spa
     (delete-horizontal-space)))
 
 (global-set-key (kbd "M-\\") 'delete-blank-space-dwim)
+
+(defun move-line-up ()
+  "Move up the current line."
+  (interactive)
+  (transpose-lines 1)
+  (forward-line -2)
+  (indent-according-to-mode))
+
+(defun move-line-down ()
+  "Move down the current line."
+  (interactive)
+  (forward-line 1)
+  (transpose-lines 1)
+  (forward-line -1)
+  (indent-according-to-mode))
+
+(global-set-key [(super up)]  'move-line-up)
+(global-set-key [(super down)]  'move-line-down)
+
+(global-set-key (kbd "C-z") 'zap-up-to-char)
 
 ;; Clean and straightforward undo/redo
 (use-package undo-fu
@@ -632,6 +729,24 @@ When point is in whitespace between non-whitespace invoke (delete-horizontal-spa
   ("C-x !" . projectile-run-vterm))
 
 (global-set-key (kbd "C-x C-m") 'execute-extended-command)
+
+(use-package helpful
+  :bind
+  ("C-h f" . #'helpful-callable)
+  ("C-c F" . #'helpful-function)
+  ("C-h v" . #'helpful-variable)
+  ("C-h k" . #'helpful-key)
+  ("C-h x" . #'helpful-command)
+  ("C-c C-d" . #'helpful-at-point))
+
+(add-to-list 'display-buffer-alist
+ '("\\*Help\\*\\|\\*helpful.*\\*"
+   (display-buffer-in-side-window)
+   (side . right)
+   (slot . 0)
+   (window-width . 80)
+   (window-parameters
+    (no-delete-other-windows . t))))
 
 (defun luda/switch-theme (theme)
   "Load THEME after unloading previously loaded themes.
@@ -666,16 +781,9 @@ customization done outside of themes."
 (keymap-set global-map "C-x k" 'kill-this-buffer)
 (keymap-set global-map "C-x C-k" 'kill-buffer)
 
-(defun luda/hop-buffer ()
-  (interactive)
-  (if (= (length (window-list)) 1)
-      (switch-to-buffer nil)
-    (other-window 1)))
-
-(global-set-key (kbd "M-o") 'luda/hop-buffer)
-
 (use-package css-mode
   :custom
+  (tab-width 2)
   (css-indent-offset 2))
 
 (use-package rainbow-mode
@@ -690,21 +798,26 @@ customization done outside of themes."
   :defer t)
 
 (use-package jtsx
-  :mode (("\\.jsx?\\'" . jsx-mode)
-         ("\\.tsx?\\'" . tsx-mode))
+  :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
+         ("\\.tsx\\'" . jtsx-tsx-mode)
+         ("\\.ts\\'" . jtsx-typescript-mode))
+  :custom
+  (js-indent-level 2)
+  (typescript-ts-mode-indent-offset 2)
+  (jtsx-switch-indent-offset 0)
+  (jtsx-indent-statement-block-regarding-standalone-parent nil)
+  (jtsx-jsx-element-move-allow-step-out t)
+  (jtsx-enable-jsx-electric-closing-element t)
   :config
-  (setq js-indent-level 2)
-  (setq typescript-ts-mode-indent-offset 2)
-  (setq jtsx-switch-indent-offset 0)
-  (setq jtsx-indent-statement-block-regarding-standalone-parent nil)
-  (setq jtsx-jsx-element-move-allow-step-out t)
-  (setq jtsx-enable-jsx-electric-closing-element t))
+  (apheleia-mode t))
 
 (use-package ruby-ts-mode
   :mode "\\.rb\\'"
   :mode "\\.pryrc\\'"
   :mode "Rakefile\\'"
-  :mode "Gemfile\\'")
+  :mode "Gemfile\\'"
+  :config
+  (apheleia-mode t))
 
 (use-package yaml-ts-mode
   :mode "\\.y[a]?ml")
