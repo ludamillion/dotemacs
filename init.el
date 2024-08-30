@@ -42,39 +42,35 @@
       '(
         accent               ; Easier access to accented characters
         ace-window           ; Easier moving between windows
-        apheleia             ; Code formatting with the pain and blocking
+        apheleia             ; Code formatting without the pain and blocking
         avy                  ; Jump to things (but really much, much more...)
         cape                 ; Completion At Point Extensions
         circadian            ; Change my theme in rhythm with nature
+        command-log-mode     ; More insight into what commands are being run/looks fancy when showing off
         consult              ; Consulting completing-read
         consult-lsp          ; LSP extras for consult to, well, consult
         corfu                ; Completion Overlay Region FUnction
-        deft                 ; Enhanced note taking with Org
+				denote
+				doct                 ; (D)eclarative (O)rg (C)apture (T)emplates
         embark
         embark-consult
         exec-path-from-shell ; Get environment variables such as $PATH from the shell
-        f                    ; Modern API for working with files and directories
         flycheck             ; Enhanced syntax checking, more flexible than flymake
         flycheck-eglot       ; Allow Flycheck to understand Eglot as a checker
-        flyspell
         haml-mode            ; Rails templates not covered by treesitter or web-mode
         helpful              ; A better help buffer
-        imenu-list           ; Show imenu entries in a separate
-        language-id
-        lua-mode
         magit                ; A Git porcelain inside Emacs.
         marginalia           ; Enrich existing commands with completion annotations
         markdown-mode        ; Major mode for Markdown-formatted text
         no-littering         ; Keep our things clean and tidy
         orderless            ; Completion style for matching regexps in any order
-        org-auto-tangle
+				pdf-tools
         projectile           ; Project scoped stuffness
-        rainbow-mode         ; Sometime you just need to see the colors
         rg                   ; Ripgrep for speed and profit(?)
-        slim-mode
-        smartscan            ; A little package to quick hop to
-        smartparens          ; Like parens but, you know, ...smarter
-        transpose-frame
+        save-visited-files   ; Simplest form of session persistance
+        surround
+        tempel
+        tempel-collection
         treesit-auto
         undo-fu              ; Work around Emacs' clunky undo interface
         undo-fu-session      ; Persistant undo across sessions
@@ -84,18 +80,11 @@
         vterm                ; A real terminal emulator running in Emacs
         web-mode             ; Uber mode for web templating languages
         which-key            ; Discovery method for key bindings
-        zetteldeft           ; Put your deft notes in little slip boxen
         ))
 
 ;; Install packages that are not yet installed
 (dolist (package package-list)
   (straight-use-package package))
-
-;; Install a selection of the N Λ N O suite of packages install straight from GitHub
-
-;; A cleaner, more minimal Org agenda
-(straight-use-package
- '(nano-agenda :type git :host github :repo "rougier/nano-agenda"))
 
 (straight-use-package
  '(jtsx :type git :host github :repo "llemaitre19/jtsx"))
@@ -112,18 +101,16 @@
 (straight-use-package '(org :type built-in))
 
 (let ((inhibit-message t))
-  (message "Welcome to GNU Emacs / Liminal edition")
+  (message "Welcome to GNU Emacs / Sensible edition")
   (message (format "Initialization time: %s" (emacs-init-time))))
 
 (defun reload-init-file ()
   "Reload the file referenced by `user-init-file`."
 
   (interactive)
-  (load-file user-init-file))
+	(load-file (expand-file-name "init.el" user-emacs-directory)))
 
-(global-set-key (kbd "<f5>") 'reload-init-file)
-
-(add-hook 'org-mode-hook 'org-auto-tangle-mode)
+(keymap-global-set "<f5>" 'reload-init-file)
 
 (use-package no-littering
   :init
@@ -214,11 +201,6 @@
   (setq mac-command-modifier 'meta)
   (setq dired-use-ls-dired nil))
 
-(require 'server)
-
-(unless (server-running-p)
-  (server-start))
-
 (defun luda/make-scratch-frame ()
   "Create a new frame and switch to *scratch* buffer."
 
@@ -233,49 +215,63 @@
 
 (keymap-set global-map "M-n" liminal-frame-map)
 
-(use-package liminal-theme
-  :load-path "~/code/liminal-theme"
+(use-package sensible-settings
+  :load-path "~/code/sensible-settings"
   :init
-  (setopt liminal-manage-cursor t
-          liminal-manage-fonts t
-          liminal-manage-ui t
-          liminal-manage-ux t
-          liminal-font-size 16)
+  (setopt sensible-font-size 16
+          sensible-manage-cursor t
+          sensible-manage-fonts t
+          sensible-manage-ui t
+          sensible-manage-ux t)
   :config
-  (liminal-mode))
+  (sensible-mode))
 
-(use-package liminal-modeline
-  :after liminal-theme
-  :load-path "~/code/liminal-modeline"
+(use-package sensible-themes
+	:after 'sensible-settings
+  :load-path "~/code/sensible-themes")
+
+(use-package sensible-modeline
+  :after 'sensible-themes
+  :load-path "~/code/sensible-modeline"
   :init
   (setopt mode-line-format nil)
   :hook
-  (prog-mode            . liminal-modeline-prog-mode)
-  (text-mode            . liminal-modeline-text-mode)
-  (org-mode             . liminal-modeline-org-mode)
-  (term-mode            . liminal-modeline-term-mode)
-  (vterm-mode           . liminal-modeline-term-mode)
-  (messages-buffer-mode . liminal-modeline-message-mode)
-  (org-capture-mode     . liminal-modeline-org-capture-mode)
-  (org-agenda-mode      . liminal-modeline-org-agenda-mode))
+  (prog-mode            . sensible-modeline-prog-mode)
+  (text-mode            . sensible-modeline-text-mode)
+  (org-mode             . sensible-modeline-org-mode)
+  (term-mode            . sensible-modeline-term-mode)
+  (vterm-mode           . sensible-modeline-term-mode)
+  (messages-buffer-mode . sensible-modeline-message-mode)
+  (org-capture-mode     . sensible-modeline-org-capture-mode)
+  (org-agenda-mode      . sensible-modeline-org-agenda-mode))
 
 (use-package circadian
   :custom
-   (calendar-latitude 42.4)
-   (calendar-longitude -71.0)
-   (circadian-themes '((:sunrise . liminal-light)
-                       (:sunset  . liminal-dark)))
-   :config
-   (circadian-setup))
+  (calendar-latitude 42.4)
+  (calendar-longitude -71.0)
+  (circadian-themes '((:sunrise . sensible-amber-light)
+                      (:sunset  . sensible-azure-dark)))
+  :config
+  (circadian-setup))
 
 (setq-default line-spacing 1)
 (global-visual-line-mode)
 
-;; (use-package display-line-numbers
-;;   :custom
-;;   (display-line-numbers-widen t)
-;;   :hook
-;;   ((prog-mode conf-mode) . display-line-numbers-mode))
+(use-package display-line-numbers
+  :custom
+  (display-line-numbers-widen t)
+  :hook
+  ((prog-mode conf-mode) . display-line-numbers-mode))
+
+(use-package pdf-tools
+  :config
+  (pdf-tools-install)
+  (setq-default pdf-view-display-size 'fit-width)
+  (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
+  :custom
+  (pdf-annot-activate-created-annotations t "automatically annotate highlights"))
+
+(add-hook 'pdf-view-mode-hook (lambda() (display-line-numbers-mode -1)))
 
 (use-package vertico
   :bind (:map vertico-map
@@ -314,7 +310,7 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   :config
   (recentf-mode)
   :bind (
-         ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+         ("M-s d" . consult-fd) ;; Requires having fd installed otherwise use consult-find
          ("M-s c" . consult-locate)
          ("M-s g" . consult-grep)
          ("M-s G" . consult-git-grep)
@@ -323,8 +319,9 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
          ("M-s L" . consult-line-multi)
          ("M-s k" . consult-keep-lines)
          ("M-s u" . consult-focus-lines)
-         ("M-x"   . consult-buffer)
+         ("M-s <SPC>"   . consult-buffer)
          ("M-y"   . consult-yank-pop)
+         ("C-x M-k"   . consult-kmacro)
          ("M-g g" . consult-goto-line)
          ("M-g i" . consult-imenu)
          ("M-g o" . consult-outline)
@@ -332,9 +329,9 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
 
 (use-package orderless
   :config
-   (setq completion-styles '(orderless partial-completion basic))
-   (setq completion-category-defaults nil)
-   (setq completion-category-overrides '((file (styles partial-completion)))))
+  (setq completion-styles '(orderless partial-completion basic))
+  (setq completion-category-defaults nil)
+  (setq completion-category-overrides '((file (styles partial-completion)))))
 
 (defun corfu-x-eshell-hook ()
   "Set up Corfu behaviors in a shell friendly way."
@@ -342,35 +339,44 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   (corfu-mode))
 
 (use-package corfu
-  :config
+  :init
   (setq corfu-cycle t
         corfu-auto t
         corfu-on-exact-match nil)
-  :hook
-  (eshell-mode . corfu-x-eshell-hook)
-  :init
   (corfu-history-mode)
-  (global-corfu-mode))
+  (corfu-echo-mode)
+  (global-corfu-mode)
+  :hook
+  (eshell-mode . corfu-x-eshell-hook))
+
+(defun luda/eglot-capf ()
+  (setq-local completion-at-point-functions
+              (list (cape-capf-super
+                     #'eglot-completion-at-point
+                     #'tempel-expand
+                     #'cape-file))))
+
+(defun luda/cape-capf-setup-lsp ()
+  "Replace the default `lsp-completion-at-point' with its
+`cape-capf-buster' version."
+  (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
+        (cape-capf-buster #'eglot-completion-at-point))
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev t))
+
+(defun luda/cape-capf-setup-org ()
+  (add-to-list 'completion-at-point-functions (cape-capf-super #'cape-dict #'cape-dabbrev)))
+
+(defun luda/cape-capf-setup-git-commit ()
+  (let ((result))
+    (dolist (element '(cape-dabbrev cape-symbol) result)
+      (add-to-list 'completion-at-point-functions element))))
 
 (use-package cape
-  :init
-  ;; LSP
-  (defun luda/cape-capf-setup-lsp ()
-    "Replace the default `lsp-completion-at-point' with its
-`cape-capf-buster' version."
-    (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
-          (cape-capf-buster #'eglot-completion-at-point))
-    (add-to-list 'completion-at-point-functions #'cape-dabbrev t))
-
-  (defun luda/cape-capf-setup-org ()
-    (add-to-list 'completion-at-point-functions (cape-super-capf #'cape-dict #'cape-dabbrev)))
-
-  (defun luda/cape-capf-setup-git-commit ()
-    (let ((result))
-      (dolist (element '(cape-dabbrev cape-symbol) result)
-        (add-to-list 'completion-at-point-functions element))))
+  :config
+  (setq completion-category-overrides '((eglot (styles orderless))
+                                        (eglot-capf (styles orderless))))
   :hook
-  ((eglot-managed-mode . luda/cape-capf-setup-lsp)
+  ((eglot-managed-mode . luda/eglot-capf)
    (org-mode . luda/cape-capf-setup-org)
    (git-commit-mode . luda/cape-capf-setup-git-commit)))
 
@@ -413,6 +419,68 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
+(use-package tempel
+  ;; Require trigger prefix before template name when completing.
+  :custom
+  (tempel-trigger-prefix "<")
+
+  :bind (("M-=" . tempel-complete) ;; Alternative tempel-expand
+         ("M-*" . tempel-insert))
+  :init
+
+  ;; Setup completion at point
+  (defun tempel-setup-capf ()
+    ;; Add the Tempel Capf to `completion-at-point-functions'.
+    ;; `tempel-expand' only triggers on exact matches. Alternatively use
+    ;; `tempel-complete' if you want to see all matches, but then you
+    ;; should also configure `tempel-trigger-prefix', such that Tempel
+    ;; does not trigger too often when you don't expect it. NOTE: We add
+    ;; `tempel-expand' *before* the main programming mode Capf, such
+    ;; that it will be tried first.
+    (setq-local completion-at-point-functions
+                (cons #'tempel-expand
+                      completion-at-point-functions)))
+
+  (add-hook 'conf-mode-hook 'tempel-setup-capf)
+  (add-hook 'prog-mode-hook 'tempel-setup-capf)
+  (add-hook 'text-mode-hook 'tempel-setup-capf))
+
+;; Optional: Add tempel-collection.
+;; The package is young and doesn't have comprehensive coverage.
+(use-package tempel-collection)
+
+(use-package ace-window
+  :bind
+  ("M-o" . 'ace-window)
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?j ?k ?l)
+        aw-dispatch-always t
+        aw-dispatch-alist
+        '((?x aw-delete-window "Ace - Delete Window")
+          (?c aw-swap-window "Ace - Swap Window")
+          (?n aw-flip-window)
+          (?v aw-split-window-vert "Ace - Split Vert Window")
+          (?h aw-split-window-horz "Ace - Split Horz Window")
+          (?m delete-other-windows "Ace - Maximize Window")
+          (?g delete-other-windows)
+          (?b balance-windows)
+          (?u (lambda ()
+                (progn
+                  (winner-undo)
+                  (setq this-command 'winner-undo))))
+          (?r winner-redo))))
+
+(keymap-global-set "C-M-o" 'mode-line-other-buffer)
+
+(use-package save-visited-files
+  :init
+  (save-visited-files-mode t)
+  :custom
+  (save-visited-files-location (expand-file-name "save-visited-files" user-emacs-directory))
+  (save-visited-files-ignore-tramp-files t)
+  (save-visited-files-ignore-directories nil)
+  (save-visited-files-auto-restore nil))
+
 ;; Add prompt indicator to `completing-read-multiple'.
 ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
 (defun crm-indicator (args)
@@ -438,26 +506,29 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
 
 (keymap-set global-map "C-x m" liminal-modes-toggle-map)
 
-(defun luda/eglot-capf ()
-  (setq-local completion-at-point-functions
-              (list (cape-capf-super
-                     #'eglot-completion-at-point
-                     #'cape-file))))
+(use-package which-key
+  :config
+  (setq which-key-idle-delay 0.75)
+  (which-key-mode))
+
+(use-package projectile
+	:config
+	(projectile-mode)
+	:custom
+	(projectile-project-search-path `(,(concat luda/local-root "code")))
+	:bind (:map projectile-mode-map
+							("s-," . projectile-command-map)))
+
 (use-package eglot
   :bind (:map eglot-mode-map
               ("C-x l r" . eglot-rename)
               ("M-k" . eglot-code-actions))
-  :hook ((eglot-managed-mode . luda/eglot-capf)
-         (ruby-ts-mode . eglot-ensure)
-         (jsx-mode . eglot-ensure)
-         (css-mode . eglot-ensure)
-         (org-mode . eglot-ensure))
+  :hook ((prog-mode . eglot-ensure)
+         (css-mode . eglot-ensure))
   :config
   (setq eldoc-echo-area-use-multiline-p nil)
   (add-to-list 'eglot-server-programs
-               '(ruby-base-mode . ("solargraph" "stdio")))
-  (add-to-list 'eglot-server-programs
-               '(org-mode . ("efm-langserver"))))
+               '(ruby-ts-mode . ("solargraph" "stdio"))))
 
 (use-package eglot-booster
   :after eglot
@@ -465,54 +536,26 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   (eglot-booster-mode))
 
 (use-package eglot-ltex
-  :hook
-  (text-mode . (lambda ()
-                 (require 'eglot-ltex)
-                 (eglot-ensure)))
-  :init
-  (setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"))
+	:hook
+	(text-mode . (lambda ()
+								 (require 'eglot-ltex)
+								 (eglot-ensure)))
+	:init
+	(setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"))
 
 (use-package flycheck
   :config
   (global-flycheck-mode))
 
 (use-package flycheck-eglot
-  :config
-  (global-flycheck-eglot-mode)
+  :hook
+  (eglot-managed-mode . flycheck-eglot-mode)
   :after (flycheck eglot))
 
-(defun luda/save-word ()
-  "Mark a Flyspell reported error as acceptable."
-
-  (interactive)
-
-  (let ((current-location (point))
-        (word (flyspell-get-word)))
-    (when (consp word)
-      (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
-
-(use-package flyspell
-  :bind
-   ("C-x $" . 'luda/save-word)
-   ("C-'" . 'flyspell-auto-correct-previous-word)
-  :hook ((text-mode . flyspell-mode)
-         (prog-mode . flyspell-prog-mode))
-  :config
-  ;; Configure `LANG`, otherwise ispell.el cannot find a 'default
-  ;; dictionary' even though multiple dictionaries will be configured
-  ;; in next line.
-
-  (setenv "LANG" "en_US.UTF-8")
-  (setq ispell-program-name "hunspell")
-  ;; Configure German, Swiss German, and two variants of English.
-  (setq ispell-dictionary "en_US,en_CA,fr_FR")
-  ;; ispell-set-spellchecker-params has to be called
-  ;; before ispell-hunspell-add-multi-dic will work
-  (ispell-set-spellchecker-params)
-  (ispell-hunspell-add-multi-dic "en_US,en_CA,fr_FR")
-  ;; For saving words to the personal dictionary, don't infer it from
-  ;; the locale, otherwise it would save to ~/.hunspell_de_DE.
-  (setq ispell-personal-dictionary "~/.hunspell_personal"))
+(use-package jinx
+	:hook (emacs-startup . global-jinx-mode)
+	:bind (("M-$" . jinx-correct)
+				 ("C-M-$" . jinx-languages)))
 
 (setq treesit-language-source-alist
       '((css "https://github.com/tree-sitter/tree-sitter-css")
@@ -540,13 +583,6 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   (treesit-auto-install 'prompt)
   :config
   (global-treesit-auto-mode))
-
-(use-package projectile
-  :config
-  (projectile-global-mode)
-  :bind
-  ("s-p" . projectile-command-map)
-  ("C-c p" . projectile-command-map))
 
 (use-package apheleia
   :custom
@@ -614,6 +650,8 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   :bind (("M-s %" . #'re-builder)
          :map reb-mode-map ("RET" . #'reb-replace-regexp)
          :map reb-lisp-mode-map ("RET" . #'reb-replace-regexp))
+  :custom
+  (reb-re-syntax 'string)
   :config
   (defvar my/re-builder-positions nil
     "Store point and region bounds before calling re-builder")
@@ -662,6 +700,9 @@ surrounded by word boundaries."
   :bind
   ("C-x e" . 'accent-menu))
 
+(use-package surround
+  :bind-keymap ("M-'" . surround-keymap))
+
 (defun current-line-empty-p ()
   "Return true is the point is in an empty line, false otherwise."
 
@@ -703,6 +744,27 @@ When point is in whitespace between non-whitespace invoke (delete-horizontal-spa
 
 (global-set-key (kbd "C-z") 'zap-up-to-char)
 
+(global-set-key [remap downcase-word] 'downcase-dwim)
+(global-set-key [remap upcase-word] 'upcase-dwim)
+(global-set-key [remap capitalize-word] 'capitalize-dwim)
+
+(use-package elec-pair
+  :config
+  (electric-pair-mode))
+
+(defun narrow-to-region-indirect (start end)
+  "Restrict editing in this buffer to the current region, indirectly."
+  (interactive "r")
+  (deactivate-mark)
+  (let ((buf (clone-indirect-buffer nil nil)))
+    (with-current-buffer buf
+      (narrow-to-region start end))
+    (switch-to-buffer buf)))
+
+(keymap-set global-map "C-c '" 'narrow-to-region-indirect)
+
+(global-set-key [remap dabbrev-expand] 'hippie-expand)
+
 ;; Clean and straightforward undo/redo
 (use-package undo-fu
   :config
@@ -728,8 +790,6 @@ When point is in whitespace between non-whitespace invoke (delete-horizontal-spa
   :bind
   ("C-x !" . projectile-run-vterm))
 
-(global-set-key (kbd "C-x C-m") 'execute-extended-command)
-
 (use-package helpful
   :bind
   ("C-h f" . #'helpful-callable)
@@ -740,45 +800,27 @@ When point is in whitespace between non-whitespace invoke (delete-horizontal-spa
   ("C-c C-d" . #'helpful-at-point))
 
 (add-to-list 'display-buffer-alist
- '("\\*Help\\*\\|\\*helpful.*\\*"
-   (display-buffer-in-side-window)
-   (side . right)
-   (slot . 0)
-   (window-width . 80)
-   (window-parameters
-    (no-delete-other-windows . t))))
+             '("\\*Help\\*\\|\\*helpful.*\\*"
+               (display-buffer-in-side-window)
+               (side . right)
+               (slot . 0)
+               (window-width . 80)
+               (window-parameters
+                (no-delete-other-windows . t))))
 
-(defun luda/switch-theme (theme)
-  "Load THEME after unloading previously loaded themes.
+(defun luda/quit-dwim (&optional arg)
+	"If current frame is the last frame kill emacs, else delete it."
+	(interactive "P")
 
-Unloading themes in this manned does not remove any
-customization done outside of themes."
+	(if (> (length (frame-list)) 1)
+  		(delete-frame arg)
+		(if (y-or-n-p (format "Are you sure you want to close the last frame?"))
+				(save-buffers-kill-terminal arg)
+			(message "Great, back to what you were doing then."))))
 
-  (interactive
-   (list
-    (intern (completing-read "Load custom theme: "
-                             (mapcar 'symbol-name
-                                     (custom-available-themes))))))
-  (mapcar #'disable-theme custom-enabled-themes)
-  (load-theme theme t))
+(global-set-key (kbd "C-x C-c") 'luda/quit-dwim)
 
-(defun luda/kill-frame ()
-  "Delete frame or kill Emacs if there is only one frame."
-  (interactive)
-  (condition-case nil
-      (delete-frame)
-    (error
-     (if (y-or-n-p (format "Are you sure you want to close the last frame?"))
-         (save-buffers-kill-terminal)
-       (message "Great, back to what you were doing then.")))))
-
-(global-set-key (kbd "C-x C-c") 'luda/kill-frame)
-
-(use-package transpose-frame
-  :bind
-  ("C-x |" . transpose-frame))
-
-(keymap-set global-map "C-x k" 'kill-this-buffer)
+(keymap-set global-map "C-x k" 'kill-current-buffer)
 (keymap-set global-map "C-x C-k" 'kill-buffer)
 
 (use-package css-mode
@@ -786,13 +828,10 @@ customization done outside of themes."
   (tab-width 2)
   (css-indent-offset 2))
 
-(use-package rainbow-mode
-  :custom
-  (rainbow-html-colors nil)
-  :hook (css-mode . rainbow-mode))
-
 (use-package web-mode
-  :mode "\\.erb\\'")
+  :mode
+  (("\\.erb\\'" . web-mode)
+   ("\\.html?\\'" . web-mode)))
 
 (use-package haml-mode
   :defer t)
@@ -837,21 +876,22 @@ customization done outside of themes."
 
 (setq luda/todo-keywords
       `((sequence
-         "CALENDAR(c!)" "SHORT(s!)" "LONG(l!)" "WAIT(!w)" "|" "DONE(d!)" "NOPE(-!)")))
+         "TODO(t!)" "ACTIVE(a!)" "WAITING(w!)" "MAYBE(m!)" "|" "DONE(d!)" "OBSOLETE(o!)" "CANCELED(-!)")))
+
+(use-package doct
+	;;recommended: defer until calling doct
+	:commands (doct))
 
 (use-package org
   :init
-  (setq org-export-backends
-        '(ascii md html icalendar latex odt))
+  (setq org-export-backends '(ascii md html icalendar latex))
   :config
-  (setq org-default-notes-file (expand-file-name "todo.org" luda/org-dir))
+  (setq org-default-notes-file (expand-file-name "todo.org" luda/org-dir)) ;; Should maybe be inbox
   (setq org-log-done 'time)
   (setq org-log-reschedule 'time)
   (setq org-log-into-drawer t)
-  (setq org-startup-indented t)
   (setq org-startup-truncated nil)
   (setq org-todo-keywords luda/todo-keywords)
-  (setq org-id-track-globally t)
   (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
   (setq org-id-locations-file luda/org-id-locations-file)
   (setq org-id-locations-file-relative t)
@@ -860,53 +900,34 @@ customization done outside of themes."
   (setq org-latex-pdf-process
         '("tectonic %f"))
 
-  (setq org-capture-templates
-        `(("t" "Todo" entry (file+headline ,luda/projects-file "Tasks")
-           "* TODO %?\n  %i\n  %a")
-          ("pn" "Project Note" entry (file+headline ,luda/projects-file "Notes")
-           "* Bench Note %?\n  %i\n  %a")
-          ("j" "Journal" entry (file+olp+datetree ,luda/journal-file)
-           "* %?\nEntered on %U\n  %i\n  %a")))
+	(setq org-capture-templates
+				(doct `(("Projects"
+								 :keys "p" :file ,luda/projects-file
+								 :template ("* %{todo-state} %^{Description}\n:PROPERTIES:\n:Created: %U\n:END:\n\n\n%i\n%a")
+								 :children (("Todo"
+														 :keys "t"
+														 :headline "Tasks"
+														 :todo-state "TODO")
+														("Note"
+														 :keys "n"
+														 :headline "Notes"
+														 :todo-state ""))
+								 )
+								("Journal"
+								 :keys "j"
+								 :type plain
+								 :file ,luda/journal-file
+								 :datetree t
+								 :template ":PROPERTIES\n:Created: %U\n:END:\n\n%?\n%i\n%a"
+								 :empty-lines 1))))
 
-  ;; One of my big uses for Org is my literate config so having elisp as a template is a must
-  (add-to-list 'org-structure-template-alist '("sl" . "src emacs-lisp"))
+	;; ;; One of my big uses for Org is my literate config so having elisp as a template is a must
+	(add-to-list 'org-structure-template-alist '("sl" . "src emacs-lisp"))
 
-  :bind
-  ("C-c a" . org-agenda)
-  ("C-c c" . org-capture)
-  ("C-c l" . org-store-link))
-
-
-
-(require 'f)
-
-(defun deft-sidebar ()
-  (interactive)
-  (let ((sidebar-buf (generate-new-buffer deft-buffer)))
-    (with-current-buffer sidebar-buf
-      (deft-mode))
-    (display-buffer-in-side-window sidebar-buf
-                                   '((slot . 1)
-                                     (dedicated . t)
-                                     (window-height . 0.35)))))
-
-(use-package deft
-  :commands deft
-  :init
-  (setq deft-directory (f-expand "notes/" luda/org-dir)
-        deft-default-extension "org"
-        deft-use-filename-as-title nil
-        deft-use-filter-string-for-filename t
-        deft-auto-save-interval -1.0
-        deft-file-naming-rules
-        '((noslash . "-")
-          (nospace . "-")
-          (case-fn . downcase)))
-  :config
-  (add-to-list 'deft-extensions "tex"))
-
-(use-package zetteldeft
-  :init (zetteldeft-set-classic-keybindings))
+	:bind
+	("C-c a" . org-agenda)
+	("C-c c" . org-capture)
+	("C-c l" . org-store-link))
 
 (use-package magit
   :bind

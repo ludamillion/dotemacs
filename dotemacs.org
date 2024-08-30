@@ -2,7 +2,7 @@
 #+AUTHOR: Luke D. Inglis
 #+DATE: 11/2023
 #+STARTUP: show2levels indent hidestars
-#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/code/dotemacs/init.el")))
+#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/code/dotemacs/init.el"))
 
 * Emacs Literate Configuration
 * Documentation
@@ -30,22 +30,22 @@ This document is a literate configuration for GNU Emacs written in [[https://org
 
 #+end_quote
 
-*** To Do [1/4]                                                  :INACTIVE:
+*** To Do [2/4]                                                  :INACTIVE:
 
 Simply put a list of concrete actions to take to enchance or solve issues with this configuration.
 
 - [ ] Change underlying Coreutils on MacOS to be the GNU version and adjust config accordingly if necessary.
-- [ ] Extract the non-theme related settings from the =liminal-mode= settings
+- [X] Extract the non-theme related settings from the =liminal-mode= settings
 - [X] Switch to my own fork of the modeline
-- [ ] [[id:C3E38617-59A2-4BB9-8E0D-04047CE5FB5B][Read up on =cycle-spacing=]]
+- [ ] Read up on =cycle-spacing=
 
-*** Research [0/6]                                               :INACTIVE:
+*** Research [1/7]                                               :INACTIVE:
 
 List of less tasks to do that are more theoretical or investigative than the concrete, actionable items above. N.B. the output of these tasks should include two things, one necessary and one conditional. The necessary item is a note with the result of investigating. The conditional item is a To Do added to the list above if the result of the research is an actionable item.
 
 - [ ] [[https://github.com/mickeynp/combobulate][Combobulate]] - Structure navigation and editing. Leverages tree-sitter. An alternative to Objed.
 - [ ] [[Https://github.com/radian-software/prescient.el][Prescient]] - An extra layer of intelligence for completion sorting and filtering
-- [ ] [[https://github.com/oantolin/embark][Embark]]. Looks super cool. Maybe able to combine with Objed or Combobulate.
+- [X] [[https://github.com/oantolin/embark][Embark]]. Looks super cool. Maybe able to combine with Objed or Combobulate.
   Note: I've already added Embark but have yet to use it for much. Spend some time getting to know it.
 - [ ] [[https://github.com/kickingvegas/casual-dired][Casual Dired]] - A transient window based 'porcelain' for Dired aimed at simplifying the UX.
 - [0/2] [[https://protesilaos.com/emacs/denote][Denote]] - Look into as an alternative to Deft + Zetteldeft for note taking.
@@ -53,6 +53,8 @@ List of less tasks to do that are more theoretical or investigative than the con
   - [ ] Can it be massaged to work with [[https://logseq.com/][LogSeq]]
 - [ ] [[https://www.orgroam.com/][Org Roam]] - Much heavier than Denote but might also fit with how I think about how I'd like to use Org mode. Additionally can be configured in such a way as to work well with [[https://logseq.com/][LogSeq]] which seems appealing
 - [ ] As per the last two items look into various ways in which [[https://logseq.com/][LogSeq]] and Emacs/OrgMode can talk to each other and determine the best way of syncing the two.
+- [ ] [[https://github.com/alphapapa/activities.el][Activities]] - Package built around the idea of saving files, buffers, and
+  other related state defined as an /activity/.
 
 *** Possible packages to add                                     :INACTIVE:
 
@@ -103,7 +105,7 @@ This code is meant to go to the [[file:early-init.el][early-init.el]] file.
    site-run-file nil                         ; No site-wide run-time initializations.
    inhibit-default-init t                    ; No site-wide default library
    gc-cons-threshold most-positive-fixnum    ; Very large threshold for garbage
-                                             ; collector during init
+                                          ; collector during init
    package-enable-at-startup nil)            ; We'll use straight.el
 
   (setq native-comp-eln-load-path
@@ -138,16 +140,16 @@ Using [[https://github.com/raxod502/straight.el][straight.el]] for package manag
 
   (setq straight-check-for-modifications nil)
 
-  #+end_src
+#+end_src
 
-  Library load paths with a special case for mu4e (you may need to adapt this path).
+Library load paths with a special case for mu4e (you may need to adapt this path).
 
-  #+begin_src emacs-lisp
+#+begin_src emacs-lisp
 
-    (add-to-list 'load-path
-                 (expand-file-name "lisp" user-emacs-directory))
+  (add-to-list 'load-path
+               (expand-file-name "lisp" user-emacs-directory))
 
-  #+end_src
+#+end_src
 
 ** Packages installation
 
@@ -159,39 +161,35 @@ Packages used in this specific configuration. You may want to adapt this list. T
         '(
           accent               ; Easier access to accented characters
           ace-window           ; Easier moving between windows
-          apheleia             ; Code formatting with the pain and blocking
+          apheleia             ; Code formatting without the pain and blocking
           avy                  ; Jump to things (but really much, much more...)
           cape                 ; Completion At Point Extensions
           circadian            ; Change my theme in rhythm with nature
+          command-log-mode     ; More insight into what commands are being run/looks fancy when showing off
           consult              ; Consulting completing-read
           consult-lsp          ; LSP extras for consult to, well, consult
           corfu                ; Completion Overlay Region FUnction
-          deft                 ; Enhanced note taking with Org
+  				denote
+  				doct                 ; (D)eclarative (O)rg (C)apture (T)emplates
           embark
           embark-consult
           exec-path-from-shell ; Get environment variables such as $PATH from the shell
-          f                    ; Modern API for working with files and directories
           flycheck             ; Enhanced syntax checking, more flexible than flymake
           flycheck-eglot       ; Allow Flycheck to understand Eglot as a checker
-          flyspell
           haml-mode            ; Rails templates not covered by treesitter or web-mode
           helpful              ; A better help buffer
-          imenu-list           ; Show imenu entries in a separate
-          language-id
-          lua-mode
           magit                ; A Git porcelain inside Emacs.
           marginalia           ; Enrich existing commands with completion annotations
           markdown-mode        ; Major mode for Markdown-formatted text
           no-littering         ; Keep our things clean and tidy
           orderless            ; Completion style for matching regexps in any order
-          org-auto-tangle
+  				pdf-tools
           projectile           ; Project scoped stuffness
-          rainbow-mode         ; Sometime you just need to see the colors
           rg                   ; Ripgrep for speed and profit(?)
-          slim-mode
-          smartscan            ; A little package to quick hop to
-          smartparens          ; Like parens but, you know, ...smarter
-          transpose-frame
+          save-visited-files   ; Simplest form of session persistance
+          surround
+          tempel
+          tempel-collection
           treesit-auto
           undo-fu              ; Work around Emacs' clunky undo interface
           undo-fu-session      ; Persistant undo across sessions
@@ -201,18 +199,11 @@ Packages used in this specific configuration. You may want to adapt this list. T
           vterm                ; A real terminal emulator running in Emacs
           web-mode             ; Uber mode for web templating languages
           which-key            ; Discovery method for key bindings
-          zetteldeft           ; Put your deft notes in little slip boxen
           ))
 
   ;; Install packages that are not yet installed
   (dolist (package package-list)
     (straight-use-package package))
-
-  ;; Install a selection of the N Λ N O suite of packages install straight from GitHub
-
-  ;; A cleaner, more minimal Org agenda
-  (straight-use-package
-   '(nano-agenda :type git :host github :repo "rougier/nano-agenda"))
 
   (straight-use-package
    '(jtsx :type git :host github :repo "llemaitre19/jtsx"))
@@ -228,7 +219,7 @@ Packages used in this specific configuration. You may want to adapt this list. T
 
   (straight-use-package '(org :type built-in))
 
-  #+end_src
+#+end_src
 
 ** Meta-Configuration
 
@@ -241,7 +232,7 @@ Display a message to the *Messages* buffer showing the Emacs init time.
 #+begin_src emacs-lisp
 
   (let ((inhibit-message t))
-    (message "Welcome to GNU Emacs / Liminal edition")
+    (message "Welcome to GNU Emacs / Sensible edition")
     (message (format "Initialization time: %s" (emacs-init-time))))
 
 #+end_src
@@ -254,19 +245,9 @@ Display a message to the *Messages* buffer showing the Emacs init time.
     "Reload the file referenced by `user-init-file`."
 
     (interactive)
-    (load-file user-init-file))
+  	(load-file (expand-file-name "init.el" user-emacs-directory)))
 
-  (global-set-key (kbd "<f5>") 'reload-init-file)
-
-#+end_src
-
-*** Auto-tangle
-
-Automatically tangle org-mode files with the option #+auto_tangle: t
-
-#+begin_src emacs-lisp
-
-  (add-hook 'org-mode-hook 'org-auto-tangle-mode)
+  (keymap-global-set "<f5>" 'reload-init-file)
 
 #+end_src
 
@@ -333,12 +314,12 @@ Preservre cursor position per file across sessions.
 
 Remove text properties for kill ring entries (see https://emacs.stackexchange.com/questions/4187). This saves a lot of time when loading it.
 
- #+begin_src emacs-lisp
+#+begin_src emacs-lisp
 
-(defun unpropertize-kill-ring ()
-  (setq kill-ring (mapcar 'substring-no-properties kill-ring)))
+  (defun unpropertize-kill-ring ()
+    (setq kill-ring (mapcar 'substring-no-properties kill-ring)))
 
-(add-hook 'kill-emacs-hook 'unpropertize-kill-ring)
+  (add-hook 'kill-emacs-hook 'unpropertize-kill-ring)
 
 #+end_src
 
@@ -381,7 +362,7 @@ No duplicates in history
 
 #+begin_src emacs-lisp
 
-(setq history-delete-duplicates t)
+  (setq history-delete-duplicates t)
 
 #+end_src
 
@@ -389,8 +370,8 @@ Start history mode.
 
 #+begin_src emacs-lisp
 
-(let (message-log-max)
-  (savehist-mode))
+  (let (message-log-max)
+    (savehist-mode))
 
 #+end_src
 
@@ -437,19 +418,6 @@ Juggle a few modifier keys to make things a little more comfortable. Tell dired 
 
 #+end_src
 
-** Server
-
-In theory the server should be running via a Homebrew installed Plist via =launchctl=. However, if it isn't running already than start it when Emacs is initialized.
-
-#+begin_src emacs-lisp
-
-  (require 'server)
-
-  (unless (server-running-p)
-    (server-start))
-
-#+end_src
-
 * Frame
 
 A variation on =make-frame= that opens to the =*scratch*= buffer rather than the current buffer.
@@ -473,32 +441,36 @@ A variation on =make-frame= that opens to the =*scratch*= buffer rather than the
 #+end_src
 
 * Visual
-** Liminal Theme
+** Sensible Settings
 
-My version of the =nano-theme= package. Currently it's a straightforward fork with mostly just the colors changed and the nano naming replaced with my own liminal naming.
-
-Visually a lot of what I'm going for is derived from the N Λ N O project and things found in its author personal config. I'm currently in the process of forking and customizing various aspects of it.
-
-As part of it's setup it is running the =liminal-mode= function which sets a number of sensible defaults and settings. For me it would make more sense for these to be there own separate setup but I haven't extracted them yet.
+As part of it's setup it is running the =sensible-mode= function which sets a number of sensible defaults and settings. For me it would make more sense for these to be there own separate setup but I haven't extracted them yet.
 
 #+begin_src emacs-lisp
 
-  (use-package liminal-theme
-    :load-path "~/code/liminal-theme"
+  (use-package sensible-settings
+    :load-path "~/code/sensible-settings"
     :init
-    (setopt liminal-manage-cursor t
-            liminal-manage-fonts t
-            liminal-manage-ui t
-            liminal-manage-ux t
-            liminal-font-size 16)
+    (setopt sensible-font-size 16
+            sensible-manage-cursor t
+            sensible-manage-fonts t
+            sensible-manage-ui t
+            sensible-manage-ux t)
     :config
-    (liminal-mode))
+    (sensible-mode))
 
 #+end_src
 
-** Liminal Mode
+** Sensible Themes
 
-The =nano-theme= package on which my Liminal theme is based has a =liminal-mode= function which sets a number of variables settings to make Emacs conform to Rougier's presentation goals. While I like most of his choices I don't necessarily think all of the settings would be set by the theme itself. Here I'm extracting them.
+New theme ideas I'm playing around with using [[https://www.reasonable.work/colors/][Reasonable Colors]].
+
+#+begin_src emacs-lisp
+
+  (use-package sensible-themes
+  	:after 'sensible-settings
+    :load-path "~/code/sensible-themes")
+
+#+end_src
 
 ** Liminal modeline
 
@@ -506,20 +478,20 @@ I like the idea and the behavior of this modeline but there are a few more thing
 
 #+begin_src emacs-lisp
 
-  (use-package liminal-modeline
-    :after liminal-theme
-    :load-path "~/code/liminal-modeline"
+  (use-package sensible-modeline
+    :after 'sensible-themes
+    :load-path "~/code/sensible-modeline"
     :init
     (setopt mode-line-format nil)
     :hook
-    (prog-mode            . liminal-modeline-prog-mode)
-    (text-mode            . liminal-modeline-text-mode)
-    (org-mode             . liminal-modeline-org-mode)
-    (term-mode            . liminal-modeline-term-mode)
-    (vterm-mode           . liminal-modeline-term-mode)
-    (messages-buffer-mode . liminal-modeline-message-mode)
-    (org-capture-mode     . liminal-modeline-org-capture-mode)
-    (org-agenda-mode      . liminal-modeline-org-agenda-mode))
+    (prog-mode            . sensible-modeline-prog-mode)
+    (text-mode            . sensible-modeline-text-mode)
+    (org-mode             . sensible-modeline-org-mode)
+    (term-mode            . sensible-modeline-term-mode)
+    (vterm-mode           . sensible-modeline-term-mode)
+    (messages-buffer-mode . sensible-modeline-message-mode)
+    (org-capture-mode     . sensible-modeline-org-capture-mode)
+    (org-agenda-mode      . sensible-modeline-org-agenda-mode))
 
 #+end_src
 
@@ -531,12 +503,12 @@ I prefer the legibility of a well designed light theme when the lighting is good
 
   (use-package circadian
     :custom
-     (calendar-latitude 42.4)
-     (calendar-longitude -71.0)
-     (circadian-themes '((:sunrise . liminal-light)
-                         (:sunset  . liminal-dark)))
-     :config
-     (circadian-setup))
+    (calendar-latitude 42.4)
+    (calendar-longitude -71.0)
+    (circadian-themes '((:sunrise . sensible-amber-light)
+                        (:sunset  . sensible-azure-dark)))
+    :config
+    (circadian-setup))
 
 #+end_src
 
@@ -555,11 +527,27 @@ Always waffle on how minimal to be. Right now line numbers in prog modes are use
 
 #+begin_src emacs-lisp
 
-  ;; (use-package display-line-numbers
-  ;;   :custom
-  ;;   (display-line-numbers-widen t)
-  ;;   :hook
-  ;;   ((prog-mode conf-mode) . display-line-numbers-mode))
+  (use-package display-line-numbers
+    :custom
+    (display-line-numbers-widen t)
+    :hook
+    ((prog-mode conf-mode) . display-line-numbers-mode))
+
+#+end_src
+
+* PDF
+
+#+begin_src emacs-lisp
+
+  (use-package pdf-tools
+    :config
+    (pdf-tools-install)
+    (setq-default pdf-view-display-size 'fit-width)
+    (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
+    :custom
+    (pdf-annot-activate-created-annotations t "automatically annotate highlights"))
+
+  (add-hook 'pdf-view-mode-hook (lambda() (display-line-numbers-mode -1)))
 
 #+end_src
 
@@ -614,7 +602,7 @@ What Vertico is to Ivy [[https://github.com/minad/consult][Consult]] is to Ivy's
     :config
     (recentf-mode)
     :bind (
-           ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+           ("M-s d" . consult-fd) ;; Requires having fd installed otherwise use consult-find
            ("M-s c" . consult-locate)
            ("M-s g" . consult-grep)
            ("M-s G" . consult-git-grep)
@@ -623,8 +611,9 @@ What Vertico is to Ivy [[https://github.com/minad/consult][Consult]] is to Ivy's
            ("M-s L" . consult-line-multi)
            ("M-s k" . consult-keep-lines)
            ("M-s u" . consult-focus-lines)
-           ("M-x"   . consult-buffer)
+           ("M-s <SPC>"   . consult-buffer)
            ("M-y"   . consult-yank-pop)
+           ("C-x M-k"   . consult-kmacro)
            ("M-g g" . consult-goto-line)
            ("M-g i" . consult-imenu)
            ("M-g o" . consult-outline)
@@ -640,9 +629,9 @@ Orderless enhances completion functions allowing for searching by space delimite
 
   (use-package orderless
     :config
-     (setq completion-styles '(orderless partial-completion basic))
-     (setq completion-category-defaults nil)
-     (setq completion-category-overrides '((file (styles partial-completion)))))
+    (setq completion-styles '(orderless partial-completion basic))
+    (setq completion-category-defaults nil)
+    (setq completion-category-overrides '((file (styles partial-completion)))))
 
 #+end_src
 
@@ -652,23 +641,23 @@ Another package from =minad= (author of Vertico and Consult) Corfu is the 'in-bu
 
 #+begin_src emacs-lisp
 
-    (defun corfu-x-eshell-hook ()
-      "Set up Corfu behaviors in a shell friendly way."
-      (setq-local corfu-auto nil)
-      (corfu-mode))
+  (defun corfu-x-eshell-hook ()
+    "Set up Corfu behaviors in a shell friendly way."
+    (setq-local corfu-auto nil)
+    (corfu-mode))
 
-    (use-package corfu
-      :config
-      (setq corfu-cycle t
-            corfu-auto t
-            corfu-on-exact-match nil)
-      :hook
-      (eshell-mode . corfu-x-eshell-hook)
-      :init
-      (corfu-history-mode)
-      (global-corfu-mode))
+  (use-package corfu
+    :init
+    (setq corfu-cycle t
+          corfu-auto t
+          corfu-on-exact-match nil)
+    (corfu-history-mode)
+    (corfu-echo-mode)
+    (global-corfu-mode)
+    :hook
+    (eshell-mode . corfu-x-eshell-hook))
 
-  #+end_src
+#+end_src
 
 * Cape
 
@@ -676,25 +665,34 @@ Yet another package from =minad=. As mentioned Corfu leverages the =completion-a
 
 #+begin_src emacs-lisp
 
-  (use-package cape
-    :init
-    ;; LSP
-    (defun luda/cape-capf-setup-lsp ()
-      "Replace the default `lsp-completion-at-point' with its
+  (defun luda/eglot-capf ()
+    (setq-local completion-at-point-functions
+                (list (cape-capf-super
+                       #'eglot-completion-at-point
+                       #'tempel-expand
+                       #'cape-file))))
+
+  (defun luda/cape-capf-setup-lsp ()
+    "Replace the default `lsp-completion-at-point' with its
   `cape-capf-buster' version."
-      (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
-            (cape-capf-buster #'eglot-completion-at-point))
-      (add-to-list 'completion-at-point-functions #'cape-dabbrev t))
+    (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
+          (cape-capf-buster #'eglot-completion-at-point))
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev t))
 
-    (defun luda/cape-capf-setup-org ()
-      (add-to-list 'completion-at-point-functions (cape-super-capf #'cape-dict #'cape-dabbrev)))
+  (defun luda/cape-capf-setup-org ()
+    (add-to-list 'completion-at-point-functions (cape-capf-super #'cape-dict #'cape-dabbrev)))
 
-    (defun luda/cape-capf-setup-git-commit ()
-      (let ((result))
-        (dolist (element '(cape-dabbrev cape-symbol) result)
-          (add-to-list 'completion-at-point-functions element))))
+  (defun luda/cape-capf-setup-git-commit ()
+    (let ((result))
+      (dolist (element '(cape-dabbrev cape-symbol) result)
+        (add-to-list 'completion-at-point-functions element))))
+
+  (use-package cape
+    :config
+    (setq completion-category-overrides '((eglot (styles orderless))
+                                          (eglot-capf (styles orderless))))
     :hook
-    ((eglot-managed-mode . luda/cape-capf-setup-lsp)
+    ((eglot-managed-mode . luda/eglot-capf)
      (org-mode . luda/cape-capf-setup-org)
      (git-commit-mode . luda/cape-capf-setup-git-commit)))
 
@@ -752,7 +750,100 @@ Marginalia adds rich annotations to the minibuffer completions. Good for quick r
 
 #+end_src
 
+* Tempel
+
+
+Another minad package to try. This time template expansion.
+
+#+begin_src emacs-lisp
+
+  (use-package tempel
+    ;; Require trigger prefix before template name when completing.
+    :custom
+    (tempel-trigger-prefix "<")
+
+    :bind (("M-=" . tempel-complete) ;; Alternative tempel-expand
+           ("M-*" . tempel-insert))
+    :init
+
+    ;; Setup completion at point
+    (defun tempel-setup-capf ()
+      ;; Add the Tempel Capf to `completion-at-point-functions'.
+      ;; `tempel-expand' only triggers on exact matches. Alternatively use
+      ;; `tempel-complete' if you want to see all matches, but then you
+      ;; should also configure `tempel-trigger-prefix', such that Tempel
+      ;; does not trigger too often when you don't expect it. NOTE: We add
+      ;; `tempel-expand' *before* the main programming mode Capf, such
+      ;; that it will be tried first.
+      (setq-local completion-at-point-functions
+                  (cons #'tempel-expand
+                        completion-at-point-functions)))
+
+    (add-hook 'conf-mode-hook 'tempel-setup-capf)
+    (add-hook 'prog-mode-hook 'tempel-setup-capf)
+    (add-hook 'text-mode-hook 'tempel-setup-capf))
+
+  ;; Optional: Add tempel-collection.
+  ;; The package is young and doesn't have comprehensive coverage.
+  (use-package tempel-collection)
+
+#+end_src
+
 * Ace Window
+
+#+begin_src emacs-lisp
+
+  (use-package ace-window
+    :bind
+    ("M-o" . 'ace-window)
+    :config
+    (setq aw-keys '(?a ?s ?d ?f ?j ?k ?l)
+          aw-dispatch-always t
+          aw-dispatch-alist
+          '((?x aw-delete-window "Ace - Delete Window")
+            (?c aw-swap-window "Ace - Swap Window")
+            (?n aw-flip-window)
+            (?v aw-split-window-vert "Ace - Split Vert Window")
+            (?h aw-split-window-horz "Ace - Split Horz Window")
+            (?m delete-other-windows "Ace - Maximize Window")
+            (?g delete-other-windows)
+            (?b balance-windows)
+            (?u (lambda ()
+                  (progn
+                    (winner-undo)
+                    (setq this-command 'winner-undo))))
+            (?r winner-redo))))
+
+#+end_src
+
+Not directly related to ace but philosophically related. Key binding for quickly hopping between the current buffer and the last visited one.
+
+#+begin_src emacs-lisp
+
+  (keymap-global-set "C-M-o" 'mode-line-other-buffer)
+
+#+end_src
+
+* Save Visited Files
+
+I've looked around for different types of session management for Emacs. For the
+most part I don't want anything more than just remembering the files I had open
+if I need to quit out for some reason. Thankfully someone else had the same
+idea.
+
+#+begin_src emacs-lisp
+
+  (use-package save-visited-files
+    :init
+    (save-visited-files-mode t)
+    :custom
+    (save-visited-files-location (expand-file-name "save-visited-files" user-emacs-directory))
+    (save-visited-files-ignore-tramp-files t)
+    (save-visited-files-ignore-directories nil)
+    (save-visited-files-auto-restore nil))
+
+#+end_src
+
 * Minibuffer
 
 #+begin_src emacs-lisp
@@ -793,32 +884,50 @@ Stuff related, at least philosophically to the management of modes themselves.
 #+end_src
 
 * Which key for discoverability
+
+Add which-key for discoverability and because I can only ever remember my most used key bindings.
+
+#+begin_src emacs-lisp
+
+  (use-package which-key
+    :config
+    (setq which-key-idle-delay 0.75)
+    (which-key-mode))
+
+#+end_src
+
+* Projectile
+
+I had stopped exploring projectile for a bit but never removed it. I'm taking a second look now.
+
+#+begin_src emacs-lisp
+
+  (use-package projectile
+  	:config
+  	(projectile-mode)
+  	:custom
+  	(projectile-project-search-path `(,(concat luda/local-root "code")))
+  	:bind (:map projectile-mode-map
+  							("s-," . projectile-command-map)))
+
+#+end_src
+
 * LSP
 
 Use Eglot for LSP integration. Fewer options than =lsp-mode= but it's built-in and covers the ground that I need it for right noe
 
 #+begin_src emacs-lisp
 
-  (defun luda/eglot-capf ()
-    (setq-local completion-at-point-functions
-                (list (cape-capf-super
-                       #'eglot-completion-at-point
-                       #'cape-file))))
   (use-package eglot
     :bind (:map eglot-mode-map
                 ("C-x l r" . eglot-rename)
                 ("M-k" . eglot-code-actions))
-    :hook ((eglot-managed-mode . luda/eglot-capf)
-           (ruby-ts-mode . eglot-ensure)
-           (jsx-mode . eglot-ensure)
-           (css-mode . eglot-ensure)
-           (org-mode . eglot-ensure))
+    :hook ((prog-mode . eglot-ensure)
+           (css-mode . eglot-ensure))
     :config
     (setq eldoc-echo-area-use-multiline-p nil)
     (add-to-list 'eglot-server-programs
-                 '(ruby-base-mode . ("solargraph" "stdio")))
-    (add-to-list 'eglot-server-programs
-                 '(org-mode . ("efm-langserver"))))
+                 '(ruby-ts-mode . ("solargraph" "stdio"))))
 
   (use-package eglot-booster
     :after eglot
@@ -830,12 +939,12 @@ Use Eglot for LSP integration. Fewer options than =lsp-mode= but it's built-in a
 #+begin_src emacs-lisp
 
   (use-package eglot-ltex
-    :hook
-    (text-mode . (lambda ()
-                   (require 'eglot-ltex)
-                   (eglot-ensure)))
-    :init
-    (setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"))
+  	:hook
+  	(text-mode . (lambda ()
+  								 (require 'eglot-ltex)
+  								 (eglot-ensure)))
+  	:init
+  	(setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"))
 
 #+end_src
 * Code analysis:
@@ -850,53 +959,24 @@ Flycheck to run checkers, linters, etc. Also hook Flycheck and Eglot together so
     (global-flycheck-mode))
 
   (use-package flycheck-eglot
-    :config
-    (global-flycheck-eglot-mode)
+    :hook
+    (eglot-managed-mode . flycheck-eglot-mode)
     :after (flycheck eglot))
 
 #+end_src
 
-** Flyspell
+** Jinx
 
-Another Fly, this time Flyspell. Spellchecking everywhere/everywhen because I am dyslexic and I type quickly. Add my own =save-word= function as I use a fair number of domain terms etc. that aren't in general purpose dictionaries.
+Fast just-in-time spell checker leveraging the power of the enchant library.
 
 #+begin_src emacs-lisp
 
-  (defun luda/save-word ()
-    "Mark a Flyspell reported error as acceptable."
-
-    (interactive)
-
-    (let ((current-location (point))
-          (word (flyspell-get-word)))
-      (when (consp word)
-        (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
-
-  (use-package flyspell
-    :bind
-     ("C-x $" . 'luda/save-word)
-     ("C-'" . 'flyspell-auto-correct-previous-word)
-    :hook ((text-mode . flyspell-mode)
-           (prog-mode . flyspell-prog-mode))
-    :config
-    ;; Configure `LANG`, otherwise ispell.el cannot find a 'default
-    ;; dictionary' even though multiple dictionaries will be configured
-    ;; in next line.
-
-    (setenv "LANG" "en_US.UTF-8")
-    (setq ispell-program-name "hunspell")
-    ;; Configure German, Swiss German, and two variants of English.
-    (setq ispell-dictionary "en_US,en_CA,fr_FR")
-    ;; ispell-set-spellchecker-params has to be called
-    ;; before ispell-hunspell-add-multi-dic will work
-    (ispell-set-spellchecker-params)
-    (ispell-hunspell-add-multi-dic "en_US,en_CA,fr_FR")
-    ;; For saving words to the personal dictionary, don't infer it from
-    ;; the locale, otherwise it would save to ~/.hunspell_de_DE.
-    (setq ispell-personal-dictionary "~/.hunspell_personal"))
+  (use-package jinx
+  	:hook (emacs-startup . global-jinx-mode)
+  	:bind (("M-$" . jinx-correct)
+  				 ("C-M-$" . jinx-languages)))
 
 #+end_src
-
 * Treesitter
 
 I tried the =treesit-auto= package for automagically handling installation and activation of Treesitter parsers/modes but it wasn't working as smoothly as I'd hoped so I'm going to just handle things manually for the time being.
@@ -934,38 +1014,28 @@ Edit: trying =treesit-auto= yet again as I was unable to get /anything/ to work 
 
 #+end_src
 
-* Projectile
+* Formatting
 
-The de facto standard for project scoped actions bring in =projectile= with no additional customization.
+I played around with using Eglot and the LSP for formatting and I might still
+do that but it was going to take some configuration to get it to not do
+annoying things with the formatting like always using actual tabs and
+defaulting to width 8 tabs. Both of those being 'issues' with how the LSP spec
+defines tabSize and what Emacs considers a tab and what it considers
+indentation.
+
+So for the time being I am using [[https://github.com/radian-software/apheleia][Apheleia]]. Currentinly only set up for Javascript.
 
 #+begin_src emacs-lisp
 
-  (use-package projectile
+  (use-package apheleia
+    :custom
+    ((alist-get 'prettier apheleia-formatters)
+     '(npx "prettier" "--print-width" "100" file))
     :config
-    (projectile-global-mode)
-    :bind
-    ("s-p" . projectile-command-map)
-    ("C-c p" . projectile-command-map))
+    (add-to-list 'apheleia-mode-alist '(jsx-mode . prettier))
+    (add-to-list 'apheleia-mode-alist '(ruby-ts-mode . rubocop)))
 
 #+end_src
-
-* Formatting
-
-  I played around with using Eglot and the LSP for formatting and I might still do that but it was going to take some configuration to get it to not do annoying things with the formatting like always using actual tabs and defaulting to width 8 tabs. Both of those being 'issues' with how the LSP spec defines tabSize and what Emacs considers a tab and what it considers indentation.
-
-  So for the time being I am using [[https://github.com/radian-software/apheleia][Apheleia]]. Currentinly only set up for Javascript.
-
-  #+begin_src emacs-lisp
-
-    (use-package apheleia
-      :custom
-      ((alist-get 'prettier apheleia-formatters)
-       '(npx "prettier" "--print-width" "100" file))
-      :config
-      (add-to-list 'apheleia-mode-alist '(jsx-mode . prettier))
-      (add-to-list 'apheleia-mode-alist '(ruby-ts-mode . rubocop)))
-
-  #+end_src
 
 * Text editing and navigation
 
@@ -1062,6 +1132,8 @@ The follow is code that is taken from Karthik Chikmagalur's fantastic blog entry
     :bind (("M-s %" . #'re-builder)
            :map reb-mode-map ("RET" . #'reb-replace-regexp)
            :map reb-lisp-mode-map ("RET" . #'reb-replace-regexp))
+    :custom
+    (reb-re-syntax 'string)
     :config
     (defvar my/re-builder-positions nil
       "Store point and region bounds before calling re-builder")
@@ -1120,14 +1192,31 @@ At work I sometimes have to write in French. On top of that I'm attempting to le
 
 #+end_src
 
+** Surround
+
+Something I miss still from my Neovim days is the venerable surround
+plugin. Since I don't use Evil evil-surround isn't for me. However, someone else
+has already had the idea of porting this concept back to vanilla Emacs as
+well. The, rather obviously named, =surround= package.
+
+#+begin_src emacs-lisp
+
+  (use-package surround
+    :bind-keymap ("M-'" . surround-keymap))
+
+#+end_src
+
 ** Miscellaneous Enhancements
-:PROPERTIES:
-:ID:       C3E38617-59A2-4BB9-8E0D-04047CE5FB5B
-:END:
 
-Emacs has two similar functions for deleting surrounding white space, =delete-horizontal-space= which deletes all whitespace surrounding the point on the current line and =delete-blank-lines= which deletes either blank lines above and below the current line if it is blank or deletes the current line if it is blank and the the lines surrounding lines are not. Below is a utility function to smartly combine the two.
+Emacs has two similar functions for deleting surrounding white space,
+=delete-horizontal-space= which deletes all whitespace surrounding the point on
+the current line and =delete-blank-lines= which deletes either blank lines above
+and below the current line if it is blank or deletes the current line if it is
+blank and the the lines surrounding lines are not. Below is a utility function
+to smartly combine the two.
 
-Read up on =cycle-spacing= command. It looks like it might do much of what I'm doing here.
+Read up on =cycle-spacing= command. It looks like it might do much of what I'm
+doing here.
 
 #+begin_src emacs-lisp
 
@@ -1186,6 +1275,57 @@ As probably want to zap up to a character as often as I want to zap the characte
 
 #+end_src
 
+Emacs has given us many DWIM versions of common commands over the years. However, they don't replace the 'old version' by default. DWIM when I use the case change commands.
+
+#+begin_src emacs-lisp
+
+  (global-set-key [remap downcase-word] 'downcase-dwim)
+  (global-set-key [remap upcase-word] 'upcase-dwim)
+  (global-set-key [remap capitalize-word] 'capitalize-dwim)
+
+#+end_src
+
+Turn on electric-pair-mode
+
+#+begin_src emacs-lisp
+
+  (use-package elec-pair
+    :config
+    (electric-pair-mode))
+
+#+end_src
+
+** Narrow to indirect
+
+Combine two neat features of Emacs to facilitate a better workflow for editing single files with multiple languages.
+
+Currently unaltered. Found here: [[https://demonastery.org/2013/04/emacs-narrow-to-region-indirect/]]
+
+#+begin_src emacs-lisp
+
+  (defun narrow-to-region-indirect (start end)
+    "Restrict editing in this buffer to the current region, indirectly."
+    (interactive "r")
+    (deactivate-mark)
+    (let ((buf (clone-indirect-buffer nil nil)))
+      (with-current-buffer buf
+        (narrow-to-region start end))
+      (switch-to-buffer buf)))
+
+  (keymap-set global-map "C-c '" 'narrow-to-region-indirect)
+
+#+end_src
+
+** Hippie Expand
+
+Seamlessly replace =dabbrev= with =hippie-expand= for fun and profit.
+
+#+begin_src emacs-lisp
+
+  (global-set-key [remap dabbrev-expand] 'hippie-expand)
+
+#+end_src
+
 * Behavioral Enhancements
 
 One of the few big holes in Emacs' basic functionality is its undo system. So I use a drop in replacement.
@@ -1237,14 +1377,6 @@ When I want a terminal I want a real terminal. =vterm= essentially add a 'real' 
 
 #+end_src
 
-Probably most this to a more sensible place when I come up with one; Swap out =M-x= for running =execute-extended-command=.
-
-#+begin_src emacs-lisp
-
-  (global-set-key (kbd "C-x C-m") 'execute-extended-command)
-
-#+end_src
-
 Make Emacs' already helpful **Help** system even more helpful. In addition to adding the =helpful= package to enhance certain queries set a rule to open help buffer's in a side window.
 
 #+begin_src emacs-lisp
@@ -1259,65 +1391,33 @@ Make Emacs' already helpful **Help** system even more helpful. In addition to ad
     ("C-c C-d" . #'helpful-at-point))
 
   (add-to-list 'display-buffer-alist
-   '("\\*Help\\*\\|\\*helpful.*\\*"
-     (display-buffer-in-side-window)
-     (side . right)
-     (slot . 0)
-     (window-width . 80)
-     (window-parameters
-      (no-delete-other-windows . t))))
+               '("\\*Help\\*\\|\\*helpful.*\\*"
+                 (display-buffer-in-side-window)
+                 (side . right)
+                 (slot . 0)
+                 (window-width . 80)
+                 (window-parameters
+                  (no-delete-other-windows . t))))
 
 #+end_src
 
 * Utility Functions
 
-Miscellaneous utility functions. Perhaps to later be packaged up if I make =liminal= more of a Nano-like 'distro'.
-
-Switch themes more cleanly than the default. Emacs themes are designed to be able to stack on top of each other. This behavior is not always what is wanted. This function disables any themes in place and them loads the requested them.
-
-#+begin_src emacs-lisp
-
-  (defun luda/switch-theme (theme)
-    "Load THEME after unloading previously loaded themes.
-
-  Unloading themes in this manned does not remove any
-  customization done outside of themes."
-
-    (interactive
-     (list
-      (intern (completing-read "Load custom theme: "
-                               (mapcar 'symbol-name
-                                       (custom-available-themes))))))
-    (mapcar #'disable-theme custom-enabled-themes)
-    (load-theme theme t))
-
-#+end_src
-
 Kill the current frame or exit emacs if the frame in question is the only one. Taken from [[https://github.com/rougier/nano-emacs/issues/128]]. Tweaked to confirm but only when killing the last frame. I've accidentally closed the last frame a few too many times for comfort.
 
 #+begin_src emacs-lisp
 
-  (defun luda/kill-frame ()
-    "Delete frame or kill Emacs if there is only one frame."
-    (interactive)
-    (condition-case nil
-        (delete-frame)
-      (error
-       (if (y-or-n-p (format "Are you sure you want to close the last frame?"))
-           (save-buffers-kill-terminal)
-         (message "Great, back to what you were doing then.")))))
+  (defun luda/quit-dwim (&optional arg)
+  	"If current frame is the last frame kill emacs, else delete it."
+  	(interactive "P")
 
-  (global-set-key (kbd "C-x C-c") 'luda/kill-frame)
+  	(if (> (length (frame-list)) 1)
+    		(delete-frame arg)
+  		(if (y-or-n-p (format "Are you sure you want to close the last frame?"))
+  				(save-buffers-kill-terminal arg)
+  			(message "Great, back to what you were doing then."))))
 
-#+end_src
-
-Generally speaking I don't like to have more two windows open at a time. When I do have two windows I don't always split them the way I want. Ergo the need to toggle between vertical and horizontal split.
-
-#+begin_src emacs-lisp
-
-  (use-package transpose-frame
-    :bind
-    ("C-x |" . transpose-frame))
+  (global-set-key (kbd "C-x C-c") 'luda/quit-dwim)
 
 #+end_src
 
@@ -1325,7 +1425,7 @@ When I want to kill a buffer I almost always want to kill the buffer I'm in. Occ
 
 #+begin_src emacs-lisp
 
-  (keymap-set global-map "C-x k" 'kill-this-buffer)
+  (keymap-set global-map "C-x k" 'kill-current-buffer)
   (keymap-set global-map "C-x C-k" 'kill-buffer)
 
 #+end_src
@@ -1349,21 +1449,6 @@ I also need to figure out what to set up for SCSS as we lean on that heavily at 
 
 #+end_src
 
-Maybe put this somewhere else but it works hand in hand with CSS so it's not the /wrong/ place to put it.
-
-#+begin_src emacs-lisp
-
-  (use-package rainbow-mode
-    :custom
-    (rainbow-html-colors nil)
-    :hook (css-mode . rainbow-mode))
-
-#+end_src
-
-** EmacsLisp
-
-Ah, the raison d'être
-
 ** ERB
 :LOGBOOK:
 - State "CALENDAR"   from              [2024-02-27 Tue 07:52]
@@ -1374,11 +1459,13 @@ At my day job we have a primarily Rails codebase. This means we have legacy ERB 
 #+begin_src emacs-lisp
 
   (use-package web-mode
-    :mode "\\.erb\\'")
+    :mode
+    (("\\.erb\\'" . web-mode)
+     ("\\.html?\\'" . web-mode)))
 
 #+end_src
 
-** HAML + Slim
+** HAML
 
 A Rails codebase also means HAML and Slim templates too. Sadly for my config's dependency graph =web-mode= is designed for template languages that are derived from HTML which HAML is not. So bring in its own mode package.
 
@@ -1457,18 +1544,30 @@ Various directory and file locations for use configuring Org.
 
 #+end_src
 
-Define some custom todo keywords. I've been trying for ages to find a ToDo workflow/system that works. While my ADHD brain is great at finding such systems It's rubbish at using them. Currently I'm trying to simplify things and go with a 3+1 list system. Which goes something like this.
+~Define some custom todo keywords.~ I've been trying for ages to find a ToDo workflow/system that works. While my ADHD brain is great at finding such systems It's rubbish at using them. Currently I'm trying to simplify things and go with a 3+1 list system. Which goes something like this.
 
 + Calendar: Anything which has a specific date attached to it which isn't today.
 + Short: Anything that needs to be done *today*. N.B. things from the calendar with date of 'today' should move to short list.
 + Long: Everything that doesn't belong on once of the other lists.
 + Wait: A subset of the long list for items which depend on something from someone else.
 
+  Originally I was going to do this with todo states. However upon thinking more about it and readying about some other people's approaches I decided that more typical todo states made more sense and that the 3 list system makes more sense to implement as custom agendas/filters. /That/ version still needs to be implemented.
+
 #+begin_src emacs-lisp
 
   (setq luda/todo-keywords
         `((sequence
-           "CALENDAR(c!)" "SHORT(s!)" "LONG(l!)" "WAIT(!w)" "|" "DONE(d!)" "NOPE(-!)")))
+           "TODO(t!)" "ACTIVE(a!)" "WAITING(w!)" "MAYBE(m!)" "|" "DONE(d!)" "OBSOLETE(o!)" "CANCELED(-!)")))
+
+#+end_src
+
+Doct is a spiffy little DSL for defining Org capture templates in a more readable, declarative manner.
+
+#+begin_src emacs-lisp
+
+  (use-package doct
+  	;;recommended: defer until calling doct
+  	:commands (doct))
 
 #+end_src
 
@@ -1478,17 +1577,14 @@ Configure Org itself
 
   (use-package org
     :init
-    (setq org-export-backends
-          '(ascii md html icalendar latex odt))
+    (setq org-export-backends '(ascii md html icalendar latex))
     :config
-    (setq org-default-notes-file (expand-file-name "todo.org" luda/org-dir))
+    (setq org-default-notes-file (expand-file-name "todo.org" luda/org-dir)) ;; Should maybe be inbox
     (setq org-log-done 'time)
     (setq org-log-reschedule 'time)
     (setq org-log-into-drawer t)
-    (setq org-startup-indented t)
     (setq org-startup-truncated nil)
     (setq org-todo-keywords luda/todo-keywords)
-    (setq org-id-track-globally t)
     (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
     (setq org-id-locations-file luda/org-id-locations-file)
     (setq org-id-locations-file-relative t)
@@ -1497,67 +1593,38 @@ Configure Org itself
     (setq org-latex-pdf-process
           '("tectonic %f"))
 
-    (setq org-capture-templates
-          `(("t" "Todo" entry (file+headline ,luda/projects-file "Tasks")
-             "* TODO %?\n  %i\n  %a")
-            ("pn" "Project Note" entry (file+headline ,luda/projects-file "Notes")
-             "* Bench Note %?\n  %i\n  %a")
-            ("j" "Journal" entry (file+olp+datetree ,luda/journal-file)
-             "* %?\nEntered on %U\n  %i\n  %a")))
+  	(setq org-capture-templates
+  				(doct `(("Projects"
+  								 :keys "p" :file ,luda/projects-file
+  								 :template ("* %{todo-state} %^{Description}\n:PROPERTIES:\n:Created: %U\n:END:\n\n\n%i\n%a")
+  								 :children (("Todo"
+  														 :keys "t"
+  														 :headline "Tasks"
+  														 :todo-state "TODO")
+  														("Note"
+  														 :keys "n"
+  														 :headline "Notes"
+  														 :todo-state ""))
+  								 )
+  								("Journal"
+  								 :keys "j"
+  								 :type plain
+  								 :file ,luda/journal-file
+  								 :datetree t
+  								 :template ":PROPERTIES\n:Created: %U\n:END:\n\n%?\n%i\n%a"
+  								 :empty-lines 1))))
 
-    ;; One of my big uses for Org is my literate config so having elisp as a template is a must
-    (add-to-list 'org-structure-template-alist '("sl" . "src emacs-lisp"))
+  	;; ;; One of my big uses for Org is my literate config so having elisp as a template is a must
+  	(add-to-list 'org-structure-template-alist '("sl" . "src emacs-lisp"))
 
-    :bind
-    ("C-c a" . org-agenda)
-    ("C-c c" . org-capture)
-    ("C-c l" . org-store-link))
+  	:bind
+  	("C-c a" . org-agenda)
+  	("C-c c" . org-capture)
+  	("C-c l" . org-store-link))
 
 #+end_src
 
 Personal overlay for org mode to 'beautify' it a bit. There are plenty of packages and approaches to this but rather than endlessly customizing a handful of different packages I figured I'd roll my own and take what I liked from different sources.
-
-#+begin_src emacs-lisp
-
-
-
-#+end_src
-
-Deft brings the note taking approach of [[https://notational.net/][Notational Velocity]] into Emacs. Naturally it makes sense to hook it into Org. Still not sure if I'm totally sold on this approach over ordinary capturing. I do like it though.
-
-#+begin_src emacs-lisp
-
-  (require 'f)
-
-  (defun deft-sidebar ()
-    (interactive)
-    (let ((sidebar-buf (generate-new-buffer deft-buffer)))
-      (with-current-buffer sidebar-buf
-        (deft-mode))
-      (display-buffer-in-side-window sidebar-buf
-                                     '((slot . 1)
-                                       (dedicated . t)
-                                       (window-height . 0.35)))))
-
-  (use-package deft
-    :commands deft
-    :init
-    (setq deft-directory (f-expand "notes/" luda/org-dir)
-          deft-default-extension "org"
-          deft-use-filename-as-title nil
-          deft-use-filter-string-for-filename t
-          deft-auto-save-interval -1.0
-          deft-file-naming-rules
-          '((noslash . "-")
-            (nospace . "-")
-            (case-fn . downcase)))
-    :config
-    (add-to-list 'deft-extensions "tex"))
-
-  (use-package zetteldeft
-    :init (zetteldeft-set-classic-keybindings))
-
-#+end_src
 
 * Version Control
 ** Magit
@@ -1622,3 +1689,6 @@ Taken from https://panadestein.github.io/emacsd/ a friendlier =ediff= experience
     (setq ediff-split-window-function 'split-window-horizontally))
 
 #+end_src
+
+
+
