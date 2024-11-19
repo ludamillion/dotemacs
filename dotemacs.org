@@ -2,7 +2,7 @@
 #+AUTHOR: Luke D. Inglis
 #+DATE: 11/2023
 #+STARTUP: show2levels indent hidestars
-#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/code/dotemacs/init.el"))
+#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/code/dotemacs/lit-init.el"))
 
 * Emacs Literate Configuration
 * Documentation
