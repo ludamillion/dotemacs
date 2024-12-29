@@ -14,6 +14,9 @@
         (elisp "https://github.com/Wilfred/tree-sitter-elisp")
         (go "https://github.com/tree-sitter/tree-sitter-go")
         (html "https://github.com/tree-sitter/tree-sitter-html")
+				(javascript "https://github.com/tree-sitter/tree-sitter-javascript")
+				(typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+				(tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
         (json "https://github.com/tree-sitter/tree-sitter-json")
         (make "https://github.com/alemuller/tree-sitter-make")
         (toml "https://github.com/tree-sitter/tree-sitter-toml")
@@ -38,22 +41,38 @@
   (css-indent-offset 2))
 
 (use-package web-mode
+	:custom
+	(web-mode-markup-indent-offset 2)
   :mode
   (("\\.erb\\'" . web-mode)
    ("\\.html?\\'" . web-mode)))
 
-(use-package jtsx
-  :straight (jtsx :type git :host github :repo "llemaitre19/jtsx")
-  :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
-         ("\\.tsx\\'" . jtsx-tsx-mode)
-         ("\\.ts\\'" . jtsx-typescript-mode))
+(use-package haml-mode
+	:straight t)
+
+(use-package js
   :custom
-  (js-indent-level 2)
-  (typescript-ts-mode-indent-offset 2)
-  (jtsx-switch-indent-offset 0)
-  (jtsx-indent-statement-block-regarding-standalone-parent nil)
-  (jtsx-jsx-element-move-allow-step-out t)
-  (jtsx-enable-jsx-electric-closing-element t))
+  (js-indent-level 4))
+
+(use-package typescript-ts-mode
+  :mode (rx ".ts")
+  :custom
+  (typescript-indent-level 2)
+  :config
+  (unbind-key "M-." typescript-ts-base-mode-map))
+
+;; (use-package jtsx
+;;   :straight (jtsx :type git :host github :repo "llemaitre19/jtsx")
+;;   :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
+;;          ("\\.tsx\\'" . jtsx-tsx-mode)
+;;          ("\\.ts\\'" . jtsx-typescript-mode))
+;;   :custom
+;;   (js-indent-level 2)
+;;   (typescript-ts-mode-indent-offset 2)
+;;   (jtsx-switch-indent-offset 0)
+;;   (jtsx-indent-statement-block-regarding-standalone-parent nil)
+;;   (jtsx-jsx-element-move-allow-step-out t)
+;;   (jtsx-enable-jsx-electric-closing-element t))
 
 (use-package ruby-ts-mode
   :mode "\\.rb\\'"

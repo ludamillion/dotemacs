@@ -6,7 +6,8 @@
 
 (defvar eglot-enabled-modes
   '(csharp-mode
-    jtsx-jsx-mode
+    js-ts-mode
+    typescript-ts-mode
     ruby-mode)
   "Opt in list of modes which Eglot should manage.")
 

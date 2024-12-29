@@ -72,6 +72,11 @@
   :init
   (electric-pair-mode))
 
+(use-package accent
+	:bind ("C-x '" . #'accent-menu))
+
+(use-package puni)
+
 (global-set-key [remap dabbrev-expand] 'hippie-expand)
 
 (keymap-global-set "C-j" #'join-line)

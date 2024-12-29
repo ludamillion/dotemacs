@@ -1,3 +1,27 @@
+;;; dotemacs --- A literate Emacs configuration -*- lexical-binding: t -*-
+
+;;; Copyright (C) 2024 Luke D. Inglis
+
+;;; This file is free software; you can redistribute it and/or modify
+;;; it under the terms of the GNU General Public License as published by
+;;; the Free Software Foundation; either version 3, or (at your option)
+;;; any later version.
+
+;;; This file is distributed in the hope that it will be useful,
+;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;; GNU General Public License for more details.
+
+;;; For a full copy of the GNU General Public License
+;;; see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;;; Code:
+
+;;;; Use straight.el for more deterministic package management and
+;;;; make this config the source of truth on packages.
+
 (unless (featurep 'straight)
   ;; Bootstrap straight.el
   (defvar bootstrap-version)
@@ -13,13 +37,21 @@
         (eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage)))
 
+;;;; use-package
 (require 'use-package)
 (require 'straight)
 
+;; Tell `use-package' to always load features lazily unless told
+;; otherwise. It's nicer to have this kind of thing be deterministic:
+;; if `:demand' is present, the loading is eager; otherwise, the
+;; loading is lazy. See
+;; https://github.com/jwiegley/use-package#notes-about-lazy-loading.
 (setopt straight-use-package-by-default t
-				use-package-always-defer t)
+        use-package-always-defer t)
 
-(add-to-list 'load-path (expand-file-name "lisp/" user-emacs-directory))
+;;;; Startup and configuration related code
+
+;;;; Bring in PATH env variables and make their values available to Emacs
 
 (use-package exec-path-from-shell
   :demand t
@@ -27,19 +59,20 @@
   (exec-path-from-shell-initialize))
 
 (let ((inhibit-message t))
-  (message "Welcome to GNU Emacs / Logos Edition")
+  (message "Welcome to GNU Emacs / Sensible edition")
   (message (format "Initialization time: %s" (emacs-init-time))))
 
-(defun luda/reload-init-file ()
+(defun reload-init-file ()
   "Reload the init.el file in the Emacs directory."
+
   (interactive)
   (load-file (expand-file-name "init.el" user-emacs-directory)))
 
-(keymap-global-set "<f5>" 'luda/reload-init-file)
+(keymap-global-set "<f5>" 'reload-init-file)
 
 (use-package on
   :demand t
-  :straight (:type git :host gitlab :repo "ajgrf/on.el"))
+  :straight (on :type git :host gitlab :repo "ajgrf/on.el"))
 
 (use-package use-package-xdg
   :demand t
@@ -47,36 +80,29 @@
                              :host codeberg
                              :repo "rossabaker/use-package-xdg"))
 
-(use-package auto-save
-  :no-require
-  :straight nil
-  :xdg-state
-  (auto-save-list-file-prefix "saves/"))
+(add-to-list 'load-path (expand-file-name "lisp/" user-emacs-directory))
 
-(use-package recentf
-  :hook
-  (on-first-input . recentf-mode)
-  :custom
-  (recentf-max-saved-items 100)
-  :xdg-state
-  (recentf-save-file "recentf"))
+;;;; Backups, history, etc.
 
-(setopt inhibit-eol-conversion t)
-(setopt indent-tabs-mode nil)
-
-(defun no-junk-please-were-unixish ()
-  (let ((coding-str (symbol-name buffer-file-coding-system)))
-    (when (string-match "-\\(?:dos\\|mac\\)$" coding-str)
-      (set-buffer-file-coding-system 'unix))))
-
-(add-hook 'find-file-hook 'no-junk-please-were-unixish)
-
+;;; Put the bookmarks file in the proper XDG location
 (use-package bookmark
   :commands (bookmark-set)
   :xdg-state
   (bookmark-default-file "bookmarks.eld"))
 
-;;;; Backups, history, etc.
+(use-package auto-save
+  :straight nil
+  :no-require
+  :xdg-state
+  (auto-save-list-prefix "saves/"))
+
+;; Adjust limits for and activate recentf mode
+(use-package recentf
+  :hook
+  (on-first-buffer . recentf-mode)
+  :custom
+  (recentf-max-menu-items 10)
+  (recentf-max-saved-items 100))
 
 ;; SAVE ALL THE HISTORIES!
 (setq savehist-watchlist
@@ -165,11 +191,21 @@
   :straight (:type git :local-repo "~/code/emacs-lisp/sensible-settings")
   :demand t
   :init
-  (setf sensible-manage-cursor t
+  (setf sensible-font-size 18
+        sensible-manage-cursor t
         sensible-manage-fonts t
         sensible-manage-ui t
         sensible-manage-ux t)
   (sensible-mode))
+
+;;; Provide my custom themes with an approach inspired by Nicolas Rougier's
+;;; NANO-Emacs projects and colors taken from Andrew Howell's Reasonable Colors
+;;; project.
+
+;; (use-package sensible-themes
+;;   :straight (:type git :local-repo "~/code/emacs-lisp/sensible-themes")
+;;   :demand t
+;;   :requires (sensible-settings))
 
 (use-package sensible-modeline
   :straight (:type git :local-repo "~/code/emacs-lisp/sensible-modeline")
@@ -188,10 +224,16 @@
   :custom
   (calendar-latitude 42.4)
   (calendar-longitude -71.0)
-  (circadian-themes '((:sunrise . logos-light)
-                      (:sunset  . logos-dark)))
+  (circadian-themes '((:sunrise . modus-operandi)
+                      (:sunset  . modus-vivendi)))
   :config
   (circadian-setup))
+
+(use-package display-line-numbers
+  :custom
+  (display-line-numbers-widen t)
+  :hook
+  ((prog-mode conf-mode) . display-line-numbers-mode))
 
 ;;;; PDF Tools
 
@@ -205,6 +247,8 @@
   (setq-default pdf-view-display-size 'fit-width)
   (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
 
+;;;; Iceberg Stack (aka Minad is a wizard)
+
 (mapc
  (lambda (string)
    (add-to-list 'load-path (locate-user-emacs-file string)))
@@ -214,10 +258,8 @@
 (require 'luda-lsp)
 (require 'luda-analysis)
 (require 'luda-editing)
-(require 'luda-formatting)
 (require 'luda-interface)
 (require 'luda-vc)
-(require 'luda-term)
 (require 'luda-prog-modes)
 
 (use-package tempel
@@ -236,13 +278,6 @@
   "v" #'global-visual-line-mode
   "f" #'toggle-frame-fullscreen
   "w" #'whitespace-mode)
-
-(use-package whitespace-mode
-  :straight (:type built-in)
-  :custom
-  (whitespace-style
-   '(face tabs spaces trailing lines-tail space-before-tab newline indentation
-    empty space-after-tab space-mark tab-mark newline-mark missing-newline-at-eof)))
 
 (keymap-global-set "C-c t" sensible-toggles-map)
 
@@ -300,10 +335,6 @@
 (use-package yaml-ts-mode
   :straight (:type built-in)
   :mode (rx (| ".yml" ".yaml")))
-
-(use-package yaml-pro
-  :after yaml-ts-mode
-  :hook (yaml-ts-mode . yaml-pro-ts-mode))
 
 (defvar luda/local-root "~/"
   "The explicit root directory value.")
@@ -380,7 +411,6 @@
 		 (csharp . t)))
 
   :bind
-  ("M-<return>" . org-insert-heading-after-current)
   ("C-c a" . org-agenda)
   ("C-c c" . org-capture)
   ("C-c l" . org-store-link))
@@ -413,9 +443,6 @@
         ("c" . rainbow-mode)) ; C-x x c
   :hook (emacs-lisp-mode . prot/rainbow-mode-in-themes))
 
-(use-package wgrep
-	:straight t
-	:custom
-	(wgrep-auto-save-buffer t))
+(add-hook 'after-init-hook (lambda () (set-frame-name "home")))
 
 (provide 'init)

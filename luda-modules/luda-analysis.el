@@ -26,13 +26,13 @@
   :ensure nil
   :bind
   (:map ctl-x-x-map
-    ("m" . flymake-mode) ; C-x x m
-    :map flymake-mode-map
-    ("C-c ! s" . flymake-start)
-    ("C-c ! d" . flymake-show-buffer-diagnostics) ; Emacs28
-    ("C-c ! D" . flymake-show-project-diagnostics) ; Emacs28
-    ("C-c ! n" . flymake-goto-next-error)
-    ("C-c ! p" . flymake-goto-prev-error))
+        ("m" . flymake-mode) ; C-x x m
+        :map flymake-mode-map
+        ("C-c ! s" . flymake-start)
+        ("C-c ! d" . flymake-show-buffer-diagnostics) ; Emacs28
+        ("C-c ! D" . flymake-show-project-diagnostics) ; Emacs28
+        ("C-c ! n" . flymake-goto-next-error)
+        ("C-c ! p" . flymake-goto-prev-error))
   :config
   (setq flymake-fringe-indicator-position 'left-fringe)
   (setq flymake-suppress-zero-counters t)
@@ -51,8 +51,12 @@
 
 (use-package jinx
   :hook (emacs-startup . global-jinx-mode)
-  :bind (("C-;" . jinx-correct)
-         ("C-M-;" . jinx-languages)))
+	:custom
+	(jinx-languages "en fr")
+  :bind
+  (("C-;" . jinx-correct-nearest)
+   ("C-x j n" . jinx-next)
+   ("C-x j p" . jinx-previous)))
 
 (defvar ludamacs-prose-mode-list
   '(org-mode
@@ -71,14 +75,14 @@
   (eglot-ensure))
 
 (use-package eglot-ltex
-  :straight (eglot-ltex :type git
-			:host github
-			:repo "emacs-languagetool/eglot-ltex")
+  :straight (:type git
+									 :host github
+									 :repo "emacs-languagetool/eglot-ltex")
   :hook
   (ludamacs-prose-mode-list . require-and-ensure-eglot-ltex)
   :init
   (setq eglot-ltex-server-path "/usr/local/"
-	eglot-ltex-communication-channel 'stdio))
+				eglot-ltex-communication-channel 'stdio))
 
 (provide 'luda-analysis)
 ;;; luda-analysis.el ends here
