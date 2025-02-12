@@ -60,8 +60,11 @@
         (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line)
   :bind ("M-j" . avy-goto-char-timer))
 
-(use-package surround
-  :bind-keymap ("M-'" . surround-keymap))
+(use-package ipe
+  :commands 'ipe-insert-pair-edit
+  :bind ("M-'" . #'ipe-insert-pair-edit)
+  :custom
+  (ipe-menu-support t))
 
 (use-package misc
   :straight (misc :type built-in)
@@ -76,6 +79,7 @@
 	:bind ("C-x '" . #'accent-menu))
 
 (use-package puni)
+
 
 (global-set-key [remap dabbrev-expand] 'hippie-expand)
 

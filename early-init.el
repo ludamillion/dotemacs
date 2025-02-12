@@ -11,26 +11,26 @@
  '(default-frame-alist initial-frame-alist))
 
 (setopt frame-resize-pixelwise t
-	frame-inhibit-implied-resize t
-	frame-title-format '("%b"))
+	      frame-inhibit-implied-resize t
+	      frame-title-format '("%b"))
 
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 
 (setopt inhibit-splash-screen t
-	inhibit-x-resources t
-	inhibit-startup-echo-area-message user-login-name
-	inhibit-startup-buffer-menu t)
+	      inhibit-x-resources t
+	      inhibit-startup-echo-area-message user-login-name
+	      inhibit-startup-buffer-menu t)
 
 (setopt inhibit-startup-screen t
 				initial-major-mode 'lisp-interaction-mode)
 
 (setopt initial-scratch-message
-	(format ";; This is `%s'.  Use `%s' to evaluate and print results\n\n"
-		'lisp-interaction-mode
-		(propertize
-		 (substitute-command-keys "\\<lisp-interaction-mode-map>\\[eval-print-last-sexp]")
-		 'face 'help-key-binding)))
+	      (format ";; This is `%s'.  Use `%s' to evaluate and print results\n\n"
+		            'lisp-interaction-mode
+		            (propertize
+		             (substitute-command-keys "\\<lisp-interaction-mode-map>\\[eval-print-last-sexp]")
+		             'face 'help-key-binding)))
 
 (setopt ring-bell-function 'ignore
 				use-dialog-box t

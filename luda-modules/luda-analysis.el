@@ -55,6 +55,7 @@
 	(jinx-languages "en fr")
   :bind
   (("C-;" . jinx-correct-nearest)
+   ("C-x j a" . jinx-correct-all)
    ("C-x j n" . jinx-next)
    ("C-x j p" . jinx-previous)))
 
@@ -81,7 +82,7 @@
   :hook
   (ludamacs-prose-mode-list . require-and-ensure-eglot-ltex)
   :init
-  (setq eglot-ltex-server-path "/usr/local/"
+  (setq eglot-ltex-server-path "~/tools/ltex-ls-plus/bin/ltex-ls-plus"
 				eglot-ltex-communication-channel 'stdio))
 
 (provide 'luda-analysis)

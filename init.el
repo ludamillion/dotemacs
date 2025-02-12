@@ -23,7 +23,10 @@
 
 (use-package exec-path-from-shell
   :demand t
-  :init
+  :if (memq window-system '(mac ns x))
+  :custom
+  (exec-path-from-shell-variables '("PATH" "MANPATH" "XDG_CONFIG_DIRS" "XDG_DATA_DIRS"))
+  :config
   (exec-path-from-shell-initialize))
 
 (let ((inhibit-message t))
@@ -47,11 +50,42 @@
                              :host codeberg
                              :repo "rossabaker/use-package-xdg"))
 
+(set-fontset-font
+ t
+ 'symbol
+ (cond
+  ((member "Apple Symbols" (font-family-list)) "Apple Symbols")
+  ((member "Symbola" (font-family-list)) "Symbola")))
+
+(set-fontset-font
+ t
+ 'emoji
+ (cond
+  ((member "Apple Color Emoji" (font-family-list)) "Apple Color Emoji")
+  ((member "Noto Color Emoji" (font-family-list)) "Noto Color Emoji")
+  ((member "Noto Emoji" (font-family-list)) "Noto Emoji")
+  ((member "Symbola" (font-family-list)) "Symbola")))
+
+(use-package mini-ontop
+  :straight (:type git :host github :repo "hkjels/mini-ontop.el")
+  :hook
+  (on-first-input . mini-ontop-mode))
+
 (use-package auto-save
   :no-require
   :straight nil
   :xdg-state
-  (auto-save-list-file-prefix "saves/"))
+  (auto-save-list-prefix "saves/"))
+
+(use-package filelock
+  :straight (:type built-in)
+  :custom
+  (create-lockfiles nil))
+
+(use-package autorevert
+  :straight (:type built-in)
+  :custom
+  (global-auto-revert-mode t))
 
 (use-package recentf
   :hook
@@ -69,28 +103,34 @@
     (when (string-match "-\\(?:dos\\|mac\\)$" coding-str)
       (set-buffer-file-coding-system 'unix))))
 
-(add-hook 'find-file-hook 'no-junk-please-were-unixish)
+;; (add-hook 'find-file-hook 'no-junk-please-were-unixish)
+
+(use-package editorconfig
+  :config
+  (editorconfig-mode 1))
+
+(use-package dired
+  :straight (:type built-in)
+  :custom
+  (dired-dwim-target t))
 
 (use-package bookmark
   :commands (bookmark-set)
   :xdg-state
   (bookmark-default-file "bookmarks.eld"))
 
-;;;; Backups, history, etc.
-
-;; SAVE ALL THE HISTORIES!
 (setq savehist-watchlist
-      '(kill-ring
+      '(bookmark-history
         command-history
-        set-variable-value-history
         custom-variable-history
-        query-replace-history
-        read-expression-history
-        minibuffer-history
-        read-char-history
         face-name-history
-        bookmark-history
-        file-name-history))
+        file-name-history
+        minibuffer-history
+        query-replace-history
+        read-char-history
+        read-expression-history
+        set-variable-value-history
+        kill-ring))
 
 (use-package savehist
   :hook
@@ -140,18 +180,18 @@
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
 
-(defun luda/make-vterm-frame ()
+(defun luda/make-eat-frame ()
   "Create a new frame and create a vterm buffer."
 
   (interactive)
   (select-frame (make-frame))
-  (vterm))
+  (eat-project))
 
 (defvar-keymap sensible-frame-map
   :doc "Liminal prefix map for frame operations."
   "m" #'make-frame
   "n" #'luda/make-scratch-frame
-  "v" #'luda/make-vterm-frame)
+  "v" #'luda/make-eat-frame)
 
 (keymap-global-set "M-n" sensible-frame-map)
 
@@ -169,13 +209,15 @@
         sensible-manage-fonts t
         sensible-manage-ui t
         sensible-manage-ux t)
+  :config
   (sensible-mode))
 
 (use-package sensible-modeline
   :straight (:type git :local-repo "~/code/emacs-lisp/sensible-modeline")
   :demand t
-  :requires (nerd-icons)
-  :init (sensible-modeline-mode))
+  :requires 'nerd-icons
+  :hook
+  (on-init-ui . sensible-modeline-mode))
 
 (use-package logos-themes
   :straight (:type git :local-repo "~/code/emacs-lisp/logos-themes")
@@ -242,7 +284,7 @@
   :custom
   (whitespace-style
    '(face tabs spaces trailing lines-tail space-before-tab newline indentation
-    empty space-after-tab space-mark tab-mark newline-mark missing-newline-at-eof)))
+          empty space-after-tab space-mark tab-mark newline-mark missing-newline-at-eof)))
 
 (keymap-global-set "C-c t" sensible-toggles-map)
 
@@ -322,54 +364,41 @@
 
 (setq luda/journal-file (expand-file-name "journal.org" luda/org-dir))
 (setq luda/projects-file (expand-file-name "projects.org" luda/org-dir))
+(setq luda/notes-directory (expand-file-name "notes" luda/org-dir))
 (setq luda/org-id-locations-file (expand-file-name ".org-id-locations" luda/org-dir))
-
-(setq luda/todo-keywords
-      `((sequence
-         "TODO(t!)" "ACTIVE(a!)" "WAITING(w!)" "MAYBE(m!)" "|" "DONE(d!)"
-	 "OBSOLETE(o!)" "CANCELED(-!)")))
 
 (use-package org
   :straight (:type built-in)
   :init
   (setq org-export-backends '(ascii md html icalendar latex))
-  :config
-  (setq org-default-notes-file (expand-file-name "todo.org" luda/org-dir)) ;; Should maybe be inbox
-  (setq org-log-done 'time)
-  (setq org-log-reschedule 'time)
-  (setq org-log-into-drawer t)
-  (setq org-startup-truncated nil)
-  (setq org-todo-keywords luda/todo-keywords)
-  (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
-  (setq org-id-locations-file luda/org-id-locations-file)
-  (setq org-id-locations-file-relative t)
-  (setq org-fontify-whole-heading-line t)
-  (setq org-agenda-files `(,luda/org-dir ,luda/beorg-directory))
-  (setq org-latex-pdf-process
-        '("tectonic %f"))
+  :custom
+  (org-default-notes-file (expand-file-name "inbox.org" luda/org-dir)) ;; Should maybe be inbox
+  (org-log-done 'time)
+  (org-log-into-drawer t)
+  (org-capture-bookmark nil)
+  (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
+  (org-id-locations-file luda/org-id-locations-file)
+  (org-id-locations-file-relative t)
+  (org-fontify-whole-heading-line t)
+  (org-agenda-files `(,luda/org-dir ,luda/beorg-directory))
+  (org-latex-pdf-process '("tectonic %f"))
 
-  (setq org-capture-templates
-        (doct `(("Projects"
-                 :keys "p" :file ,luda/projects-file
-                 :template ("* %{todo-state} %^{Description}\n:PROPERTIES:\n:Created: %U\n:END:\n\n\n%i\n%a")
-                 :children (("Todo"
-                             :keys "t"
-                             :headline "Tasks"
-                             :todo-state "TODO")
-                            ("Note"
-                             :keys "n"
-                             :headline "Notes"
-                             :todo-state ""))
-                 )
-                ("Journal"
-                 :keys "j"
-                 :type plain
-                 :file ,luda/journal-file
-                 :datetree t
-                 :template ":PROPERTIES\n:Created: %U\n:END:\n\n%?\n%i\n%a"
-                 :empty-lines 1))))
+  (org-capture-templates
+   '(("f" "Fleeting note" item
+      (file+headline org-default-notes-file "Notes")
+      "- %?")
+     ("p" "Permanent note" plain
+      (file denote-last-path)
+      #'denote-org-capture
+      :no-save t
+      :immediate-finish nil
+      :kill-buffer t
+      :jump-to-captured t)
+     ("t" "New task" entry
+      (file+headline org-default-notes-file "Tasks")
+      "* TODO %i%?")))
 
-  ;; ;; One of my big uses for Org is my literate config so having elisp as a template is a must
+  ;; ;; ;; One of my big uses for Org is my literate config so having elisp as a template is a must
   (add-to-list 'org-structure-template-alist '("sl" . "src emacs-lisp"))
   (add-to-list 'org-structure-template-alist '("s#" . "src csharp"))
 
@@ -389,6 +418,27 @@
   :straight t
   ;;recommended: defer until calling doct
   :commands (doct))
+
+(use-package denote
+  :init
+  (require 'denote-org-extras)
+  (denote-rename-buffer-mode 1)
+  :custom
+  (denote-directory luda/notes-directory)
+  :hook
+  (dired-mode . denote-dired-mode)
+  :custom-face
+  (denote-faces-link ((t (:slant italic)))))
+
+;; Denote extensions
+(use-package consult-notes
+  :bind
+  ("M-s n" . #'consult-notes)
+  :commands (consult-notes
+             consult-notes-search-in-all-notes)
+  :custom
+  (consult-notes-file-dir-sources
+   `(("Denote" ?d ,luda/notes-directory))))
 
 (use-package emacs-lock
   :config
@@ -410,12 +460,23 @@
                ((string-match-p "-theme" file)))
       (rainbow-mode 1)))
   :bind (:map ctl-x-x-map
-        ("c" . rainbow-mode)) ; C-x x c
+              ("c" . rainbow-mode)) ; C-x x c
   :hook (emacs-lisp-mode . prot/rainbow-mode-in-themes))
 
 (use-package wgrep
-	:straight t
-	:custom
-	(wgrep-auto-save-buffer t))
+  :straight t
+  :custom
+  (wgrep-auto-save-buffer t))
+
+(use-package plz
+  :straight t)
+
+(use-package combobulate
+  :custom
+  ;; You can customize Combobulate's key prefix here.
+  ;; Note that you may have to restart Emacs for this to take effect!
+  (combobulate-key-prefix "C-c o")
+  :hook
+  ((prog-mode . combobulate-mode)))
 
 (provide 'init)
