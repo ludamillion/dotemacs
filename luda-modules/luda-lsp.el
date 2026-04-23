@@ -5,8 +5,7 @@
 ;;; Code:
 
 (defvar eglot-enabled-modes
-  '(csharp-mode
-    js-ts-mode
+  '(js-ts-mode
     typescript-ts-mode
     ruby-mode)
   "Opt in list of modes which Eglot should manage.")
@@ -29,7 +28,7 @@
 
 (use-package eglot-booster
   :straight (:type git :host github :repo "jdtsmith/eglot-booster")
-	:after (eglot)
+  :after (eglot)
   :config
   (eglot-booster-mode))
 

@@ -16,13 +16,11 @@
 (require 'use-package)
 (require 'straight)
 
-(setopt straight-use-package-by-default t
-				use-package-always-defer t)
+(setopt straight-use-package-by-default t)
 
 (add-to-list 'load-path (expand-file-name "lisp/" user-emacs-directory))
 
 (use-package exec-path-from-shell
-  :demand t
   :if (memq window-system '(mac ns x))
   :custom
   (exec-path-from-shell-variables '("PATH" "MANPATH" "XDG_CONFIG_DIRS" "XDG_DATA_DIRS"))
@@ -30,7 +28,7 @@
   (exec-path-from-shell-initialize))
 
 (let ((inhibit-message t))
-  (message "Welcome to GNU Emacs / Logos Edition")
+  (message "Welcome to GNU Emacs / Esprit Edition")
   (message (format "Initialization time: %s" (emacs-init-time))))
 
 (defun luda/reload-init-file ()
@@ -42,7 +40,7 @@
 
 (use-package on
   :demand t
-  :straight (:type git :host gitlab :repo "ajgrf/on.el"))
+  :straight (:type git :host gitlab :repo "axgfn/on.el"))
 
 (use-package use-package-xdg
   :demand t
@@ -65,6 +63,9 @@
   ((member "Noto Color Emoji" (font-family-list)) "Noto Color Emoji")
   ((member "Noto Emoji" (font-family-list)) "Noto Emoji")
   ((member "Symbola" (font-family-list)) "Symbola")))
+
+(use-package diminish
+  :demand t)
 
 (use-package mini-ontop
   :straight (:type git :host github :repo "hkjels/mini-ontop.el")
@@ -97,13 +98,6 @@
 
 (setopt inhibit-eol-conversion t)
 (setopt indent-tabs-mode nil)
-
-(defun no-junk-please-were-unixish ()
-  (let ((coding-str (symbol-name buffer-file-coding-system)))
-    (when (string-match "-\\(?:dos\\|mac\\)$" coding-str)
-      (set-buffer-file-coding-system 'unix))))
-
-;; (add-hook 'find-file-hook 'no-junk-please-were-unixish)
 
 (use-package editorconfig
   :config
@@ -175,52 +169,31 @@
 
 (defun luda/make-scratch-frame ()
   "Create a new frame and switch to *scratch* buffer."
-
   (interactive)
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
 
 (defun luda/make-eat-frame ()
   "Create a new frame and create a vterm buffer."
-
   (interactive)
   (select-frame (make-frame))
   (eat-project))
 
-(defvar-keymap sensible-frame-map
-  :doc "Liminal prefix map for frame operations."
+(defvar-keymap esprit-frame-map
+  :doc "Prefix map for frame operations."
   "m" #'make-frame
   "n" #'luda/make-scratch-frame
   "v" #'luda/make-eat-frame)
 
-(keymap-global-set "M-n" sensible-frame-map)
+(keymap-global-set "M-n" esprit-frame-map)
 
-;; Sensible Configuation
+;; Esprit Configuation
 ;;   - Set up my own little bundle of packages to tailor the Emacs experience
 
-(use-package nerd-icons
-  :demand t)
-
-(use-package sensible-settings
-  :straight (:type git :local-repo "~/code/emacs-lisp/sensible-settings")
-  :demand t
-  :init
-  (setf sensible-manage-cursor t
-        sensible-manage-fonts t
-        sensible-manage-ui t
-        sensible-manage-ux t)
-  :config
-  (sensible-mode))
-
-(use-package sensible-modeline
-  :straight (:type git :local-repo "~/code/emacs-lisp/sensible-modeline")
-  :demand t
-  :requires 'nerd-icons
-  :hook
-  (on-init-ui . sensible-modeline-mode))
-
-(use-package logos-themes
-  :straight (:type git :local-repo "~/code/emacs-lisp/logos-themes")
+(use-package esprit-themes
+  ;; :straight (:type git :host github :repo "ludamillion/esprit-themes")
+  :straight nil
+  :load-path "~/code/esprit-themes"
   :demand t)
 
 ;;; Choose light or dark theme based on the time of day at my location
@@ -230,33 +203,29 @@
   :custom
   (calendar-latitude 42.4)
   (calendar-longitude -71.0)
-  (circadian-themes '((:sunrise . logos-light)
-                      (:sunset  . logos-dark)))
+  (circadian-themes '((:sunrise . esprit-cerulean-light)
+                      (:sunset  . esprit-cerulean-dark)))
   :config
   (circadian-setup))
 
-;;;; PDF Tools
+(use-package nerd-icons
+  :demand t)
 
-(use-package pdf-tools
-  :custom
-  (pdf-annot-activate-created-annotations t "automatically annotate highlights")
-  :hook
-  (pdf-view-mode-hook . (lambda() (display-line-numbers-mode -1)))
-  :config
-  (pdf-tools-install)
-  (setq-default pdf-view-display-size 'fit-width)
-  (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
+(use-package esprit-line
+  :straight nil
+  :demand t
+  :load-path "~/code/esprit-line"
+  :hook (after-init . esprit-line-mode))
 
 (mapc
  (lambda (string)
    (add-to-list 'load-path (locate-user-emacs-file string)))
- '("luda-lisp" "luda-modules"))
+ '("luda-modules"))
 
 (require 'luda-completion)
 (require 'luda-lsp)
 (require 'luda-analysis)
 (require 'luda-editing)
-(require 'luda-formatting)
 (require 'luda-interface)
 (require 'luda-vc)
 (require 'luda-term)
@@ -273,8 +242,8 @@
 ;; The package is young and doesn't have comprehensive coverage.
 (use-package tempel-collection)
 
-(defvar-keymap sensible-toggles-map
-  :doc "Sensible prefix key maps | minor mode toggling."
+(defvar-keymap esprit-toggles-map
+  :doc "Esprit prefix key maps | minor mode toggling."
   "v" #'global-visual-line-mode
   "f" #'toggle-frame-fullscreen
   "w" #'whitespace-mode)
@@ -286,13 +255,18 @@
    '(face tabs spaces trailing lines-tail space-before-tab newline indentation
           empty space-after-tab space-mark tab-mark newline-mark missing-newline-at-eof)))
 
-(keymap-global-set "C-c t" sensible-toggles-map)
+(keymap-global-set "C-c t" esprit-toggles-map)
 
 (use-package bind-key
   :straight (bind-key :type built-in))
 
+(use-package outline-minor-mode
+  :diminish "¶"
+  :straight (:type built-in))
+
 (use-package which-key
-  :straight (which-key :type built-in)
+  :straight (:type built-in)
+  :diminish which-key-mode
   :custom
   (which-key-idle-delay 1)
   :hook
@@ -314,7 +288,7 @@
 (use-package undo-fu-session
   :custom
   (undo-fu-session-incompatible-files
-	 '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+   '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
   (undo-fu-session-global-mode))
 
 (use-package vterm
@@ -334,10 +308,43 @@
 
 (use-package nxml-mode
   :straight (:type built-in)
-  :mode (rx (| ".xml" ".csproj")))
+  :mode (rx (| ".xml" ".svg")))
 
 (use-package markdown-mode
-  :mode (rx ".md"))
+  :mode ((rx ".md") . gfm-mode)
+  :commands (markdown-mode gfm-mode)
+  :bind ("C-c C-c C-p" . 'esprit/markdown-preview)
+  :config
+  (setq markdown-command "pandoc -t html5"))
+
+(use-package simple-httpd
+  :ensure t
+  :custom
+  (httpd-port 7070)
+  (httpd-host (system-name)))
+
+(use-package impatient-mode
+  :ensure t
+  :commands impatient-mode)
+
+(defun esprit/markdown-filter (buffer)
+  (princ
+   (with-temp-buffer
+     (let ((tmp (buffer-name)))
+       (set-buffer buffer)
+       (set-buffer (markdown tmp))
+       (format "<!DOCTYPE html><html><title>Markdown preview</title><link rel=\"stylesheet\" href = \"https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/3.0.1/github-markdown.min.css\"/>
+<body><article class=\"markdown-body\" style=\"box-sizing: border-box;min-width: 200px;max-width: 980px;margin: 0 auto;padding: 45px;\">%s</article></body></html>" (buffer-string))))
+   (current-buffer)))
+
+(defun esprit/markdown-preview ()
+  "Open a live, styled markdown preview."
+  (interactive)
+  (unless (process-status "httpd")
+    (httpd-start))
+  (impatient-mode)
+  (imp-set-user-filter 'esprit/markdown-filter)
+  (imp-visit-buffer))
 
 (use-package yaml-ts-mode
   :straight (:type built-in)
@@ -405,8 +412,7 @@
   (org-babel-do-load-languages
 	 'org-babel-load-languages
 	 '((emacs-lisp . t)
-		 (shell . t)
-		 (csharp . t)))
+		 (shell . t)))
 
   :bind
   ("M-<return>" . org-insert-heading-after-current)
@@ -414,14 +420,8 @@
   ("C-c c" . org-capture)
   ("C-c l" . org-store-link))
 
-(use-package doct
-  :straight t
-  ;;recommended: defer until calling doct
-  :commands (doct))
-
 (use-package denote
   :init
-  (require 'denote-org-extras)
   (denote-rename-buffer-mode 1)
   :custom
   (denote-directory luda/notes-directory)
@@ -445,24 +445,6 @@
   (with-current-buffer "*scratch*"
     (emacs-lock-mode 'kill)))
 
-(use-package command-log-mode
-  :straight (:type git :local-repo "~/code/emacs-lisp/command-log-mode"))
-
-;;;; Rainbow mode for color previewing (rainbow-mode.el)
-(use-package rainbow-mode
-  :init
-  (setq rainbow-ansi-colors nil)
-  (setq rainbow-x-colors nil)
-
-  (defun prot/rainbow-mode-in-themes ()
-    (when-let ((file (buffer-file-name))
-               ((derived-mode-p 'emacs-lisp-mode))
-               ((string-match-p "-theme" file)))
-      (rainbow-mode 1)))
-  :bind (:map ctl-x-x-map
-              ("c" . rainbow-mode)) ; C-x x c
-  :hook (emacs-lisp-mode . prot/rainbow-mode-in-themes))
-
 (use-package wgrep
   :straight t
   :custom
@@ -480,3 +462,20 @@
   ((prog-mode . combobulate-mode)))
 
 (provide 'init)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("79a11bba703b24ed5a5bb9e0d738103a7f25e11b1eacffff6314fbf7b4b99a7c"
+     "db86799cbf2be8d9e101e9e7d8a64d598689d58a2cec1917f623c7d9699ddb04"
+     "f5adedef87149fba04e6f5da9caf5c9f9812b64a697c56f525be882c723d74ab"
+     "0c7948cd9d02cc16434d9dfa8317a77a339c5bbbe2e2892e3780d6c5fe99d705"
+     default)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )

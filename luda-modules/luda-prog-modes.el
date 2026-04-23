@@ -5,8 +5,7 @@
 ;;; Code:
 
 (setq treesit-language-source-alist
-      '((c-sharp "https://github.com/tree-sitter/tree-sitter-c-sharp")
-        (css "https://github.com/tree-sitter/tree-sitter-css")
+      '((css "https://github.com/tree-sitter/tree-sitter-css")
         (lua "https://github.com/MunifTanjim/tree-sitter-lua")
         (ruby "https://github.com/tree-sitter/tree-sitter-ruby")
         (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
@@ -14,9 +13,9 @@
         (elisp "https://github.com/Wilfred/tree-sitter-elisp")
         (go "https://github.com/tree-sitter/tree-sitter-go")
         (html "https://github.com/tree-sitter/tree-sitter-html")
-				(javascript "https://github.com/tree-sitter/tree-sitter-javascript")
-				(typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
-				(tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+	(javascript "https://github.com/tree-sitter/tree-sitter-javascript")
+	(typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+	(tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
         (json "https://github.com/tree-sitter/tree-sitter-json")
         (make "https://github.com/alemuller/tree-sitter-make")
         (toml "https://github.com/tree-sitter/tree-sitter-toml")
@@ -37,18 +36,7 @@
 
 (use-package css-mode
   :custom
-  (tab-width 2)
   (css-indent-offset 2))
-
-(use-package web-mode
-	:custom
-	(web-mode-markup-indent-offset 2)
-  :mode
-  (("\\.erb\\'" . web-mode)
-   ("\\.html?\\'" . web-mode)))
-
-(use-package haml-mode
-	:straight t)
 
 (use-package js
   :custom
@@ -73,18 +61,6 @@
 ;;   (jtsx-indent-statement-block-regarding-standalone-parent nil)
 ;;   (jtsx-jsx-element-move-allow-step-out t)
 ;;   (jtsx-enable-jsx-electric-closing-element t))
-
-(use-package ruby-ts-mode
-  :mode "\\.rb\\'"
-  :mode "\\.pryrc\\'"
-  :mode "Rakefile\\'"
-  :mode "Gemfile\\'")
-
-(use-package csharp-mode
-  :straight (:type built-in))
-
-(use-package ob-csharp
-  :straight (ob-csharp :type git :host github :repo "samwdp/ob-csharp"))
 
 (provide 'luda-prog-modes)
 ;;; luda-prog-modes.el ends here

@@ -5,7 +5,7 @@
 ;;; Code:
 
 (defun avy-action-embark (pt)
-	"Invoke embark at PT."
+  "Invoke embark at PT."
   (unwind-protect
       (save-excursion
         (goto-char pt)
@@ -15,7 +15,7 @@
   t)
 
 (defun avy-action-copy-whole-line (pt)
-	"Copy entire line starting at PT."
+  "Copy entire line starting at PT."
   (save-excursion
     (goto-char pt)
     (cl-destructuring-bind (start . end)
@@ -27,13 +27,13 @@
   t)
 
 (defun avy-action-yank-whole-line (pt)
-	"Yank line starting at PT."
+  "Yank line starting at PT."
   (avy-action-copy-whole-line pt)
   (save-excursion (yank))
   t)
 
 (defun avy-action-kill-whole-line (pt)
-	"Kill line starting at PT."
+  "Kill line starting at PT."
   (save-excursion
     (goto-char pt)
     (kill-whole-line))
@@ -43,7 +43,7 @@
   t)
 
 (defun avy-action-teleport-whole-line (pt)
-	"Teleport whole line starting at PT."
+  "Teleport whole line starting at PT."
   (avy-action-kill-whole-line pt)
   (save-excursion (yank)) t)
 
@@ -60,12 +60,6 @@
         (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line)
   :bind ("M-j" . avy-goto-char-timer))
 
-(use-package ipe
-  :commands 'ipe-insert-pair-edit
-  :bind ("M-'" . #'ipe-insert-pair-edit)
-  :custom
-  (ipe-menu-support t))
-
 (use-package misc
   :straight (misc :type built-in)
   :bind
@@ -76,14 +70,36 @@
   (electric-pair-mode))
 
 (use-package accent
-	:bind ("C-x '" . #'accent-menu))
-
-(use-package puni)
-
+  :bind ("C-x '" . #'accent-menu))
 
 (global-set-key [remap dabbrev-expand] 'hippie-expand)
 
 (keymap-global-set "C-j" #'join-line)
+
+(use-package evil
+  :ensure t
+  :init
+  (setq evil-respect-visual-line-mode t)
+  (setq evil-undo-system 'undo-redo)
+  (setq evil-want-keybinding nil)
+  :config
+  (evil-mode)
+  ;; If you use Magit, start editing in insert state
+  (add-hook 'git-commit-setup-hook 'evil-insert-state)
+  ;; Configuring initial major mode for some modes
+  (evil-set-initial-state 'eat-mode 'emacs)
+  (evil-set-initial-state 'vterm-mode 'emacs))
+
+(use-package evil-collection
+  :after evil
+  :ensure t
+  :config
+  (evil-collection-init))
+
+(use-package evil-surround
+  :ensure t
+  :config
+  (global-evil-surround-mode 1))
 
 (provide 'luda-editing)
 ;;; luda-editing.el ends here

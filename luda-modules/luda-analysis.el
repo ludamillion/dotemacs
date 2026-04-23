@@ -49,15 +49,15 @@
           flymake-mode-line-note-counter ""))
   (setq flymake-show-diagnostics-at-end-of-line nil)) ; Emacs 30
 
-(use-package jinx
-  :hook (emacs-startup . global-jinx-mode)
-	:custom
-	(jinx-languages "en fr")
-  :bind
-  (("C-;" . jinx-correct-nearest)
-   ("C-x j a" . jinx-correct-all)
-   ("C-x j n" . jinx-next)
-   ("C-x j p" . jinx-previous)))
+;; (use-package jinx
+;;   :hook (emacs-startup . global-jinx-mode)
+;; 	:custom
+;; 	(jinx-languages "en fr")
+;;   :bind
+;;   (("C-;" . jinx-correct-nearest)
+;;    ("C-x j a" . jinx-correct-all)
+;;    ("C-x j n" . jinx-next)
+;;    ("C-x j p" . jinx-previous)))
 
 (defvar ludamacs-prose-mode-list
   '(org-mode
@@ -77,13 +77,13 @@
 
 (use-package eglot-ltex
   :straight (:type git
-									 :host github
-									 :repo "emacs-languagetool/eglot-ltex")
+		   :host github
+		   :repo "emacs-languagetool/eglot-ltex")
   :hook
   (ludamacs-prose-mode-list . require-and-ensure-eglot-ltex)
   :init
   (setq eglot-ltex-server-path "~/tools/ltex-ls-plus/bin/ltex-ls-plus"
-				eglot-ltex-communication-channel 'stdio))
+	eglot-ltex-communication-channel 'stdio))
 
 (provide 'luda-analysis)
 ;;; luda-analysis.el ends here

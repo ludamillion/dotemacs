@@ -25,20 +25,20 @@
     (consult-ripgrep dir initial)))
 
 (use-package consult
-  :bind (("M-s d" . consult-fd) ;; Requires having fd installed otherwise use consult-find
-         ("M-s G" . consult-git-grep)
-         ("M-s r" . wrapper/consult-ripgrep)
-         ("M-s l" . consult-line)
-         ("M-s L" . consult-line-multi)
-         ("M-s k" . consult-keep-lines)
-         ("M-s u" . consult-focus-lines)
-         ("M-s <SPC>"   . consult-buffer)
-         ("M-y"   . consult-yank-pop)
+  :bind (("M-s d"     . consult-fd) ;; Requires having fd installed otherwise use consult-find
+         ("M-s G"     . consult-git-grep)
+         ("M-s r"     . wrapper/consult-ripgrep)
+         ("M-s l"     . consult-line)
+         ("M-s L"     . consult-line-multi)
+         ("M-s k"     . consult-keep-lines)
+         ("M-s u"     . consult-focus-lines)
+         ("M-s <SPC>" . consult-buffer)
+         ("M-y"       . consult-yank-pop)
          ("C-x M-k"   . consult-kmacro)
-         ("M-g g" . consult-goto-line)
-         ("M-g i" . consult-imenu)
-         ("M-g o" . consult-outline)
-         ("C-x b" . consult-bookmark)))
+         ("M-g g"     . consult-goto-line)
+         ("M-g i"     . consult-imenu)
+         ("M-g o"     . consult-outline)
+         ("C-x b"     . consult-bookmark)))
 
 (use-package orderless
   :custom
@@ -53,7 +53,7 @@
 
 (defun ludamacs--corfu-modes ()
   "Activate the desired corfu modes."
-	(corfu-history-mode)
+  (corfu-history-mode)
   (corfu-echo-mode)
   (global-corfu-mode))
 
@@ -63,25 +63,25 @@
         corfu-auto t
         corfu-on-exact-match nil)
   :hook
-	(on-first-buffer . ludamacs--corfu-modes)
+  (on-first-buffer . ludamacs--corfu-modes)
   (eshell-mode . corfu-x-eshell-hook))
 
 (defun luda/cape-capf-setup-eglot ()
-	"Configure cape completion at point functions for Eglot managed modes."
+  "Configure cape completion at point functions for Eglot managed modes."
   (let ((result))
     (dolist (element `(,(cape-capf-buster #'eglot-completion-at-point)
-											 cape-file
-											 cape-dabbrev) result)
+		       cape-file
+		       cape-dabbrev) result)
       (add-to-list 'completion-at-point-functions element))))
 
 (defun luda/cape-capf-setup-org ()
-	"Configure cape completion at point functions for org mode."
+  "Configure cape completion at point functions for org mode."
   (let ((result))
     (dolist (element '(cape-dict cape-dabbrev) result)
       (add-to-list 'completion-at-point-functions element))))
 
 (defun luda/cape-capf-setup-git-commit ()
-	"Configure cape completion at point functions for git-commit mode."
+  "Configure cape completion at point functions for git-commit mode."
   (let ((result))
     (dolist (element '(cape-dict cape-dabbrev) result)
       (add-to-list 'completion-at-point-functions element))))

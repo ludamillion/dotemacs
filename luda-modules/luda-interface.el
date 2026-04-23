@@ -59,14 +59,54 @@
       ;; Close a child frame.
       (delete-frame (selected-frame)))))
 
-(use-package swiss-move
-	:bind (("s-n" . swiss-move-line-down)
-				 ("s-p" . swiss-move-line-up)))
+;; (use-package swiss-move
+;;   :bind (("s-n" . swiss-move-line-down)
+;; 	 ("s-p" . swiss-move-line-up)))
 
 (global-set-key (kbd "C-x C-c") 'luda-close-dwim)
 
 (keymap-set global-map "C-x k" 'kill-current-buffer)
 (keymap-set global-map "C-x C-k" 'kill-buffer)
+
+(use-package fontaine
+  :demand t
+  :custom
+  (fontaine-latest-state-file
+   (locate-user-emacs-file "fontaine-latest-state.eld"))
+  (fontaine-presets
+      '((small
+         :default-family "Monaspace Argon Var"
+         :default-height 80
+         :variable-pitch-family "Atkinson Hyperlegible")
+        (regular) ; like this it uses all the fallback values and is named `regular'
+        (medium
+         :default-height 115
+         :bold-weight extrabold)
+        (large
+         :inherit medium
+         :default-height 150)
+        (presentation
+         :default-height 180)
+        (t
+         :default-family "Monaspace Argon Var"
+         :fixed-pitch-weight nil ; falls back to :default-weight
+         :fixed-pitch-height 1.0
+
+         :fixed-pitch-serif-family nil ; falls back to :default-family
+         :fixed-pitch-serif-weight nil ; falls back to :default-weight
+         :fixed-pitch-serif-height 1.0
+
+         :variable-pitch-family "Atkinson Hyperlegible"
+         :variable-pitch-weight nil
+         :variable-pitch-height 1.0)))
+  :config
+  (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
+
+  ;; Persist the latest font preset when closing/starting Emacs and
+  ;; while switching between themes.
+  (fontaine-mode 1)
+  :bind
+  ("C-c f" . #'fontaine-set-preset))
 
 (provide 'luda-interface)
 ;;; luda-interface.el ends here
