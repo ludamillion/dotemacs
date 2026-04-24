@@ -75,29 +75,22 @@
    (locate-user-emacs-file "fontaine-latest-state.eld"))
   (fontaine-presets
       '((small
-         :default-family "Monaspace Argon Var"
+         :default-family "Aporetic Sans Mono"
          :default-height 80
-         :variable-pitch-family "Atkinson Hyperlegible")
+         :variable-pitch-family "Aporetic Serif")
         (regular) ; like this it uses all the fallback values and is named `regular'
         (medium
-         :default-height 115
-         :bold-weight extrabold)
+         :default-height 160
+         :bold-weight regular)
         (large
          :inherit medium
-         :default-height 150)
-        (presentation
          :default-height 180)
         (t
-         :default-family "Monaspace Argon Var"
-         :fixed-pitch-weight nil ; falls back to :default-weight
+         :default-family "Aporetic Sans Mono"
+         :variable-pitch-family "Aporetic Serif"
+
          :fixed-pitch-height 1.0
-
-         :fixed-pitch-serif-family nil ; falls back to :default-family
-         :fixed-pitch-serif-weight nil ; falls back to :default-weight
          :fixed-pitch-serif-height 1.0
-
-         :variable-pitch-family "Atkinson Hyperlegible"
-         :variable-pitch-weight nil
          :variable-pitch-height 1.0)))
   :config
   (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))

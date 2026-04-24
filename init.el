@@ -78,11 +78,6 @@
   :xdg-state
   (auto-save-list-prefix "saves/"))
 
-(use-package filelock
-  :straight (:type built-in)
-  :custom
-  (create-lockfiles nil))
-
 (use-package autorevert
   :straight (:type built-in)
   :custom
@@ -243,13 +238,14 @@
 (use-package tempel-collection)
 
 (defvar-keymap esprit-toggles-map
+  :name "esprit-toggles"
   :doc "Esprit prefix key maps | minor mode toggling."
   "v" #'global-visual-line-mode
   "f" #'toggle-frame-fullscreen
   "w" #'whitespace-mode)
 
-(use-package whitespace-mode
-  :straight (:type built-in)
+(use-package whitespace
+  :straight nil
   :custom
   (whitespace-style
    '(face tabs spaces trailing lines-tail space-before-tab newline indentation
@@ -260,7 +256,7 @@
 (use-package bind-key
   :straight (bind-key :type built-in))
 
-(use-package outline-minor-mode
+(use-package outline
   :diminish "¶"
   :straight (:type built-in))
 
@@ -273,6 +269,7 @@
   (on-first-input . which-key-mode))
 
 (use-package emacs
+  :custom (create-lockfiles nil)
   :bind (("C-x C-m" . execute-extended-command)
          :map isearch-mode-map ("C-o" . isearch-occur)))
 

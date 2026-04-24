@@ -72,6 +72,10 @@
 (use-package accent
   :bind ("C-x '" . #'accent-menu))
 
+(use-package simple
+  :straight (:type built-in)
+  :hook (text-mode . visual-line-mode))
+
 (global-set-key [remap dabbrev-expand] 'hippie-expand)
 
 (keymap-global-set "C-j" #'join-line)
@@ -82,6 +86,8 @@
   (setq evil-respect-visual-line-mode t)
   (setq evil-undo-system 'undo-redo)
   (setq evil-want-keybinding nil)
+  :custom
+  (evil-undo-system 'undo-fu)
   :config
   (evil-mode)
   ;; If you use Magit, start editing in insert state
