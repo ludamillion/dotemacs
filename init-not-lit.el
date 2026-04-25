@@ -230,24 +230,9 @@
   (circadian-setup))
 
 (use-package display-line-numbers
-  :custom
-  (display-line-numbers-widen t)
+  :custom (display-line-numbers-widen t)
   :hook
   ((prog-mode conf-mode) . display-line-numbers-mode))
-
-;;;; PDF Tools
-
-(use-package pdf-tools
-  :custom
-  (pdf-annot-activate-created-annotations t "automatically annotate highlights")
-  :hook
-  (pdf-view-mode-hook . (lambda() (display-line-numbers-mode -1)))
-  :config
-  (pdf-tools-install)
-  (setq-default pdf-view-display-size 'fit-width)
-  (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
-
-;;;; Iceberg Stack (aka Minad is a wizard)
 
 (mapc
  (lambda (string)

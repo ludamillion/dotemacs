@@ -72,9 +72,10 @@
 (use-package accent
   :bind ("C-x '" . #'accent-menu))
 
-(use-package simple
+(use-package emacs
   :straight (:type built-in)
-  :hook (text-mode . visual-line-mode))
+  :hook ((esprit-prose-modes . visual-line-mode)
+         (esprit-prose-modes . variable-pitch-mode)))
 
 (global-set-key [remap dabbrev-expand] 'hippie-expand)
 
@@ -106,6 +107,17 @@
   :ensure t
   :config
   (global-evil-surround-mode 1))
+
+(use-package evil-mc
+  :ensure t
+  :hook (after-init . global-evil-mc-mode)
+  :config
+  (evil-define-key 'visual evil-mc-key-map
+  "A" #'evil-mc-make-cursor-in-visual-selection-end
+  "I" #'evil-mc-make-cursor-in-visual-selection-beg))
+
+(bind-key "M-u" #'upcase-dwim)
+(bind-key "M-l" #'downcase-dwim)
 
 (provide 'luda-editing)
 ;;; luda-editing.el ends here

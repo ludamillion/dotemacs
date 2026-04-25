@@ -4,24 +4,6 @@
 
 ;;; Code:
 
-;; (add-to-list 'display-buffer-alist
-;;              `(,(rx bos "*Flycheck errors*" eos)
-;;                (display-buffer-reuse-window
-;; 		display-buffer-in-side-window)
-;;                (side            . bottom)
-;;                (reusable-frames . visible)
-;;                (window-height   . 0.33)))
-
-;; (use-package flycheck
-;;   :hook
-;;   (on-first-buffer . global-flycheck-mode))
-
-;; (use-package flycheck-eglot
-;;   :hook
-;;   (eglot-managed-mode . flycheck-eglot-mode)
-;;   :after (flycheck eglot))
-
-
 (use-package flymake
   :ensure nil
   :bind
@@ -33,42 +15,30 @@
         ("C-c ! D" . flymake-show-project-diagnostics) ; Emacs28
         ("C-c ! n" . flymake-goto-next-error)
         ("C-c ! p" . flymake-goto-prev-error))
-  :config
-  (setq flymake-fringe-indicator-position 'left-fringe)
-  (setq flymake-suppress-zero-counters t)
-  (setq flymake-no-changes-timeout nil)
-  (setq flymake-start-on-flymake-mode t)
-  (setq flymake-start-on-save-buffer t)
-  (setq flymake-proc-compilation-prevents-syntax-check t)
-  (setq flymake-wrap-around nil)
-  (setq flymake-mode-line-format
+  :custom
+  (flymake-fringe-indicator-position 'left-fringe)
+  (flymake-suppress-zero-counters t)
+  (flymake-no-changes-timeout nil)
+  (flymake-start-on-flymake-mode t)
+  (flymake-start-on-save-buffer t)
+  (flymake-proc-compilation-prevents-syntax-check t)
+  (flymake-wrap-around nil)
+  (flymake-mode-line-format
         '("" flymake-mode-line-exception flymake-mode-line-counters))
-  (setq flymake-mode-line-counter-format
+  (flymake-mode-line-counter-format
         '("" flymake-mode-line-error-counter
           flymake-mode-line-warning-counter
           flymake-mode-line-note-counter ""))
-  (setq flymake-show-diagnostics-at-end-of-line nil)) ; Emacs 30
+  (flymake-show-diagnostics-at-end-of-line nil)) ; Emacs 30
 
-;; (use-package jinx
-;;   :hook (emacs-startup . global-jinx-mode)
-;; 	:custom
-;; 	(jinx-languages "en fr")
-;;   :bind
-;;   (("C-;" . jinx-correct-nearest)
-;;    ("C-x j a" . jinx-correct-all)
-;;    ("C-x j n" . jinx-next)
-;;    ("C-x j p" . jinx-previous)))
-
-(defvar ludamacs-prose-mode-list
-  '(org-mode
-    git-commit-elisp-text-mode
-    bibtex-mode
-    context-mode
-    latex-mode
-    markdown-mode
-    rst-mode
-    text-mode)
-  "A list of what ludamacs considers prose modes.")
+(use-package jinx
+  :hook (emacs-startup . global-jinx-mode)
+  :custom (jinx-languages "en_US")
+  :bind
+  (("C-;" . jinx-correct-nearest)
+   ("C-x j a" . jinx-correct-all)
+   ("C-x j n" . jinx-next)
+   ("C-x j p" . jinx-previous)))
 
 (defun require-and-ensure-eglot-ltex ()
   "Require the eglot-ltex package and run `eglot-ensure'."

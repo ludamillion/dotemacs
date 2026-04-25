@@ -67,6 +67,19 @@
 (use-package diminish
   :demand t)
 
+(defvar esprit-prose-modes
+  '(
+    bibtex-mode
+    context-mode
+    git-commit-elisp-text-mode
+    latex-mode
+    markdown-mode
+    org-mode
+    rst-mode
+    text-mode
+    )
+  "List of which modes esprit considers prose.")
+
 (use-package mini-ontop
   :straight (:type git :host github :repo "hkjels/mini-ontop.el")
   :hook
@@ -312,7 +325,7 @@
   :commands (markdown-mode gfm-mode)
   :bind ("C-c C-c C-p" . 'esprit/markdown-preview)
   :config
-  (setq markdown-command "pandoc -t html5"))
+  (setq markdown-command "pandoc -t html5 -F mermaid-filter"))
 
 (use-package simple-httpd
   :ensure t
@@ -343,6 +356,12 @@
   (imp-set-user-filter 'esprit/markdown-filter)
   (imp-visit-buffer))
 
+(use-package md-mermaid
+  :straight (:host github :repo "ahmetus/md-mermaid")
+  :commands (md-mermaid-render-current
+             md-mermaid-preview-last-svg
+             md-mermaid-transient))
+
 (use-package yaml-ts-mode
   :straight (:type built-in)
   :mode (rx (| ".yml" ".yaml")))
@@ -350,6 +369,16 @@
 (use-package yaml-pro
   :after yaml-ts-mode
   :hook (yaml-ts-mode . yaml-pro-ts-mode))
+
+;; (use-package pdf-tools
+;;   :custom
+;;   (pdf-annot-activate-created-annotations t "automatically annotate highlights")
+;;   :hook
+;;   (pdf-view-mode-hook . (lambda() (display-line-numbers-mode -1)))
+;;   :config
+;;   (pdf-tools-install)
+;;   (setq-default pdf-view-display-size 'fit-width)
+;;   (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
 
 (defvar luda/local-root "~/"
   "The explicit root directory value.")
@@ -465,7 +494,8 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("79a11bba703b24ed5a5bb9e0d738103a7f25e11b1eacffff6314fbf7b4b99a7c"
+   '("dfe6118db9ca69d0de53ebe3755b5d65c66858b0317c5fe699570654a09fb195"
+     "79a11bba703b24ed5a5bb9e0d738103a7f25e11b1eacffff6314fbf7b4b99a7c"
      "db86799cbf2be8d9e101e9e7d8a64d598689d58a2cec1917f623c7d9699ddb04"
      "f5adedef87149fba04e6f5da9caf5c9f9812b64a697c56f525be882c723d74ab"
      "0c7948cd9d02cc16434d9dfa8317a77a339c5bbbe2e2892e3780d6c5fe99d705"
