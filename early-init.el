@@ -1,13 +1,13 @@
-(defun luda/add-to-list (list element)
+(defun esprit/add-to-list (list element)
   "Add to symbol of LIST the given ELEMENT.
   Simplified version of `add-to-list' halfway between `push' and `add-to-list'."
   (set list (cons element (symbol-value list))))
 
 (mapc
  (lambda (var)
-   (luda/add-to-list var '(width . (text-pixels . 1000)))
-   (luda/add-to-list var '(height . (text-pixels . 800)))
-   (luda/add-to-list var '(scroll-bar-width  . 10)))
+   (esprit/add-to-list var '(width . (text-pixels . 1000)))
+   (esprit/add-to-list var '(height . (text-pixels . 800)))
+   (esprit/add-to-list var '(scroll-bar-width  . 10)))
  '(default-frame-alist initial-frame-alist))
 
 (setopt frame-resize-pixelwise t
@@ -47,11 +47,11 @@
 (startup-redirect-eln-cache
  (expand-file-name "emacs/eln-cache/" (xdg-cache-home)))
 
-(defvar luda/file-name-handler-alist file-name-handler-alist)
-(defvar luda/vc-handled-backends vc-handled-backends)
+(defvar esprit/file-name-handler-alist file-name-handler-alist)
+(defvar esprit/vc-handled-backends vc-handled-backends)
 
-(defvar luda/gc-threshold gc-cons-threshold (* 1000 1000 8))
-(defvar luda/gc-cons-percentage 0.1)
+(defvar esprit/gc-threshold gc-cons-threshold (* 1000 1000 8))
+(defvar esprit/gc-cons-percentage 0.1)
 
 (setopt file-name-handler-alist nil
 	vc-handled-backends nil)
@@ -59,12 +59,12 @@
 (setopt gc-cons-threshold most-positive-fixnum
 	gc-cons-percentage 0.5)
 
-(defun luda/reset-startup-values ()
-  (setopt gc-cons-threshold luda/gc-threshold
-	  gc-cons-percentage luda/gc-cons-percentage
-	  file-name-handler-alist luda/file-name-handler-alist
-	  vc-handled-backends luda/vc-handled-backends))
+(defun esprit/reset-startup-values ()
+  (setopt gc-cons-threshold esprit/gc-threshold
+	  gc-cons-percentage esprit/gc-cons-percentage
+	  file-name-handler-alist esprit/file-name-handler-alist
+	  vc-handled-backends esprit/vc-handled-backends))
 
-(add-hook 'emacs-startup-hook 'luda/reset-startup-values)
+(add-hook 'emacs-startup-hook 'esprit/reset-startup-values)
 
 (provide 'early-init)

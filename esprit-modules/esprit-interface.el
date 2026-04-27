@@ -1,4 +1,4 @@
-;;; luda-interface --- Interface Module -*- lexical-binding: t -*-
+;;; esprit-interface --- Interface Module -*- lexical-binding: t -*-
 
 ;;; Commentary:
 
@@ -40,7 +40,7 @@
                (window-parameters
                 (no-delete-other-windows . t))))
 
-(defun luda-close-dwim ()
+(defun esprit-close-dwim ()
   "Quit a frame the same way no matter what kind of frame you are on."
   (interactive)
   (let ((frames (visible-frame-list)))
@@ -63,7 +63,7 @@
 ;;   :bind (("s-n" . swiss-move-line-down)
 ;; 	 ("s-p" . swiss-move-line-up)))
 
-(global-set-key (kbd "C-x C-c") 'luda-close-dwim)
+(global-set-key (kbd "C-x C-c") 'esprit-close-dwim)
 
 (keymap-set global-map "C-x k" 'kill-current-buffer)
 (keymap-set global-map "C-x C-k" 'kill-buffer)
@@ -101,5 +101,5 @@
   :bind
   ("C-c f" . #'fontaine-set-preset))
 
-(provide 'luda-interface)
-;;; luda-interface.el ends here
+(provide 'esprit-interface)
+;;; esprit-interface.el ends here

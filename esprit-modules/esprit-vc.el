@@ -1,4 +1,4 @@
-;;; luda-vc --- Version Control Module -*- lexical-binding: t -*-
+;;; esprit-vc --- Version Control Module -*- lexical-binding: t -*-
 
 ;;; Commentary:
 
@@ -32,24 +32,24 @@
 
 (keymap-set global-map "C-c g" sensible-vc-map)
 
-(defvar luda/ediff-original-windows nil)
+(defvar esprit/ediff-original-windows nil)
 
-(defun luda/store-pre-ediff-winconfig ()
+(defun esprit/store-pre-ediff-winconfig ()
   "Store the window arrangement before opening Ediff."
-  (setq luda/ediff-original-windows (current-window-configuration)))
+  (setq esprit/ediff-original-windows (current-window-configuration)))
 
-(defun luda/restore-pre-ediff-winconfig ()
+(defun esprit/restore-pre-ediff-winconfig ()
   "Reset original window arrangement."
-  (set-window-configuration luda/ediff-original-windows))
+  (set-window-configuration esprit/ediff-original-windows))
 
 (use-package ediff
   :straight (ediff :type built-in)
-  :hook ((ediff-before-setup . 'luda/store-pre-ediff-winconfig)
-         (ediff-quit . 'luda/restore-pre-ediff-winconfig))
+  :hook ((ediff-before-setup . 'esprit/store-pre-ediff-winconfig)
+         (ediff-quit . 'esprit/restore-pre-ediff-winconfig))
   :config
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-horizontally))
 
 
-(provide 'luda-vc)
-;;; luda-vc.el ends here
+(provide 'esprit-vc)
+;;; esprit-vc.el ends here

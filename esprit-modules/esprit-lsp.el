@@ -1,4 +1,4 @@
-;;; luda-lsp --- Language Server Protocol Module -*- lexical-binding: t -*-
+;;; esprit-lsp --- Language Server Protocol Module -*- lexical-binding: t -*-
 
 ;;; Commentary:
 
@@ -26,5 +26,5 @@
                                       :disabledRules ["MORFOLOGIK_RULE_EN_US"])))
   )
 
-(provide 'luda-lsp)
-;;; luda-lsp.el ends here
+(provide 'esprit-lsp)
+;;; esprit-lsp.el ends here

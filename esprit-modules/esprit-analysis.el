@@ -1,4 +1,4 @@
-;;; luda-analysis --- Code and Text Analysis Module -*- lexical-binding: t -*-
+;;; esprit-analysis --- Code and Text Analysis Module -*- lexical-binding: t -*-
 
 ;;; Commentary:
 
@@ -50,10 +50,10 @@
 		   :host github
 		   :repo "emacs-languagetool/eglot-ltex")
   :hook
-  (ludamacs-prose-mode-list . require-and-ensure-eglot-ltex)
+  (esprit/prose-mode-list . require-and-ensure-eglot-ltex)
   :init
   (setq eglot-ltex-server-path "~/tools/ltex-ls-plus/bin/ltex-ls-plus"
 	eglot-ltex-communication-channel 'stdio))
 
-(provide 'luda-analysis)
-;;; luda-analysis.el ends here
+(provide 'esprit-analysis)
+;;; esprit-analysis.el ends here

@@ -31,12 +31,12 @@
   (message "Welcome to GNU Emacs / Esprit Edition")
   (message (format "Initialization time: %s" (emacs-init-time))))
 
-(defun luda/reload-init-file ()
+(defun esprit/reload-init-file ()
   "Reload the init.el file in the Emacs directory."
   (interactive)
   (load-file (expand-file-name "init.el" user-emacs-directory)))
 
-(keymap-global-set "<f5>" 'luda/reload-init-file)
+(keymap-global-set "<f5>" 'esprit/reload-init-file)
 
 (use-package on
   :demand t
@@ -175,13 +175,13 @@
 ;; Function and key binds to create new frames by either cloning the
 ;; current buffer or jumping to the scratch buffer.
 
-(defun luda/make-scratch-frame ()
+(defun esprit/make-scratch-frame ()
   "Create a new frame and switch to *scratch* buffer."
   (interactive)
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
 
-(defun luda/make-eat-frame ()
+(defun esprit/make-eat-frame ()
   "Create a new frame and create a vterm buffer."
   (interactive)
   (select-frame (make-frame))
@@ -190,8 +190,8 @@
 (defvar-keymap esprit-frame-map
   :doc "Prefix map for frame operations."
   "m" #'make-frame
-  "n" #'luda/make-scratch-frame
-  "v" #'luda/make-eat-frame)
+  "n" #'esprit/make-scratch-frame
+  "v" #'esprit/make-eat-frame)
 
 (keymap-global-set "M-n" esprit-frame-map)
 
@@ -228,16 +228,16 @@
 (mapc
  (lambda (string)
    (add-to-list 'load-path (locate-user-emacs-file string)))
- '("luda-modules"))
+ '("esprit-modules"))
 
-(require 'luda-completion)
-(require 'luda-lsp)
-(require 'luda-analysis)
-(require 'luda-editing)
-(require 'luda-interface)
-(require 'luda-vc)
-(require 'luda-term)
-(require 'luda-prog-modes)
+(require 'esprit-completion)
+(require 'esprit-lsp)
+(require 'esprit-analysis)
+(require 'esprit-editing)
+(require 'esprit-interface)
+(require 'esprit-vc)
+(require 'esprit-term)
+(require 'esprit-prog-modes)
 
 (use-package tempel
   ;; Require trigger prefix before template name when completing.
@@ -380,40 +380,40 @@
 ;;   (setq-default pdf-view-display-size 'fit-width)
 ;;   (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
 
-(defvar luda/local-root "~/"
+(defvar esprit/local-root "~/"
   "The explicit root directory value.")
 
-(defvar luda/default-org-directory
-  (expand-file-name "org" luda/local-root))
+(defvar esprit/default-org-directory
+  (expand-file-name "org" esprit/local-root))
 
-(setq luda/sync-org-directory (expand-file-name "Dropbox/org" luda/local-root))
-(setq luda/beorg-directory
-      (expand-file-name "Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org" luda/local-root))
+(setq esprit/sync-org-directory (expand-file-name "Dropbox/org" esprit/local-root))
+(setq esprit/beorg-directory
+      (expand-file-name "Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org" esprit/local-root))
 
-(setq luda/org-dir
-      (if (file-directory-p luda/default-org-directory)
-          luda/default-org-directory
-        luda/sync-org-directory))
+(setq esprit/org-dir
+      (if (file-directory-p esprit/default-org-directory)
+          esprit/default-org-directory
+        esprit/sync-org-directory))
 
-(setq luda/journal-file (expand-file-name "journal.org" luda/org-dir))
-(setq luda/projects-file (expand-file-name "projects.org" luda/org-dir))
-(setq luda/notes-directory (expand-file-name "notes" luda/org-dir))
-(setq luda/org-id-locations-file (expand-file-name ".org-id-locations" luda/org-dir))
+(setq esprit/journal-file (expand-file-name "journal.org" esprit/org-dir))
+(setq esprit/projects-file (expand-file-name "projects.org" esprit/org-dir))
+(setq esprit/notes-directory (expand-file-name "notes" esprit/org-dir))
+(setq esprit/org-id-locations-file (expand-file-name ".org-id-locations" esprit/org-dir))
 
 (use-package org
   :straight (:type built-in)
   :init
   (setq org-export-backends '(ascii md html icalendar latex))
   :custom
-  (org-default-notes-file (expand-file-name "inbox.org" luda/org-dir)) ;; Should maybe be inbox
+  (org-default-notes-file (expand-file-name "inbox.org" esprit/org-dir)) ;; Should maybe be inbox
   (org-log-done 'time)
   (org-log-into-drawer t)
   (org-capture-bookmark nil)
   (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
-  (org-id-locations-file luda/org-id-locations-file)
+  (org-id-locations-file esprit/org-id-locations-file)
   (org-id-locations-file-relative t)
   (org-fontify-whole-heading-line t)
-  (org-agenda-files `(,luda/org-dir ,luda/beorg-directory))
+  (org-agenda-files `(,esprit/org-dir ,esprit/beorg-directory))
   (org-latex-pdf-process '("tectonic %f"))
 
   (org-capture-templates
@@ -450,7 +450,7 @@
   :init
   (denote-rename-buffer-mode 1)
   :custom
-  (denote-directory luda/notes-directory)
+  (denote-directory esprit/notes-directory)
   :hook
   (dired-mode . denote-dired-mode)
   :custom-face
@@ -464,7 +464,7 @@
              consult-notes-search-in-all-notes)
   :custom
   (consult-notes-file-dir-sources
-   `(("Denote" ?d ,luda/notes-directory))))
+   `(("Denote" ?d ,esprit/notes-directory))))
 
 (use-package emacs-lock
   :config

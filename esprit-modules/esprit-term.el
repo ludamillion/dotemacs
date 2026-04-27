@@ -1,4 +1,4 @@
-;;; luda-term --- Terminal Emulation and related functionality -*- lexical-binding: t -*-
+;;; esprit-term --- Terminal Emulation and related functionality -*- lexical-binding: t -*-
 
 ;;; Commentary:
 
@@ -14,6 +14,6 @@
 			   ("integration" "integration/*")
 			   (:exclude ".dir-locals.el" "*-tests.el"))))
 
-(provide 'luda-term)
-;;; luda-term.el ends here
+(provide 'esprit-term)
+;;; esprit-term.el ends here
 

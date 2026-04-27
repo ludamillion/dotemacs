@@ -1,4 +1,4 @@
-;;; luda-prog-modes --- Programming Modes Module -*- lexical-binding: t -*-
+;;; esprit-prog-modes --- Programming Modes Module -*- lexical-binding: t -*-
 
 ;;; Commentary:
 
@@ -62,5 +62,5 @@
 ;;   (jtsx-jsx-element-move-allow-step-out t)
 ;;   (jtsx-enable-jsx-electric-closing-element t))
 
-(provide 'luda-prog-modes)
-;;; luda-prog-modes.el ends here
+(provide 'esprit-prog-modes)
+;;; esprit-prog-modes.el ends here

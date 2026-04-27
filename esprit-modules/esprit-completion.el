@@ -1,4 +1,4 @@
-;;; luda-completion --- Completion Module -*- lexical-binding: t -*-
+;;; esprit-completion --- Completion Module -*- lexical-binding: t -*-
 
 ;;; Commentary:
 
@@ -51,7 +51,7 @@
   (setq-local corfu-auto nil)
   (corfu-mode))
 
-(defun ludamacs--corfu-modes ()
+(defun esprit/corfu-modes ()
   "Activate the desired corfu modes."
   (corfu-history-mode)
   (corfu-echo-mode)
@@ -63,10 +63,10 @@
         corfu-auto t
         corfu-on-exact-match nil)
   :hook
-  (on-first-buffer . ludamacs--corfu-modes)
+  (on-first-buffer . esprit/corfu-modes)
   (eshell-mode . corfu-x-eshell-hook))
 
-(defun luda/cape-capf-setup-eglot ()
+(defun esprit/cape-capf-setup-eglot ()
   "Configure cape completion at point functions for Eglot managed modes."
   (let ((result))
     (dolist (element `(,(cape-capf-buster #'eglot-completion-at-point)
@@ -74,13 +74,13 @@
 		       cape-dabbrev) result)
       (add-to-list 'completion-at-point-functions element))))
 
-(defun luda/cape-capf-setup-org ()
+(defun esprit/cape-capf-setup-org ()
   "Configure cape completion at point functions for org mode."
   (let ((result))
     (dolist (element '(cape-dict cape-dabbrev) result)
       (add-to-list 'completion-at-point-functions element))))
 
-(defun luda/cape-capf-setup-git-commit ()
+(defun esprit/cape-capf-setup-git-commit ()
   "Configure cape completion at point functions for git-commit mode."
   (let ((result))
     (dolist (element '(cape-dict cape-dabbrev) result)
@@ -91,9 +91,9 @@
   (setq completion-category-overrides '((eglot (styles orderless))
                                         (eglot-capf (styles orderless))))
   :hook
-  ((eglot-managed-mode . luda/cape-capf-setup-eglot)
-   (org-mode . luda/cape-capf-setup-org)
-   (git-commit-mode . luda/cape-capf-setup-git-commit)))
+  ((eglot-managed-mode . esprit/cape-capf-setup-eglot)
+   (org-mode . esprit/cape-capf-setup-org)
+   (git-commit-mode . esprit/cape-capf-setup-git-commit)))
 
 (use-package marginalia
   :hook
@@ -123,5 +123,5 @@
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
-(provide 'luda-completion)
-;;; luda-completion.el ends here
+(provide 'esprit-completion)
+;;; esprit-completion.el ends here

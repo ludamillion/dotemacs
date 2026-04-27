@@ -1,4 +1,4 @@
-;;; luda-formatting --- Code and Text Formatting Module -*- lexical-binding: t -*-
+;;; esprit-formatting --- Code and Text Formatting Module -*- lexical-binding: t -*-
 
 ;;; Commentary:
 
@@ -10,5 +10,5 @@
   (add-to-list 'apheleia-mode-alist '(js-ts-mode . prettier))
   (add-to-list 'apheleia-mode-alist '(typescript-ts-mode . prettier)))
 
-(provide 'luda-formatting)
-;;; luda-formatting.el ends here
+(provide 'esprit-formatting)
+;;; esprit-formatting.el ends here

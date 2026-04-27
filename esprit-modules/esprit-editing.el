@@ -1,4 +1,4 @@
-;;; luda-editing --- Text Editing and Manipulation Module -*- lexical-binding: t -*-
+;;; esprit-editing --- Text Editing and Manipulation Module -*- lexical-binding: t -*-
 
 ;;; Commentary:
 
@@ -119,5 +119,5 @@
 (bind-key "M-u" #'upcase-dwim)
 (bind-key "M-l" #'downcase-dwim)
 
-(provide 'luda-editing)
-;;; luda-editing.el ends here
+(provide 'esprit-editing)
+;;; esprit-editing.el ends here

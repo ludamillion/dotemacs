@@ -1,12 +1,12 @@
-#+TITLE: Emacs Literate Configuration
+#+TITLE: Esprit Emacs - A Literate Configuration
 #+AUTHOR: Luke D. Inglis
-#+DATE: 11/2023
+#+DATE: 04/2026
 #+STARTUP: show2levels indent hidestars
 #+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/code/dotemacs/lit-init.el"))
 
 * Emacs Literate Configuration
 * Documentation
-** Forwards
+* Forwards
 
 While learning Emacs I've tried a lot of different prepackaged 'distros'. Most notably, as an erstwhile (neo)vim user, Doom. After learning enough via that route and additionally deciding to try to give vanilla Emacs a solid try I'm leaving the prepackaged distros behind and building my own configuration.
 
@@ -30,7 +30,7 @@ This document is a literate configuration for GNU Emacs written in [[https://org
 
 #+end_quote
 
-*** To Do [2/4]                                                  :INACTIVE:
+*** To Do [2/4]                                                   :INACTIVE:
 
 Simply put a list of concrete actions to take to enchance or solve issues with this configuration.
 
@@ -39,7 +39,7 @@ Simply put a list of concrete actions to take to enchance or solve issues with t
 - [X] Switch to my own fork of the modeline
 - [ ] Read up on =cycle-spacing=
 
-*** Research [1/7]                                               :INACTIVE:
+*** Research [1/7]                                                :INACTIVE:
 
 List of less tasks to do that are more theoretical or investigative than the concrete, actionable items above. N.B. the output of these tasks should include two things, one necessary and one conditional. The necessary item is a note with the result of investigating. The conditional item is a To Do added to the list above if the result of the research is an actionable item.
 
@@ -56,7 +56,7 @@ List of less tasks to do that are more theoretical or investigative than the con
 - [ ] [[https://github.com/alphapapa/activities.el][Activities]] - Package built around the idea of saving files, buffers, and
   other related state defined as an /activity/.
 
-*** Possible packages to add                                     :INACTIVE:
+*** Possible packages to add                                      :INACTIVE:
 
 Listed separately from the above To Do list a holding place for packages that I've come across or seen/heard mention of that look worth investigating but maybe not enough that I need to 'To Do' them.
 
@@ -70,10 +70,10 @@ This will generate a header at the top of the tangled file to indicate it is gen
 
 #+begin_src emacs-lisp :epilogue (format-time-string ";; Last generated on %c")
 
-  ;;; Sensible Emacs --- A literate configuration -*- lexical-binding: t -*-
-  ;;; This file has been generated from dotemacs.org file. DO NOT EDIT.
+  ;;; Esprit Emacs --- A literate configuration -*- lexical-binding: t -*-
+  ;;; This file has been generated from the (file-name-nondirectory (buffer-file-name)) file. DO NOT EDIT.
 
-  ;;; Copyright (C) 2024 Luke D. Inglis
+  ;;; Copyright (C) 2026 Luke D. Inglis
 
   ;;; This file is free software; you can redistribute it and/or modify
   ;;; it under the terms of the GNU General Public License as published by
@@ -400,7 +400,7 @@ point to my local root directory. Mostly for the sake of Org later on in the con
 
 #+begin_src emacs-lisp
 
-  (setq luda/local-root "~/")
+  (setq esprit/local-root "~/")
 
 #+end_src
 
@@ -423,7 +423,7 @@ A variation on =make-frame= that opens to the =*scratch*= buffer rather than the
 
 #+begin_src emacs-lisp
 
-  (defun luda/make-scratch-frame ()
+  (defun esprit/make-scratch-frame ()
     "Create a new frame and switch to *scratch* buffer."
 
     (interactive)
@@ -433,7 +433,7 @@ A variation on =make-frame= that opens to the =*scratch*= buffer rather than the
   (defvar-keymap liminal-frame-map
     :doc "Liminal prefix map for frame operations."
     "m" #'make-frame
-    "n" #'luda/make-scratch-frame)
+    "n" #'esprit/make-scratch-frame)
 
   (keymap-set global-map "M-n" liminal-frame-map)
 
@@ -664,22 +664,22 @@ Yet another package from =minad=. As mentioned Corfu leverages the =completion-a
 
 #+begin_src emacs-lisp
 
-  (defun luda/eglot-capf ()
+  (defun esprit/eglot-capf ()
     (setq-local completion-at-point-functions
                 (list ((cape-capf-buster #'eglot-completion-at-point)
   										 #'cape-file))))
 
-  (defun luda/cape-capf-setup-lsp ()
+  (defun esprit/cape-capf-setup-lsp ()
     "Replace the default `lsp-completion-at-point' with its
   `cape-capf-buster' version."
     (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
           (cape-capf-buster #'eglot-completion-at-point))
     (add-to-list 'completion-at-point-functions #'cape-dabbrev t))
 
-  (defun luda/cape-capf-setup-org ()
+  (defun esprit/cape-capf-setup-org ()
     (add-to-list 'completion-at-point-functions (cape-capf-super #'cape-dict #'cape-dabbrev)))
 
-  (defun luda/cape-capf-setup-git-commit ()
+  (defun esprit/cape-capf-setup-git-commit ()
     (let ((result))
       (dolist (element '(cape-dabbrev cape-symbol) result)
         (add-to-list 'completion-at-point-functions element))))
@@ -689,9 +689,9 @@ Yet another package from =minad=. As mentioned Corfu leverages the =completion-a
     (setq completion-category-overrides '((eglot (styles orderless))
                                           (eglot-capf (styles orderless))))
     :hook
-    ((eglot-managed-mode . luda/eglot-capf)
-     (org-mode . luda/cape-capf-setup-org)
-     (git-commit-mode . luda/cape-capf-setup-git-commit)))
+    ((eglot-managed-mode . esprit/eglot-capf)
+     (org-mode . esprit/cape-capf-setup-org)
+     (git-commit-mode . esprit/cape-capf-setup-git-commit)))
 
                        #+end_src
 * Marginalia
@@ -903,7 +903,7 @@ I had stopped exploring projectile for a bit but never removed it. I'm taking a 
   	:config
   	(projectile-mode)
   	:custom
-  	(projectile-project-search-path `(,(concat luda/local-root "code")))
+  	(projectile-project-search-path `(,(concat esprit/local-root "code")))
   	:bind (:map projectile-mode-map
   							("s-," . projectile-command-map)))
 
@@ -1404,7 +1404,7 @@ Kill the current frame or exit emacs if the frame in question is the only one. T
 
 #+begin_src emacs-lisp
 
-  (defun luda/quit-dwim (&optional arg)
+  (defun esprit/quit-dwim (&optional arg)
   	"If current frame is the last frame kill emacs, else delete it."
   	(interactive "P")
 
@@ -1414,7 +1414,7 @@ Kill the current frame or exit emacs if the frame in question is the only one. T
   				(save-buffers-kill-terminal arg)
   			(message "Great, back to what you were doing then."))))
 
-  (global-set-key (kbd "C-x C-c") 'luda/quit-dwim)
+  (global-set-key (kbd "C-x C-c") 'esprit/quit-dwim)
 
 #+end_src
 
@@ -1526,18 +1526,18 @@ Various directory and file locations for use configuring Org.
 
 #+begin_src emacs-lisp
 
-  (setq luda/default-org-directory (expand-file-name "org" luda/local-root))
-  (setq luda/sync-org-directory (expand-file-name "Dropbox/org" luda/local-root))
-  (setq luda/beorg-directory (expand-file-name "Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org" luda/local-root))
+  (setq esprit/default-org-directory (expand-file-name "org" esprit/local-root))
+  (setq esprit/sync-org-directory (expand-file-name "Dropbox/org" esprit/local-root))
+  (setq esprit/beorg-directory (expand-file-name "Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org" esprit/local-root))
 
-  (setq luda/org-dir
-        (if (file-directory-p luda/default-org-directory)
-            luda/default-org-directory
-          luda/sync-org-directory))
+  (setq esprit/org-dir
+        (if (file-directory-p esprit/default-org-directory)
+            esprit/default-org-directory
+          esprit/sync-org-directory))
 
-  (setq luda/journal-file (expand-file-name "journal.org" luda/org-dir))
-  (setq luda/projects-file (expand-file-name "projects.org" luda/org-dir))
-  (setq luda/org-id-locations-file (expand-file-name ".org-id-locations" luda/org-dir))
+  (setq esprit/journal-file (expand-file-name "journal.org" esprit/org-dir))
+  (setq esprit/projects-file (expand-file-name "projects.org" esprit/org-dir))
+  (setq esprit/org-id-locations-file (expand-file-name ".org-id-locations" esprit/org-dir))
 
 #+end_src
 
@@ -1552,7 +1552,7 @@ Various directory and file locations for use configuring Org.
 
 #+begin_src emacs-lisp
 
-  (setq luda/todo-keywords
+  (setq esprit/todo-keywords
         `((sequence
            "TODO(t!)" "ACTIVE(a!)" "WAITING(w!)" "MAYBE(m!)" "|" "DONE(d!)" "OBSOLETE(o!)" "CANCELED(-!)")))
 
@@ -1576,23 +1576,23 @@ Configure Org itself
     :init
     (setq org-export-backends '(ascii md html icalendar latex))
     :config
-    (setq org-default-notes-file (expand-file-name "todo.org" luda/org-dir)) ;; Should maybe be inbox
+    (setq org-default-notes-file (expand-file-name "todo.org" esprit/org-dir)) ;; Should maybe be inbox
     (setq org-log-done 'time)
     (setq org-log-reschedule 'time)
     (setq org-log-into-drawer t)
     (setq org-startup-truncated nil)
-    (setq org-todo-keywords luda/todo-keywords)
+    (setq org-todo-keywords esprit/todo-keywords)
     (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
-    (setq org-id-locations-file luda/org-id-locations-file)
+    (setq org-id-locations-file esprit/org-id-locations-file)
     (setq org-id-locations-file-relative t)
     (setq org-fontify-whole-heading-line t)
-    (setq org-agenda-files `(,luda/org-dir ,luda/beorg-directory))
+    (setq org-agenda-files `(,esprit/org-dir ,esprit/beorg-directory))
     (setq org-latex-pdf-process
           '("tectonic %f"))
 
   	(setq org-capture-templates
   				(doct `(("Projects"
-  								 :keys "p" :file ,luda/projects-file
+  								 :keys "p" :file ,esprit/projects-file
   								 :template ("* %{todo-state} %^{Description}\n:PROPERTIES:\n:Created: %U\n:END:\n\n\n%i\n%a")
   								 :children (("Todo"
   														 :keys "t"
@@ -1606,7 +1606,7 @@ Configure Org itself
   								("Journal"
   								 :keys "j"
   								 :type plain
-  								 :file ,luda/journal-file
+  								 :file ,esprit/journal-file
   								 :datetree t
   								 :template ":PROPERTIES\n:Created: %U\n:END:\n\n%?\n%i\n%a"
   								 :empty-lines 1))))
@@ -1668,19 +1668,19 @@ Taken from https://panadestein.github.io/emacsd/ a friendlier =ediff= experience
 
 #+begin_src emacs-lisp
 
-  (defvar luda/ediff-original-windows nil)
+  (defvar esprit/ediff-original-windows nil)
 
-  (defun luda/store-pre-ediff-winconfig ()
+  (defun esprit/store-pre-ediff-winconfig ()
     "Stores the window arrangement before opening ediff."
-    (setq luda/ediff-original-windows (current-window-configuration)))
+    (setq esprit/ediff-original-windows (current-window-configuration)))
 
-  (defun luda/restore-pre-ediff-winconfig ()
+  (defun esprit/restore-pre-ediff-winconfig ()
     "Resets original window arrangement"
-    (set-window-configuration luda/ediff-original-windows))
+    (set-window-configuration esprit/ediff-original-windows))
 
   (use-package ediff
-    :hook ((ediff-before-setup . 'luda/store-pre-ediff-winconfig)
-           (ediff-quit . 'luda/restore-pre-ediff-winconfig))
+    :hook ((ediff-before-setup . 'esprit/store-pre-ediff-winconfig)
+           (ediff-quit . 'esprit/restore-pre-ediff-winconfig))
     :config
     (setq ediff-window-setup-function 'ediff-setup-windows-plain)
     (setq ediff-split-window-function 'split-window-horizontally))

@@ -159,14 +159,14 @@
 ;; Function and key binds to create new frames by either cloning the
 ;; current buffer or jumping to the scratch buffer.
 
-(defun luda/make-scratch-frame ()
+(defun esprit/make-scratch-frame ()
   "Create a new frame and switch to *scratch* buffer."
 
   (interactive)
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
 
-(defun luda/make-vterm-frame ()
+(defun esprit/make-vterm-frame ()
   "Create a new frame and create a vterm buffer."
 
   (interactive)
@@ -176,8 +176,8 @@
 (defvar-keymap sensible-frame-map
   :doc "Liminal prefix map for frame operations."
   "m" #'make-frame
-  "n" #'luda/make-scratch-frame
-  "v" #'luda/make-vterm-frame)
+  "n" #'esprit/make-scratch-frame
+  "v" #'esprit/make-vterm-frame)
 
 (keymap-global-set "M-n" sensible-frame-map)
 
@@ -237,15 +237,15 @@
 (mapc
  (lambda (string)
    (add-to-list 'load-path (locate-user-emacs-file string)))
- '("luda-lisp" "luda-modules"))
+ '("esprit-lisp" "esprit-modules"))
 
-(require 'luda-completion)
-(require 'luda-lsp)
-(require 'luda-analysis)
-(require 'luda-editing)
-(require 'luda-interface)
-(require 'luda-vc)
-(require 'luda-prog-modes)
+(require 'esprit-completion)
+(require 'esprit-lsp)
+(require 'esprit-analysis)
+(require 'esprit-editing)
+(require 'esprit-interface)
+(require 'esprit-vc)
+(require 'esprit-prog-modes)
 
 (use-package tempel
   ;; Require trigger prefix before template name when completing.
@@ -321,26 +321,26 @@
   :straight (:type built-in)
   :mode (rx (| ".yml" ".yaml")))
 
-(defvar luda/local-root "~/"
+(defvar esprit/local-root "~/"
   "The explicit root directory value.")
 
-(defvar luda/default-org-directory
-  (expand-file-name "org" luda/local-root))
+(defvar esprit/default-org-directory
+  (expand-file-name "org" esprit/local-root))
 
-(setq luda/sync-org-directory (expand-file-name "Dropbox/org" luda/local-root))
-(setq luda/beorg-directory
-      (expand-file-name "Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org" luda/local-root))
+(setq esprit/sync-org-directory (expand-file-name "Dropbox/org" esprit/local-root))
+(setq esprit/beorg-directory
+      (expand-file-name "Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org" esprit/local-root))
 
-(setq luda/org-dir
-      (if (file-directory-p luda/default-org-directory)
-          luda/default-org-directory
-        luda/sync-org-directory))
+(setq esprit/org-dir
+      (if (file-directory-p esprit/default-org-directory)
+          esprit/default-org-directory
+        esprit/sync-org-directory))
 
-(setq luda/journal-file (expand-file-name "journal.org" luda/org-dir))
-(setq luda/projects-file (expand-file-name "projects.org" luda/org-dir))
-(setq luda/org-id-locations-file (expand-file-name ".org-id-locations" luda/org-dir))
+(setq esprit/journal-file (expand-file-name "journal.org" esprit/org-dir))
+(setq esprit/projects-file (expand-file-name "projects.org" esprit/org-dir))
+(setq esprit/org-id-locations-file (expand-file-name ".org-id-locations" esprit/org-dir))
 
-(setq luda/todo-keywords
+(setq esprit/todo-keywords
       `((sequence
          "TODO(t!)" "ACTIVE(a!)" "WAITING(w!)" "MAYBE(m!)" "|" "DONE(d!)"
 	 "OBSOLETE(o!)" "CANCELED(-!)")))
@@ -350,23 +350,23 @@
   :init
   (setq org-export-backends '(ascii md html icalendar latex))
   :config
-  (setq org-default-notes-file (expand-file-name "todo.org" luda/org-dir)) ;; Should maybe be inbox
+  (setq org-default-notes-file (expand-file-name "todo.org" esprit/org-dir)) ;; Should maybe be inbox
   (setq org-log-done 'time)
   (setq org-log-reschedule 'time)
   (setq org-log-into-drawer t)
   (setq org-startup-truncated nil)
-  (setq org-todo-keywords luda/todo-keywords)
+  (setq org-todo-keywords esprit/todo-keywords)
   (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
-  (setq org-id-locations-file luda/org-id-locations-file)
+  (setq org-id-locations-file esprit/org-id-locations-file)
   (setq org-id-locations-file-relative t)
   (setq org-fontify-whole-heading-line t)
-  (setq org-agenda-files `(,luda/org-dir ,luda/beorg-directory))
+  (setq org-agenda-files `(,esprit/org-dir ,esprit/beorg-directory))
   (setq org-latex-pdf-process
         '("tectonic %f"))
 
   (setq org-capture-templates
         (doct `(("Projects"
-                 :keys "p" :file ,luda/projects-file
+                 :keys "p" :file ,esprit/projects-file
                  :template ("* %{todo-state} %^{Description}\n:PROPERTIES:\n:Created: %U\n:END:\n\n\n%i\n%a")
                  :children (("Todo"
                              :keys "t"
@@ -380,7 +380,7 @@
                 ("Journal"
                  :keys "j"
                  :type plain
-                 :file ,luda/journal-file
+                 :file ,esprit/journal-file
                  :datetree t
                  :template ":PROPERTIES\n:Created: %U\n:END:\n\n%?\n%i\n%a"
                  :empty-lines 1))))
