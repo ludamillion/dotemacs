@@ -53,6 +53,7 @@
  'symbol
  (cond
   ((member "Apple Symbols" (font-family-list)) "Apple Symbols")
+  ((member "Symbols Nerd Font" (font-family-list)) "Symbols Nerd Font")
   ((member "Symbola" (font-family-list)) "Symbola")))
 
 (set-fontset-font
@@ -62,6 +63,7 @@
   ((member "Apple Color Emoji" (font-family-list)) "Apple Color Emoji")
   ((member "Noto Color Emoji" (font-family-list)) "Noto Color Emoji")
   ((member "Noto Emoji" (font-family-list)) "Noto Emoji")
+  ((member "Symbols Nerd Font" (font-family-list)) "Symbols Nerd Font")
   ((member "Symbola" (font-family-list)) "Symbola")))
 
 (use-package diminish
@@ -220,10 +222,12 @@
   :demand t)
 
 (use-package esprit-line
-  :straight nil
   :demand t
+  :straight nil
   :load-path "~/code/esprit-line"
-  :hook (after-init . esprit-line-mode))
+  :custom
+  (esprit-line-glyph-alist esprit-line-glyphs-unicode)
+  :config (esprit-line-mode))
 
 (mapc
  (lambda (string)
