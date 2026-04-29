@@ -311,7 +311,19 @@
   :bind
   ("C-x !" . projectile-run-vterm))
 
+(defun esprit/helpful-switch-to-buffer (buffer-or-name)
+  "Switch to helpful BUFFER-OR-NAME.
+
+If we're already in a helpful buffer than reuse its window;
+otherwise create a new window."
+
+  (if (eq major-mode 'heplful-mode)
+      switch-to-buffer buffer-or-name)
+  (pop-to-buffer buffer-or-name))
+
 (use-package helpful
+  :custom
+  (helpful-switch-to-buffer #'esprit/helpful-switch-to-buffer)
   :bind
   ("C-h f"    . #'helpful-callable)
   ("C-c F"    . #'helpful-function)
@@ -329,7 +341,7 @@
   :commands (markdown-mode gfm-mode)
   :bind ("C-c C-c C-p" . 'esprit/markdown-preview)
   :config
-  (setq markdown-command "pandoc -t html5 -F mermaid-filter"))
+  (setq markdown-command "pandoc -t html5"))
 
 (use-package simple-httpd
   :ensure t
