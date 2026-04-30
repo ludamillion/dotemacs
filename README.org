@@ -2,7 +2,7 @@
 #+AUTHOR: Luke D. Inglis
 #+DATE: 04/2026
 #+STARTUP: show2levels indent hidestars
-#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "~/code/dotemacs/lit-init.el"))
+#+PROPERTY: header-args :tangle (let ((org-use-tag-inheritance t)) (if (member "INACTIVE" (org-get-tags))  "no" "lit-init.el"))
 
 * Emacs Literate Configuration
 * Documentation
@@ -24,11 +24,11 @@ Big thanks to those from whom I have learned. (And copy and pasted from...)
 
 As this config sprouted originally from N. Rougier's I will quote directly part of the preamble to his.
 
-#+begin_quote
+#+BEGIN_QUOTE
 
 This document is a literate configuration for GNU Emacs written in [[https://orgmode.org/][org]] format. It cannot be used directly and needs to be transformed to extract all the different code blocks into a single configuration file. This is done using the [[help:org-babel-tangle][org-babel-tangle]] function that "extract the bodies of all source code blocks from the current file into their own source-specific files". You can try by yourself by typing the sequence: =C-c C-v t= (org-babel-execute-subtree).
 
-#+end_quote
+#+END_QUOTE
 
 *** To Do [2/4]                                                   :INACTIVE:
 
@@ -68,10 +68,10 @@ Listed separately from the above To Do list a holding place for packages that I'
 
 This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
 
-#+begin_src emacs-lisp :epilogue (format-time-string ";; Last generated on %c")
+#+BEGIN_SRC emacs-lisp :var last-generated=(format-time-string ";; Last generated on %c") :var source-file=(file-name-nondirectory (buffer-file-name))
 
   ;;; Esprit Emacs --- A literate configuration -*- lexical-binding: t -*-
-  ;;; This file has been generated from the (file-name-nondirectory (buffer-file-name)) file. DO NOT EDIT.
+  ;;; This file has been generated from the source-file file on last-generated. DO NOT EDIT.
 
   ;;; Copyright (C) 2026 Luke D. Inglis
 
@@ -88,7 +88,7 @@ This will generate a header at the top of the tangled file to indicate it is gen
   ;;; For a full copy of the GNU General Public License
   ;;; see <https://www.gnu.org/licenses/>.
 
-#+end_src
+#+END_SRC
 
 ** Early Init                                                   :HOOK:OTHER:
 :PROPERTIES:
