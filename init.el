@@ -16,11 +16,30 @@
 (require 'use-package)
 (require 'straight)
 
-(setopt straight-use-package-by-default t)
+(straight-use-package 'use-package)
+
+;; (straight-use-package
+;;  '(asdf :type git :host github :repo "tabfugnic/asdf.el"))
+
+;; (straight-use-package
+;;  '(eglot-ltex :type git :host github :repo "emacs-languagetool/eglot-ltex"))
+
+;; (straight-use-package
+;;  '(use-package-xdg :type git :host codeberg :repo "rossabaker/use-package-xdg"))
+
+;; (straight-use-package
+;;  '(:type git :host gitlab :repo "axgfn/on.el"))
+
+;; (straight-use-package '(org :type built-in))
 
 (add-to-list 'load-path (expand-file-name "lisp/" user-emacs-directory))
 
+(use-package use-package-xdg
+  :straight (:type git :host codeberg :repo "rossabaker/use-package-xdg")
+  :demand t)
+
 (use-package exec-path-from-shell
+  :straight t
   :if (memq window-system '(mac ns x))
   :custom
   (exec-path-from-shell-variables '("PATH" "MANPATH" "XDG_CONFIG_DIRS" "XDG_DATA_DIRS"))
@@ -39,34 +58,25 @@
 (keymap-global-set "<f5>" 'esprit/reload-init-file)
 
 (use-package on
-  :demand t
-  :straight (:type git :host gitlab :repo "axgfn/on.el"))
+  :straight (:host gitlab :repo "axgfn/on.el")
+  :demand t)
 
-(use-package use-package-xdg
-  :demand t
-  :straight (use-package-xdg :type git
-                             :host codeberg
-                             :repo "rossabaker/use-package-xdg"))
+(set-fontset-font t 'symbol
+                  (cond
+                   ((member "Apple Symbols" (font-family-list)) "Apple Symbols")
+                   ((member "Symbols Nerd Font" (font-family-list)) "Symbols Nerd Font")
+                   ((member "Symbola" (font-family-list)) "Symbola")))
 
-(set-fontset-font
- t
- 'symbol
- (cond
-  ((member "Apple Symbols" (font-family-list)) "Apple Symbols")
-  ((member "Symbols Nerd Font" (font-family-list)) "Symbols Nerd Font")
-  ((member "Symbola" (font-family-list)) "Symbola")))
+(set-fontset-font t 'emoji
+                  (cond
+                   ((member "Apple Color Emoji" (font-family-list)) "Apple Color Emoji")
+                   ((member "Symbols Nerd Font" (font-family-list)) "Symbols Nerd Font")
+                   ((member "Symbola" (font-family-list)) "Symbola")))
 
-(set-fontset-font
- t
- 'emoji
- (cond
-  ((member "Apple Color Emoji" (font-family-list)) "Apple Color Emoji")
-  ((member "Noto Color Emoji" (font-family-list)) "Noto Color Emoji")
-  ((member "Noto Emoji" (font-family-list)) "Noto Emoji")
-  ((member "Symbols Nerd Font" (font-family-list)) "Symbols Nerd Font")
-  ((member "Symbola" (font-family-list)) "Symbola")))
+(set-fontset-font "fontset-default" nil "Symbola")
 
 (use-package diminish
+  :straight t
   :demand t)
 
 (defvar esprit-prose-modes
@@ -83,18 +93,15 @@
   "List of which modes esprit considers prose.")
 
 (use-package mini-ontop
-  :straight (:type git :host github :repo "hkjels/mini-ontop.el")
+  :straight (:host github :repo "hkjels/mini-ontop.el")
   :hook
   (on-first-input . mini-ontop-mode))
 
-(use-package auto-save
-  :no-require
-  :straight nil
+(use-package emacs
   :xdg-state
   (auto-save-list-prefix "saves/"))
 
 (use-package autorevert
-  :straight (:type built-in)
   :custom
   (global-auto-revert-mode t))
 
@@ -110,6 +117,7 @@
 (setopt indent-tabs-mode nil)
 
 (use-package editorconfig
+  :straight t
   :config
   (editorconfig-mode 1))
 
@@ -119,6 +127,7 @@
   (dired-dwim-target t))
 
 (use-package bookmark
+  :straight (:type built-in)
   :commands (bookmark-set)
   :xdg-state
   (bookmark-default-file "bookmarks.eld"))
@@ -137,6 +146,7 @@
         kill-ring))
 
 (use-package savehist
+  :straight (:type built-in)
   :hook
   (on-first-buffer . savehist-mode)
   :xdg-state
@@ -201,14 +211,13 @@
 ;;   - Set up my own little bundle of packages to tailor the Emacs experience
 
 (use-package esprit-themes
-  ;; :straight (:type git :host github :repo "ludamillion/esprit-themes")
   :straight nil
-  :load-path "~/code/esprit-themes"
-  :demand t)
+  :load-path "~/code/esprit-themes")
 
 ;;; Choose light or dark theme based on the time of day at my location
 
 (use-package circadian
+  :straight t
   :demand t
   :custom
   (calendar-latitude 42.4)
@@ -219,10 +228,14 @@
   (circadian-setup))
 
 (use-package nerd-icons
+  :straight t
   :demand t)
 
+;; (require 'esprit-line)
+;; (setq esprit-line-glyph-alist esprit-line-glyphs-unicode)
+;; (esprit-line-mode)
+
 (use-package esprit-line
-  :demand t
   :straight nil
   :load-path "~/code/esprit-line"
   :custom
@@ -234,14 +247,487 @@
    (add-to-list 'load-path (locate-user-emacs-file string)))
  '("esprit-modules"))
 
-(require 'esprit-completion)
-(require 'esprit-lsp)
-(require 'esprit-analysis)
-(require 'esprit-editing)
-(require 'esprit-interface)
-(require 'esprit-vc)
-(require 'esprit-term)
-(require 'esprit-prog-modes)
+(use-package flymake
+  :bind  (:map ctl-x-x-map
+               ("m" . flymake-mode) ; C-x x m
+               :map flymake-mode-map
+               ("C-c ! s" . flymake-start)
+               ("C-c ! d" . flymake-show-buffer-diagnostics) ; Emacs28
+               ("C-c ! D" . flymake-show-project-diagnostics) ; Emacs28
+               ("C-c ! n" . flymake-goto-next-error)
+               ("C-c ! p" . flymake-goto-prev-error))
+  :custom
+  (flymake-fringe-indicator-position 'left-fringe)
+  (flymake-suppress-zero-counters t)
+  (flymake-no-changes-timeout nil)
+  (flymake-start-on-flymake-mode t)
+  (flymake-start-on-save-buffer t)
+  (flymake-proc-compilation-prevents-syntax-check t)
+  (flymake-wrap-around nil)
+  (flymake-mode-line-format
+   '("" flymake-mode-line-exception flymake-mode-line-counters))
+  (flymake-mode-line-counter-format
+   '("" flymake-mode-line-error-counter
+     flymake-mode-line-warning-counter
+     flymake-mode-line-note-counter ""))
+  (flymake-show-diagnostics-at-end-of-line nil))
+
+(use-package jinx
+  :straight t
+  :hook (after-init . global-jinx-mode)
+  :custom (jinx-languages "en_US")
+  :bind
+  (("C-;" . jinx-correct-nearest)
+   ("C-x j a" . jinx-correct-all)
+   ("C-x j n" . jinx-next)
+   ("C-x j p" . jinx-previous)))
+
+(defun require-and-ensure-eglot-ltex ()
+  "Require the eglot-ltex package and run `eglot-ensure'."
+  (require 'eglot-ltex)
+  (eglot-ensure))
+
+(use-package eglot-ltex
+  :straight (:host github :repo "emacs-languagetool/eglot-ltex")
+  :hook
+  (esprit/prose-mode-list . require-and-ensure-eglot-ltex)
+  :init
+  (setq eglot-ltex-server-path "~/tools/ltex-ls-plus/bin/ltex-ls-plus"
+	eglot-ltex-communication-channel 'stdio))
+
+(use-package vertico
+  :straight t
+  :bind (:map vertico-map
+              ("C-<backspace>" . vertico-directory-up))
+  :hook
+  (on-first-input . vertico-mode)
+  (on-first-input . vertico-multiform-mode)
+  :custom
+  (vertico-resize t))
+
+(defun wrapper/consult-ripgrep (&optional dir given-initial)
+  "Pass the region to `consult-ripgrep' if available.
+
+  DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
+  (interactive "P")
+  (let ((initial
+         (or given-initial
+             (when (use-region-p)
+               (buffer-substring-no-properties (region-beginning) (region-end))))))
+    (consult-ripgrep dir initial)))
+
+(use-package consult
+  :straight t
+  :hook (on-init-ui . consult-mode)
+  :bind (("M-s d"     . consult-fd) ;; Requires having fd installed otherwise use consult-find
+         ("M-s G"     . consult-git-grep)
+         ("M-s r"     . wrapper/consult-ripgrep)
+         ("M-s l"     . consult-line)
+         ("M-s L"     . consult-line-multi)
+         ("M-s k"     . consult-keep-lines)
+         ("M-s u"     . consult-focus-lines)
+         ("M-s <SPC>" . consult-buffer)
+         ("M-y"       . consult-yank-pop)
+         ("C-x M-k"   . consult-kmacro)
+         ("M-g g"     . consult-goto-line)
+         ("M-g i"     . consult-imenu)
+         ("M-g o"     . consult-outline)
+         ("C-x b"     . consult-bookmark)))
+
+(use-package orderless
+  :straight t
+  :custom
+  (completion-styles '(orderless partial-completion basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
+
+(defun corfu-x-eshell-hook ()
+  "Set up Corfu behaviors in a shell friendly way."
+  (setq-local corfu-auto nil)
+  (corfu-mode))
+
+(defun esprit/corfu-modes ()
+  "Activate the desired corfu modes."
+  (corfu-history-mode)
+  (corfu-echo-mode)
+  (global-corfu-mode))
+
+(use-package corfu
+  :straight t
+  :init
+  (setq corfu-cycle t
+        corfu-auto t
+        corfu-on-exact-match nil)
+  :hook
+  (on-first-buffer . esprit/corfu-modes)
+  (eshell-mode . corfu-x-eshell-hook))
+
+(defun esprit/cape-capf-setup-eglot ()
+  "Configure cape completion at point functions for Eglot managed modes."
+  (let ((result))
+    (dolist (element `(,(cape-capf-buster #'eglot-completion-at-point)
+		       cape-file
+		       cape-dabbrev) result)
+      (add-to-list 'completion-at-point-functions element))))
+
+(defun esprit/cape-capf-setup-org ()
+  "Configure cape completion at point functions for org mode."
+  (let ((result))
+    (dolist (element '(cape-dict cape-dabbrev) result)
+      (add-to-list 'completion-at-point-functions element))))
+
+(defun esprit/cape-capf-setup-git-commit ()
+  "Configure cape completion at point functions for git-commit mode."
+  (let ((result))
+    (dolist (element '(cape-dict cape-dabbrev) result)
+      (add-to-list 'completion-at-point-functions element))))
+
+(use-package cape
+  :straight t
+  :config
+  (setq completion-category-overrides '((eglot (styles orderless))
+                                        (eglot-capf (styles orderless))))
+  :hook
+  ((eglot-managed-mode . esprit/cape-capf-setup-eglot)
+   (org-mode . esprit/cape-capf-setup-org)
+   (git-commit-mode . esprit/cape-capf-setup-git-commit)))
+
+(use-package marginalia
+  :straight t
+  :hook
+  (on-first-buffer . marginalia-mode)
+  :bind (:map minibuffer-local-map
+              ("M-A" . marginalia-cycle)))
+
+(use-package embark
+  :straight t
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("M-." . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+  :init
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+  :config
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :straight t
+  :after (consult embark)
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
+(defvar eglot-enabled-modes
+  '(js-ts-mode
+    typescript-ts-mode
+    ruby-mode
+    go-ts-mode
+    astro-mode)
+  "Opt in list of modes which Eglot should manage.")
+
+(use-package eglot
+  :straight (:type built-in)
+  :demand t
+  :hook (eglot-enabled-modes . eglot-ensure)
+  :bind (:map eglot-mode-map
+              ("C-x l r" . eglot-rename)
+              ("M-k" . eglot-code-actions))
+  :custom
+  (eldoc-echo-area-use-multiline-p nil)
+  (eglot-events-buffer-config '(:size 2000000 :format lisp))
+  :config
+  (setq-default eglot-workspace-configuration
+                '(:ltex-ls (:language "en-US"
+                                      :disabledRules ["MORFOLOGIK_RULE_EN_US"]))))
+
+(defun avy-action-embark (pt)
+  "Invoke embark at PT."
+  (unwind-protect
+      (save-excursion
+        (goto-char pt)
+        (embark-act))
+    (select-window
+     (cdr (ring-ref avy-ring 0))))
+  t)
+
+(defun avy-action-copy-whole-line (pt)
+  "Copy entire line starting at PT."
+  (save-excursion
+    (goto-char pt)
+    (cl-destructuring-bind (start . end)
+        (bounds-of-thing-at-point 'line)
+      (copy-region-as-kill start end)))
+  (select-window
+   (cdr
+    (ring-ref avy-ring 0)))
+  t)
+
+(defun avy-action-yank-whole-line (pt)
+  "Yank line starting at PT."
+  (avy-action-copy-whole-line pt)
+  (save-excursion (yank))
+  t)
+
+(defun avy-action-kill-whole-line (pt)
+  "Kill line starting at PT."
+  (save-excursion
+    (goto-char pt)
+    (kill-whole-line))
+  (select-window
+   (cdr
+    (ring-ref avy-ring 0)))
+  t)
+
+(defun avy-action-teleport-whole-line (pt)
+  "Teleport whole line starting at PT."
+  (avy-action-kill-whole-line pt)
+  (save-excursion (yank)) t)
+
+(use-package avy
+  :straight t
+  :bind ("M-j" . avy-goto-char-timer)
+  :custom
+  (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark
+        (alist-get ?k avy-dispatch-alist) 'avy-action-kill-stay
+        (alist-get ?K avy-dispatch-alist) 'avy-action-kill-whole-line
+        (alist-get ?t avy-dispatch-alist) 'avy-action-teleport
+        (alist-get ?T avy-dispatch-alist) 'avy-action-teleport-whole-line
+        (alist-get ?y avy-dispatch-alist) 'avy-action-yank
+        (alist-get ?w avy-dispatch-alist) 'avy-action-copy
+        (alist-get ?W avy-dispatch-alist) 'avy-action-copy-whole-line
+        (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line))
+
+(use-package emacs
+  :straight (misc :type built-in)
+  :bind
+  ("C-z" . #'zap-up-to-char))
+
+(use-package elec-pair
+  :straight (misc :type built-in)
+  :hook (on-init-ui . electric-pair-mode))
+
+(use-package accent
+  :straight t
+  :bind ("C-x '" . #'accent-menu))
+
+(use-package emacs
+  :straight (:type built-in)
+  :hook ((esprit-prose-modes . visual-line-mode)
+         (esprit-prose-modes . variable-pitch-mode)))
+
+(global-set-key [remap dabbrev-expand] 'hippie-expand)
+
+(keymap-global-set "C-j" #'join-line)
+
+(use-package multiple-cursors
+  :hook (on-init-ui . multiple-cursors-mode)
+  :straight t
+  :bind
+  ("C->" . #'mc/mark-next-like-this)
+  ("C-<" . #'mc/mark-previous-like-this)
+  ("C-c C->" . #'mc/mark-all-like-this)
+  ("C-S-c C-S-c" . #'mc/edit-lines))
+
+(use-package ace-window
+  :straight t
+  :bind
+  ("M-o" . 'ace-window)
+  :custom
+  (aw-keys '(?a ?s ?d ?f ?j ?k ?l))
+  (aw-dispatch-always t)
+  (aw-dispatch-alist
+   '((?x aw-delete-window "Ace - Delete Window")
+     (?c aw-swap-window "Ace - Swap Window")
+     (?n aw-flip-window)
+     (?v aw-split-window-vert "Ace - Split Vert Window")
+     (?h aw-split-window-horz "Ace - Split Horz Window")
+     (?m delete-other-windows "Ace - Maximize Window")
+     (?b balance-windows)
+     (?u (lambda ()
+           (progn
+             (winner-undo)
+             (setq this-command 'winner-undo))))
+     (?r winner-redo))))
+
+(keymap-global-set "C-M-o" 'mode-line-other-buffer)
+
+(setq visible-bell nil
+      ring-bell-function #'ignore)
+
+(setq switch-to-buffer-obey-display-actions t)
+
+(defun esprit-close-dwim ()
+  "Quit a frame the same way no matter what kind of frame you are on."
+  (interactive)
+  (let ((frames (visible-frame-list)))
+    (if (eq (car frames) (selected-frame))
+        ;; For parent/master frame...
+        (if (cdr frames)
+            ;; Close a parent with children present.
+            (progn
+              (delete-frame (selected-frame))
+              (when (and (eq (cadr frames) terminal-frame)
+                         (null (cddr frames)))
+                ;; No frames left on this daemon: shut it down.
+                (save-buffers-kill-emacs)))
+          ;; Close a parent with no children present.
+          (save-buffers-kill-emacs))
+      ;; Close a child frame.
+      (delete-frame (selected-frame)))))
+
+;; (use-package swiss-move
+;;   :bind (("s-n" . swiss-move-line-down)
+;; 	 ("s-p" . swiss-move-line-up)))
+
+(global-set-key (kbd "C-x C-c") 'esprit-close-dwim)
+
+(keymap-set global-map "C-x k" 'kill-current-buffer)
+(keymap-set global-map "C-x C-k" 'kill-buffer)
+
+(use-package fontaine
+  :straight t
+  :demand t
+  :custom
+  (fontaine-latest-state-file
+   (locate-user-emacs-file "fontaine-latest-state.eld"))
+  (fontaine-presets
+   '((small
+      :default-family "Geist Mono"
+      :default-height 80
+      :variable-pitch-family "Geist")
+     (regular) ; like this it uses all the fallback values and is named `regular'
+     (medium
+      :default-height 140
+      :bold-weight regular)
+     (large
+      :inherit medium
+      :default-height 180)
+     (t
+      :default-family "Aporetic Sans Mono"
+      :variable-pitch-family "Aporetic Serif"
+      :fixed-pitch-height 1.0
+      :fixed-pitch-serif-height 1.0
+      :variable-pitch-height 1.0)))
+  :config
+  (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
+
+  ;; Persist the latest font preset when closing/starting Emacs and
+  ;; while switching between themes.
+  (fontaine-mode 1)
+  :bind
+  ("C-c f" . #'fontaine-set-preset))
+
+(use-package magit
+  :straight t
+  :bind
+  ("C-M-;" . magit-status))
+
+(defvar-keymap esprit-vc-branch-map
+  :doc "Esprit prefix map for version control branch actions."
+  "b" #'magit-checkout
+  "c" #'magit-branch-create)
+
+(defvar-keymap esprit-vc-pull-map
+  :doc "Esprit prefix map for version control pull/fetch actions."
+  "p" #'magit-pull-from-pushremote
+  "u" #'magit-pull-from-upstream
+  "e" #'magit-pull-branch)
+
+(defvar-keymap esprit-vc-file-map
+  :doc "Esprit prefix map for version control file actions."
+  "r" #'magit-file-rename)
+
+(defvar-keymap esprit-vc-map
+  :doc "Esprit prefix key maps version control operations ."
+  "b" esprit-vc-branch-map
+  "F" esprit-vc-pull-map
+  "f" esprit-vc-file-map)
+
+(keymap-set global-map "C-c g" esprit-vc-map)
+
+(defvar esprit/ediff-original-windows nil)
+
+(defun esprit/store-pre-ediff-winconfig ()
+  "Store the window arrangement before opening Ediff."
+  (setq esprit/ediff-original-windows (current-window-configuration)))
+
+(defun esprit/restore-pre-ediff-winconfig ()
+  "Reset original window arrangement."
+  (set-window-configuration esprit/ediff-original-windows))
+
+(use-package ediff
+  :straight (ediff :type built-in)
+  :hook ((ediff-before-setup . 'esprit/store-pre-ediff-winconfig)
+         (ediff-quit . 'esprit/restore-pre-ediff-winconfig))
+  :config
+  (setq ediff-window-setup-function 'ediff-setup-windows-plain)
+  (setq ediff-split-window-function 'split-window-horizontally))
+
+(use-package eat
+  :straight (:type git :host codeberg :repo "akib/emacs-eat"
+	           :files ("*.el" ("term" "term/*.el") "*.texi"
+		           "*.ti" ("terminfo/e" "terminfo/e/*")
+		           ("terminfo/65" "terminfo/65/*")
+		           ("integration" "integration/*")
+		           (:exclude ".dir-locals.el" "*-tests.el"))))
+
+(use-package treesit-env
+  :straight (:host github :repo "cottontailia/treesit-env")
+  :custom
+  (treesit-env-default-revision-auto t)
+  (treesit-env-abi-max 14)
+  :config
+  (treesit-env typescript javascript go ruby lua css)
+  ;; Use the provided minimal sample recipes (Optional)
+  (require 'treesit-env-recipe-placeholder)
+  (treesit-env-source treesit-env-recipe-placeholder))
+
+(use-package css-mode
+  :custom
+  (css-indent-offset 2))
+
+(use-package js
+  :custom
+  (js-indent-level 4))
+
+(use-package go-ts-mode
+  :custom
+  (go-ts-mode-indent-offset 4)
+  :mode (rx ".go"))
+
+(require 'project)
+
+(defun project-find-go-module (dir)
+  (when-let ((root (locate-dominating-file dir "go.mod")))
+    (cons 'go-module root)))
+
+(cl-defmethod project-root ((project (head go-module)))
+  (cdr project))
+
+(add-hook 'project-find-functions #'project-find-go-module)
+
+(use-package typescript-ts-mode
+  :mode (rx ".ts")
+  :custom
+  (typescript-indent-level 2)
+  :config
+  (unbind-key "M-." typescript-ts-base-mode-map))
+
+(use-package web-mode
+  :straight t)
+
+(use-package lua-ts-mode
+  :mode (rx ".lua"))
+
+(define-derived-mode astro-mode web-mode "astro")
+(setq auto-mode-alist
+      (append '((".*\\.astro\\'" . astro-mode))
+              auto-mode-alist))
 
 (use-package tempel
   ;; Require trigger prefix before template name when completing.
@@ -252,30 +738,28 @@
 
 ;; Optional: Add tempel-collection.
 ;; The package is young and doesn't have comprehensive coverage.
-(use-package tempel-collection)
+(use-package tempel-collection
+  :straight t)
 
 (defvar-keymap esprit-toggles-map
   :name "esprit-toggles"
   :doc "Esprit prefix key maps | minor mode toggling."
   "v" #'global-visual-line-mode
   "f" #'toggle-frame-fullscreen
-  "w" #'whitespace-mode)
+  "w" #'whitespace-mode
+  "c" #'command-log-mode)
 
 (use-package whitespace
-  :straight nil
   :custom
   (whitespace-style
    '(face tabs spaces trailing lines-tail space-before-tab newline indentation
           empty space-after-tab space-mark tab-mark newline-mark missing-newline-at-eof)))
 
-(keymap-global-set "C-c t" esprit-toggles-map)
-
-(use-package bind-key
-  :straight (bind-key :type built-in))
+(keymap-global-set "C-x m" esprit-toggles-map)
 
 (use-package outline
-  :diminish "¶"
-  :straight (:type built-in))
+  :straight (:type built-in)
+  :diminish "¶")
 
 (use-package which-key
   :straight (:type built-in)
@@ -292,20 +776,30 @@
 
 ;; Clean and straightforward undo/redo
 (use-package undo-fu
-  :config
-  (setopt undo-fu-allow-undo-in-region t)
+  :straight t
+  :custom
+  (undo-fu-allow-undo-in-region t)
+  (undo-limit 67108864) ; 64mb.
+  (undo-strong-limit 100663296) ; 96mb.
+  (undo-outer-limit 1006632960) ; 960mb.
   :bind
   ("C-/" . undo-fu-only-undo)
-  ("C-M-/" . undo-fu-only-redo))
+  ("C-?" . undo-fu-only-redo))
 
 ;; Persist undo history across sessions
 (use-package undo-fu-session
+  :straight t
+  :hook
+  (after-init . undo-fu-session-global-mode)
+  :xdg-state
+  (undo-fu-session-directory "undo-fu-session")
   :custom
+  (undo-fu-session-compression 'nil)
   (undo-fu-session-incompatible-files
-   '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
-  (undo-fu-session-global-mode))
+   '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
 
 (use-package vterm
+  :straight t
   :init
   (setq vterm-max-scrollback 10000)
   :bind
@@ -322,9 +816,11 @@ otherwise create a new window."
   (pop-to-buffer buffer-or-name))
 
 (use-package helpful
+  :straight t
   :custom
   (helpful-switch-to-buffer #'esprit/helpful-switch-to-buffer)
   :bind
+  ("C-h o"    . #'helpful-symbol)
   ("C-h f"    . #'helpful-callable)
   ("C-c F"    . #'helpful-function)
   ("C-h v"    . #'helpful-variable)
@@ -332,11 +828,24 @@ otherwise create a new window."
   ("C-h x"    . #'helpful-command)
   ("C-c C-d"  . #'helpful-at-point))
 
+;; Special mode is "A special major mode is intended to view specially formatted data
+;; rather than files.". Most practically this means help(ful) buffers and the like.
+;; I prefer this kind of informational display to be in a side window.
+(add-to-list 'display-buffer-alist
+             '((derived-mode . special-mode)
+               (display-buffer-in-side-window)
+               (side . right)
+               (slot . 0)
+               (window-width . 80)
+               (window-parameters
+                (no-delete-other-windows . t))))
+
 (use-package nxml-mode
   :straight (:type built-in)
   :mode (rx (| ".xml" ".svg")))
 
 (use-package markdown-mode
+  :straight t
   :mode ((rx ".md") . gfm-mode)
   :commands (markdown-mode gfm-mode)
   :bind ("C-c C-c C-p" . 'esprit/markdown-preview)
@@ -344,13 +853,13 @@ otherwise create a new window."
   (setq markdown-command "pandoc -t html5"))
 
 (use-package simple-httpd
-  :ensure t
+  :straight t
   :custom
   (httpd-port 7070)
   (httpd-host (system-name)))
 
 (use-package impatient-mode
-  :ensure t
+  :straight t
   :commands impatient-mode)
 
 (defun esprit/markdown-filter (buffer)
@@ -382,19 +891,8 @@ otherwise create a new window."
   :straight (:type built-in)
   :mode (rx (| ".yml" ".yaml")))
 
-(use-package yaml-pro
-  :after yaml-ts-mode
-  :hook (yaml-ts-mode . yaml-pro-ts-mode))
-
-;; (use-package pdf-tools
-;;   :custom
-;;   (pdf-annot-activate-created-annotations t "automatically annotate highlights")
-;;   :hook
-;;   (pdf-view-mode-hook . (lambda() (display-line-numbers-mode -1)))
-;;   :config
-;;   (pdf-tools-install)
-;;   (setq-default pdf-view-display-size 'fit-width)
-;;   (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward))
+(use-package command-log-mode
+  :straight (:host github :repo "ludamillion/command-log-mode"))
 
 (defvar esprit/local-root "~/"
   "The explicit root directory value.")
@@ -452,9 +950,9 @@ otherwise create a new window."
   (add-to-list 'org-structure-template-alist '("s#" . "src csharp"))
 
   (org-babel-do-load-languages
-	 'org-babel-load-languages
-	 '((emacs-lisp . t)
-		 (shell . t)))
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (shell . t)))
 
   :bind
   ("M-<return>" . org-insert-heading-after-current)
@@ -463,6 +961,7 @@ otherwise create a new window."
   ("C-c l" . org-store-link))
 
 (use-package denote
+  :straight t
   :init
   (denote-rename-buffer-mode 1)
   :custom
@@ -472,8 +971,8 @@ otherwise create a new window."
   :custom-face
   (denote-faces-link ((t (:slant italic)))))
 
-;; Denote extensions
 (use-package consult-notes
+  :straight t
   :bind
   ("M-s n" . #'consult-notes)
   :commands (consult-notes
@@ -492,10 +991,8 @@ otherwise create a new window."
   :custom
   (wgrep-auto-save-buffer t))
 
-(use-package plz
-  :straight t)
-
 (use-package combobulate
+  :straight t
   :custom
   ;; You can customize Combobulate's key prefix here.
   ;; Note that you may have to restart Emacs for this to take effect!
@@ -503,22 +1000,10 @@ otherwise create a new window."
   :hook
   ((prog-mode . combobulate-mode)))
 
+(use-package esprit-movement
+  :bind ("C-a" . #'esprit/beginning-of-line))
+
+(setq esprit-emacs--success t)
+
 (provide 'init)
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("dfe6118db9ca69d0de53ebe3755b5d65c66858b0317c5fe699570654a09fb195"
-     "79a11bba703b24ed5a5bb9e0d738103a7f25e11b1eacffff6314fbf7b4b99a7c"
-     "db86799cbf2be8d9e101e9e7d8a64d598689d58a2cec1917f623c7d9699ddb04"
-     "f5adedef87149fba04e6f5da9caf5c9f9812b64a697c56f525be882c723d74ab"
-     "0c7948cd9d02cc16434d9dfa8317a77a339c5bbbe2e2892e3780d6c5fe99d705"
-     default)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+

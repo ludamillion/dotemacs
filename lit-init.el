@@ -1,9 +1,4 @@
-(let ((last-generated '";; Last generated on Thu Apr 30 07:58:16 2026")
-      (source-file '"README.org"))
-
 ;;; Esprit Emacs --- A literate configuration -*- lexical-binding: t -*-
-(format ";;; This file has been generated from the %s file on %c. DO NOT EDIT.", source-file, last-generated)
-
 ;;; Copyright (C) 2026 Luke D. Inglis
 
 ;;; This file is free software; you can redistribute it and/or modify
@@ -18,8 +13,6 @@
 
 ;;; For a full copy of the GNU General Public License
 ;;; see <https://www.gnu.org/licenses/>.
-
-)
 
 (unless (featurep 'straight)
   ;; Bootstrap straight.el
@@ -36,73 +29,20 @@
         (eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage)))
 
-(setq straight-check-for-modifications nil)
+(setopt straight-check-for-modifications nil)
+(setopt straight-use-package-by-default t)
 
-(add-to-list 'load-path
-             (expand-file-name "lisp" user-emacs-directory))
+(use-package on
+  :demand t
+  :straight (:type git :host gitlab :repo "axgfn/on.el"))
 
-(setq package-list
-      '(
-        accent               ; Easier access to accented characters
-        ace-window           ; Easier moving between windows
-        apheleia             ; Code formatting without the pain and blocking
-        avy                  ; Jump to things (but really much, much more...)
-        cape                 ; Completion At Point Extensions
-        circadian            ; Change my theme in rhythm with nature
-        command-log-mode     ; More insight into what commands are being run/looks fancy when showing off
-        consult              ; Consulting completing-read
-        consult-lsp          ; LSP extras for consult to, well, consult
-        corfu                ; Completion Overlay Region FUnction
-				denote
-				doct                 ; (D)eclarative (O)rg (C)apture (T)emplates
-				eglot-booster        ; Enable eglot to use the emacs-lsp-booster Rust program
-        embark
-        embark-consult
-        exec-path-from-shell ; Get environment variables such as $PATH from the shell
-        flycheck             ; Enhanced syntax checking, more flexible than flymake
-        flycheck-eglot       ; Allow Flycheck to understand Eglot as a checker
-        haml-mode            ; Rails templates not covered by treesitter or web-mode
-        helpful              ; A better help buffer
-        magit                ; A Git porcelain inside Emacs.
-        marginalia           ; Enrich existing commands with completion annotations
-        markdown-mode        ; Major mode for Markdown-formatted text
-        no-littering         ; Keep our things clean and tidy
-        orderless            ; Completion style for matching regexps in any order
-				pdf-tools
-        projectile           ; Project scoped stuffness
-        rg                   ; Ripgrep for speed and profit(?)
-        save-visited-files   ; Simplest form of session persistance
-        surround
-        tempel
-        tempel-collection
-        treesit-auto
-        undo-fu              ; Work around Emacs' clunky undo interface
-        undo-fu-session      ; Persistant undo across sessions
-        vertico              ; VERTical Interactive COmpletion
-        vertico-posframe
-        visual-fill-column   ; Nicer wrapping mostly for text modes
-        vterm                ; A real terminal emulator running in Emacs
-        web-mode             ; Uber mode for web templating languages
-        which-key            ; Discovery method for key bindings
-        ))
+(use-package use-package-xdg
+  :demand t
+  :straight (use-package-xdg :type git
+                             :host codeberg
+                             :repo "rossabaker/use-package-xdg"))
 
-;; Install packages that are not yet installed
-(dolist (package package-list)
-  (straight-use-package package))
-
-(straight-use-package
- '(jtsx :type git :host github :repo "llemaitre19/jtsx"))
-
-(straight-use-package
- '(asdf :type git :host github :repo "tabfugnic/asdf.el"))
-
-(straight-use-package
- '(eglot-ltex :type git :host github :repo "emacs-languagetool/eglot-ltex"))
-
-(straight-use-package
- '(use-package-xdg :type git :host codeberg :repo "rossabaker/use-package-xdg"))
-
-(straight-use-package '(org :type built-in))
+(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 
 (let ((inhibit-message t))
   (message "Welcome to GNU Emacs / Sensible edition")
@@ -112,43 +52,31 @@
   "Reload the file referenced by `user-init-file`."
 
   (interactive)
-	(load-file (expand-file-name "init.el" user-emacs-directory)))
+  (load-file (expand-file-name "init.el" user-emacs-directory)))
 
 (keymap-global-set "<f5>" 'reload-init-file)
 
-(use-package no-littering
-  :init
-  (setq no-littering-etc-directory "~/.cache/emacs/etc/"
-        no-littering-var-directory "~/.cache/emacs/var/")
-  (when (fboundp 'startup-redirect-eln-cache)
-    (startup-redirect-eln-cache
-     (convert-standard-filename
-      (expand-file-name  "eln-cache/" no-littering-var-directory))))
-  (setq vc-make-backup-files nil     ; No backup of files under version contr
-        backup-by-copying t          ; Don't clobber symlinks
-        version-control t            ; Version numbers for backup files
-        delete-old-versions t        ; Delete excess backup files silently
-        kept-old-versions 3          ; Number of old versions to keep
-        kept-new-versions 6          ; Number of new versions to keep
-        delete-by-moving-to-trash t  ; Delete files to trash
-        create-lockfiles nil)        ; More trouble than worth
-  (setq backup-directory-alist
-        `((".*" . ,(no-littering-expand-var-file-name "backup/")))
-        auto-save-file-name-transforms
-        `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
-
-(setq bookmark-default-file (expand-file-name "bookmark" user-emacs-directory))
+(setq vc-make-backup-files nil     ; No backup of files under version contr
+      backup-by-copying t          ; Don't clobber symlinks
+      version-control t            ; Version numbers for backup files
+      delete-old-versions t        ; Delete excess backup files silently
+      kept-old-versions 3          ; Number of old versions to keep
+      kept-new-versions 6          ; Number of new versions to keep
+      delete-by-moving-to-trash t  ; Delete files to trash
+      create-lockfiles nil)        ; More trouble than worth
 
 (use-package recentf
+  :hook
+  (after-init . recentf-mode)
   :custom
-  (recentf-max-menu-items 10)
   (recentf-max-saved-items 100)
-  :init
-  (recentf-mode t))
+  :xdg-state
+  (recentf-save-file "recentf"))
 
 (use-package saveplace
+  :xdg-state
+  (save-place-file "saveplace")
   :custom
-  (save-place-file (expand-file-name "saveplace" user-emacs-directory))
   (save-place-forget-unreadable-files t))
 
 (defun unpropertize-kill-ring ()
@@ -156,49 +84,49 @@
 
 (add-hook 'kill-emacs-hook 'unpropertize-kill-ring)
 
+(setq savehist-watchlist
+      '(bookmark-history
+        command-history
+        custom-variable-history
+        face-name-history
+        file-name-history
+        minibuffer-history
+        query-replace-history
+        read-char-history
+        read-expression-history
+        set-variable-value-history
+        kill-ring))
+
 (use-package savehist
-  :init
-  (savehist-mode t)
+  :hook
+  (on-first-buffer . savehist-mode)
+  :xdg-state
+  (savehist-file "history")
   :custom
   (kill-ring-max 50)
   (history-length 50)
-  (savehist-additional-variables
-   '(kill-ring
-     command-history
-     set-variable-value-history
-     custom-variable-history
-     query-replace-history
-     read-expression-history
-     minibuffer-history
-     read-char-history
-     face-name-history
-     bookmark-history
-     file-name-history))
-  :config
-  (put 'minibuffer-history         'history-length 50)
-  (put 'file-name-history          'history-length 50)
-  (put 'set-variable-value-history 'history-length 25)
-  (put 'custom-variable-history    'history-length 25)
-  (put 'query-replace-history      'history-length 25)
-  (put 'read-expression-history    'history-length 25)
-  (put 'read-char-history          'history-length 25)
-  (put 'face-name-history          'history-length 25)
-  (put 'bookmark-history           'history-length 25))
-
-(setq history-delete-duplicates t)
-
-(let (message-log-max)
-  (savehist-mode))
+  (history-delete-duplicates t)
+  (savehist-additional-variables savehist-watchlist))
 
 (use-package exec-path-from-shell
-  :init
+  :if (memq window-system '(mac ns x))
+  :custom
+  (exec-path-from-shell-variables
+   '(
+     "PATH"
+     "MANPATH"
+     "XDG_CONFIG_DIRS"
+     "XDG_DATA_DIRS"
+     ))
+  :config
   (exec-path-from-shell-initialize))
 
 (use-package asdf
   :config
   (asdf-enable))
 
-(setq esprit/local-root "~/")
+(defvar esprit/local-root "~/"
+  "Convenience pointer to my local root directory.")
 
 (when (string-equal system-type "darwin")
   (setq mac-option-modifier 'super)
@@ -207,54 +135,44 @@
 
 (defun esprit/make-scratch-frame ()
   "Create a new frame and switch to *scratch* buffer."
-
   (interactive)
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
 
-(defvar-keymap liminal-frame-map
-  :doc "Liminal prefix map for frame operations."
+(defun esprit/make-eat-frame ()
+  "Create a new frame and create an Eat buffer."
+  (interactive)
+  (select-frame (make-frame))
+  (eat-project))
+
+(defvar-keymap esprit-frame-map
+  :doc "Prefix map for frame operations."
   "m" #'make-frame
-  "n" #'esprit/make-scratch-frame)
+  "n" #'esprit/make-scratch-frame
+  "v" #'esprit/make-eat-frame)
 
-(keymap-set global-map "M-n" liminal-frame-map)
+(keymap-global-set "M-n" esprit-frame-map)
 
-(use-package sensible-settings
-  :load-path "~/code/sensible-settings"
-  :init
-  (setopt sensible-font-size 16
-          sensible-manage-cursor t
-          sensible-manage-fonts t
-          sensible-manage-ui t
-          sensible-manage-ux t)
-  :config
-  (sensible-mode))
+(use-package esprit-themes
+  ;; :straight (:type git :host github :repo "ludamillion/esprit-themes")
+  :straight nil
+  :load-path "~/code/esprit-themes"
+  :demand t)
 
-(use-package sensible-themes
-	:after 'sensible-settings
-  :load-path "~/code/sensible-themes")
-
-(use-package sensible-modeline
-  :after 'sensible-themes
-  :load-path "~/code/sensible-modeline"
-  :init
-  (setopt mode-line-format nil)
-  :hook
-  (prog-mode            . sensible-modeline-prog-mode)
-  (text-mode            . sensible-modeline-text-mode)
-  (org-mode             . sensible-modeline-org-mode)
-  (term-mode            . sensible-modeline-term-mode)
-  (vterm-mode           . sensible-modeline-term-mode)
-  (messages-buffer-mode . sensible-modeline-message-mode)
-  (org-capture-mode     . sensible-modeline-org-capture-mode)
-  (org-agenda-mode      . sensible-modeline-org-agenda-mode))
+(use-package esprit-line
+  :demand t
+  :straight nil
+  :load-path "~/code/esprit-line"
+  :custom
+  (esprit-line-glyph-alist esprit-line-glyphs-unicode)
+  :config (esprit-line-mode))
 
 (use-package circadian
   :custom
   (calendar-latitude 42.4)
   (calendar-longitude -71.0)
-  (circadian-themes '((:sunrise . sensible-amber-light)
-                      (:sunset  . sensible-azure-dark)))
+  (circadian-themes '((:sunrise . esprit-amber-light)
+                      (:sunset  . esprit-azure-dark)))
   :config
   (circadian-setup))
 
@@ -356,7 +274,7 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
 (defun esprit/eglot-capf ()
   (setq-local completion-at-point-functions
               (list ((cape-capf-buster #'eglot-completion-at-point)
-										 #'cape-file))))
+		     #'cape-file))))
 
 (defun esprit/cape-capf-setup-lsp ()
   "Replace the default `lsp-completion-at-point' with its
@@ -477,8 +395,9 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
 (use-package save-visited-files
   :init
   (save-visited-files-mode t)
+  :xdg-state
+  (save-visited-files-location "save-visited-files")
   :custom
-  (save-visited-files-location (expand-file-name "save-visited-files" user-emacs-directory))
   (save-visited-files-ignore-tramp-files t)
   (save-visited-files-ignore-directories nil)
   (save-visited-files-auto-restore nil))
@@ -487,27 +406,31 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
 ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
 (defun crm-indicator (args)
   (unless 
-			(cons (format "[crm: %s] %s"
-										(replace-regexp-in-string
-										 "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
-										 crm-separator)
-										(car args))
-						(cdr args)))
-	(advice-add #'completing-read-multiple :filter-args #'crm-indicator)
+      (cons (format "[crm: %s] %s"
+		    (replace-regexp-in-string
+		     "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+		     crm-separator)
+		    (car args))
+	    (cdr args)))
+  (advice-add #'completing-read-multiple :filter-args #'crm-indicator)
 
-	;; Do not allow the cursor in the minibuffer prompt
-	(setq minibuffer-prompt-properties
-				'(read-only t cursor-intangible t face minibuffer-prompt))
-	(add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+  ;; Do not allow the cursor in the minibuffer prompt
+  (setq minibuffer-prompt-properties
+	'(read-only t cursor-intangible t face minibuffer-prompt))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
-	;; Enable recursive minibuffers
-	(setq enable-recursive-minibuffers t)
+  ;; Enable recursive minibuffers
+  (setq enable-recursive-minibuffers t)
 
-(defvar-keymap liminal-modes-toggle-map
-  :doc "Liminal prefix key maps | mode toggling."
-  "w" #'whitespace-mode)
+(defvar-keymap esprit-modes-toggles-map
+  :name "esprit-toggles"
+  :doc "Esprit prefix key maps | minor mode toggling."
+  "v" #'global-visual-line-mode
+  "f" #'toggle-frame-fullscreen
+  "w" #'whitespace-mode
+  "c" #'command-log-mode)
 
-(keymap-set global-map "C-x m" liminal-modes-toggle-map)
+(keymap-set global-map "C-x m" esprit-modes-toggle-map)
 
 (use-package which-key
   :config
@@ -515,12 +438,12 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   (which-key-mode))
 
 (use-package projectile
-	:config
-	(projectile-mode)
-	:custom
-	(projectile-project-search-path `(,(concat esprit/local-root "code")))
-	:bind (:map projectile-mode-map
-							("s-," . projectile-command-map)))
+  :config
+  (projectile-mode)
+  :custom
+  (projectile-project-search-path `(,(concat esprit/local-root "code")))
+  :bind (:map projectile-mode-map
+	      ("s-," . projectile-command-map)))
 
 (use-package eglot
   :bind (:map eglot-mode-map
@@ -539,26 +462,17 @@ DIR and GIVEN-INITIAL match the method signature of `consult-wrapper'."
   (eglot-booster-mode))
 
 (use-package eglot-ltex
-	:hook
-	(text-mode . (lambda ()
-								 (require 'eglot-ltex)
-								 (eglot-ensure)))
-	:init
-	(setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"))
-
-(use-package flycheck
-  :config
-  (global-flycheck-mode))
-
-(use-package flycheck-eglot
   :hook
-  (eglot-managed-mode . flycheck-eglot-mode)
-  :after (flycheck eglot))
+  (text-mode . (lambda ()
+		 (require 'eglot-ltex)
+		 (eglot-ensure)))
+  :init
+  (setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"))
 
 (use-package jinx
-	:hook (emacs-startup . global-jinx-mode)
-	:bind (("M-$" . jinx-correct)
-				 ("C-M-$" . jinx-languages)))
+  :hook (emacs-startup . global-jinx-mode)
+  :bind (("M-$" . jinx-correct)
+	 ("C-M-$" . jinx-languages)))
 
 (setq treesit-language-source-alist
       '((css "https://github.com/tree-sitter/tree-sitter-css")
@@ -708,7 +622,6 @@ surrounded by word boundaries."
 
 (defun current-line-empty-p ()
   "Return true is the point is in an empty line, false otherwise."
-
   (save-excursion
     (beginning-of-line)
     (looking-at-p "[[:blank:]]*$")))
@@ -718,13 +631,10 @@ surrounded by word boundaries."
 
 When point is in a blank line invoke (delete-blank-lines).
 When point is in whitespace between non-whitespace invoke (delete-horizontal-space)."
-
   (interactive)
-
   (if (current-line-empty-p)
       (delete-blank-lines)
     (delete-horizontal-space)))
-
 (global-set-key (kbd "M-\\") 'delete-blank-space-dwim)
 
 (defun move-line-up ()
@@ -768,19 +678,26 @@ When point is in whitespace between non-whitespace invoke (delete-horizontal-spa
 
 (global-set-key [remap dabbrev-expand] 'hippie-expand)
 
-;; Clean and straightforward undo/redo
 (use-package undo-fu
-  :config
-  (setopt undo-fu-allow-undo-in-region t)
+  :custom
+  (undo-fu-allow-undo-in-region t)
+  (undo-limit 67108864) ; 64mb.
+  (undo-strong-limit 100663296) ; 96mb.
+  (undo-outer-limit 1006632960) ; 960mb.
   :bind
   ("C-/" . undo-fu-only-undo)
-  ("C-M-/" . undo-fu-only-redo))
+  ("C-?" . undo-fu-only-redo))
 
 ;; Persist undo history across sessions
 (use-package undo-fu-session
-  :config
-  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
-  (undo-fu-session-global-mode))
+  :hook
+  (after-init . undo-fu-session-global-mode)
+  :xdg-state
+  (undo-fu-session-directory "undo-fu-session")
+  :custom
+  (undo-fu-session-compression 'nil)
+  (undo-fu-session-incompatible-files
+   '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
 
 (setq visible-bell nil
       ring-bell-function #'ignore)
@@ -793,17 +710,30 @@ When point is in whitespace between non-whitespace invoke (delete-horizontal-spa
   :bind
   ("C-x !" . projectile-run-vterm))
 
+(defun esprit/helpful-switch-to-buffer (buffer-or-name)
+  "Switch to helpful BUFFER-OR-NAME.
+
+If we're already in a helpful buffer than reuse its window;
+otherwise create a new window."
+
+  (if (eq major-mode 'heplful-mode)
+      switch-to-buffer buffer-or-name)
+  (pop-to-buffer buffer-or-name))
+
 (use-package helpful
+  :custom
+  (helpful-switch-to-buffer #'esprit/helpful-switch-to-buffer)
   :bind
-  ("C-h f" . #'helpful-callable)
-  ("C-c F" . #'helpful-function)
-  ("C-h v" . #'helpful-variable)
-  ("C-h k" . #'helpful-key)
-  ("C-h x" . #'helpful-command)
-  ("C-c C-d" . #'helpful-at-point))
+  ("C-h o"    . #'helpful-symbol)
+  ("C-h f"    . #'helpful-callable)
+  ("C-c F"    . #'helpful-function)
+  ("C-h v"    . #'helpful-variable)
+  ("C-h k"    . #'helpful-key)
+  ("C-h x"    . #'helpful-command)
+  ("C-c C-d"  . #'helpful-at-point))
 
 (add-to-list 'display-buffer-alist
-             '("\\*Help\\*\\|\\*helpful.*\\*"
+             '((derived-mode special-mode)
                (display-buffer-in-side-window)
                (side . right)
                (slot . 0)
@@ -812,57 +742,19 @@ When point is in whitespace between non-whitespace invoke (delete-horizontal-spa
                 (no-delete-other-windows . t))))
 
 (defun esprit/quit-dwim (&optional arg)
-	"If current frame is the last frame kill emacs, else delete it."
-	(interactive "P")
+  "If current frame is the last frame kill emacs, else delete it."
+  (interactive "P")
 
-	(if (> (length (frame-list)) 1)
-  		(delete-frame arg)
-		(if (y-or-n-p (format "Are you sure you want to close the last frame?"))
-				(save-buffers-kill-terminal arg)
-			(message "Great, back to what you were doing then."))))
+  (if (> (length (frame-list)) 1)
+      (delete-frame arg)
+    (if (y-or-n-p (format "Are you sure you want to close the last frame?"))
+	(save-buffers-kill-terminal arg)
+      (message "Great, back to what you were doing then."))))
 
 (global-set-key (kbd "C-x C-c") 'esprit/quit-dwim)
 
 (keymap-set global-map "C-x k" 'kill-current-buffer)
 (keymap-set global-map "C-x C-k" 'kill-buffer)
-
-(use-package css-mode
-  :custom
-  (tab-width 2)
-  (css-indent-offset 2))
-
-(use-package web-mode
-  :mode
-  (("\\.erb\\'" . web-mode)
-   ("\\.html?\\'" . web-mode)))
-
-(use-package haml-mode
-  :defer t)
-
-(use-package jtsx
-  :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
-         ("\\.tsx\\'" . jtsx-tsx-mode)
-         ("\\.ts\\'" . jtsx-typescript-mode))
-  :custom
-  (js-indent-level 2)
-  (typescript-ts-mode-indent-offset 2)
-  (jtsx-switch-indent-offset 0)
-  (jtsx-indent-statement-block-regarding-standalone-parent nil)
-  (jtsx-jsx-element-move-allow-step-out t)
-  (jtsx-enable-jsx-electric-closing-element t)
-  :config
-  (apheleia-mode t))
-
-(use-package ruby-ts-mode
-  :mode "\\.rb\\'"
-  :mode "\\.pryrc\\'"
-  :mode "Rakefile\\'"
-  :mode "Gemfile\\'"
-  :config
-  (apheleia-mode t))
-
-(use-package yaml-ts-mode
-  :mode "\\.y[a]?ml")
 
 (setq esprit/default-org-directory (expand-file-name "org" esprit/local-root))
 (setq esprit/sync-org-directory (expand-file-name "Dropbox/org" esprit/local-root))
@@ -881,56 +773,87 @@ When point is in whitespace between non-whitespace invoke (delete-horizontal-spa
       `((sequence
          "TODO(t!)" "ACTIVE(a!)" "WAITING(w!)" "MAYBE(m!)" "|" "DONE(d!)" "OBSOLETE(o!)" "CANCELED(-!)")))
 
-(use-package doct
-	;;recommended: defer until calling doct
-	:commands (doct))
-
 (use-package org
   :init
   (setq org-export-backends '(ascii md html icalendar latex))
-  :config
+  :custom
   (setq org-default-notes-file (expand-file-name "todo.org" esprit/org-dir)) ;; Should maybe be inbox
-  (setq org-log-done 'time)
-  (setq org-log-reschedule 'time)
-  (setq org-log-into-drawer t)
-  (setq org-startup-truncated nil)
-  (setq org-todo-keywords esprit/todo-keywords)
-  (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
-  (setq org-id-locations-file esprit/org-id-locations-file)
-  (setq org-id-locations-file-relative t)
-  (setq org-fontify-whole-heading-line t)
-  (setq org-agenda-files `(,esprit/org-dir ,esprit/beorg-directory))
-  (setq org-latex-pdf-process
-        '("tectonic %f"))
+  (org-log-done 'time)
+  (org-log-reschedule 'time)
+  (org-log-into-drawer t)
+  (org-startup-truncated nil)
+  (org-todo-keywords esprit/todo-keywords)
+  (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
+  (org-id-locations-file esprit/org-id-locations-file)
+  (org-id-locations-file-relative t)
+  (org-fontify-whole-heading-line t)
+  (org-agenda-files `(,esprit/org-dir ,esprit/beorg-directory))
+  (org-latex-pdf-process '("tectonic %f"))
+  (org-capture-templates
+   '(("f" "Fleeting note" item
+      (file+headline org-default-notes-file "Notes")
+      "- %?")
+     ("p" "Permanent note" plain
+      (file denote-last-path)
+      #'denote-org-capture
+      :no-save t
+      :immediate-finish nil
+      :kill-buffer t
+      :jump-to-captured t)
+     ("t" "New task" entry
+      (file+headline org-default-notes-file "Tasks")
+      "* TODO %i%?")))
+  :bind
+  ("C-c a" . org-agenda)
+  ("C-c c" . org-capture)
+  ("C-c l" . org-store-link))
 
-	(setq org-capture-templates
-				(doct `(("Projects"
-								 :keys "p" :file ,esprit/projects-file
-								 :template ("* %{todo-state} %^{Description}\n:PROPERTIES:\n:Created: %U\n:END:\n\n\n%i\n%a")
-								 :children (("Todo"
-														 :keys "t"
-														 :headline "Tasks"
-														 :todo-state "TODO")
-														("Note"
-														 :keys "n"
-														 :headline "Notes"
-														 :todo-state ""))
-								 )
-								("Journal"
-								 :keys "j"
-								 :type plain
-								 :file ,esprit/journal-file
-								 :datetree t
-								 :template ":PROPERTIES\n:Created: %U\n:END:\n\n%?\n%i\n%a"
-								 :empty-lines 1))))
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (shell . t)))
 
-	;; ;; One of my big uses for Org is my literate config so having elisp as a template is a must
-	(add-to-list 'org-structure-template-alist '("sl" . "src emacs-lisp"))
+(use-package denote
+  :init
+  (denote-rename-buffer-mode 1)
+  :custom
+  (denote-directory esprit/notes-directory)
+  :hook
+  (dired-mode . denote-dired-mode)
+  :custom-face
+  (denote-faces-link ((t (:slant italic)))))
 
-	:bind
-	("C-c a" . org-agenda)
-	("C-c c" . org-capture)
-	("C-c l" . org-store-link))
+;; Denote extensions
+(use-package consult-notes
+  :bind
+  ("M-s n" . #'consult-notes)
+  :commands (consult-notes
+             consult-notes-search-in-all-notes)
+  :custom
+  (consult-notes-file-dir-sources
+   `(("Denote" ?d ,esprit/notes-directory))))
+
+(use-package emacs-lock
+  :config
+  (with-current-buffer "*scratch*"
+    (emacs-lock-mode 'kill)))
+
+(use-package wgrep
+  :straight t
+  :custom
+  (wgrep-auto-save-buffer t))
+
+(use-package combobulate
+  :custom
+  ;; You can customize Combobulate's key prefix here.
+  ;; Note that you may have to restart Emacs for this to take effect!
+  (combobulate-key-prefix "C-c o")
+  :hook
+  ((prog-mode . combobulate-mode)))
+
+(use-package esprit-movement
+  :straight nil
+  :bind ("C-a" . #'esprit/beginning-of-line))
 
 (use-package magit
   :bind
@@ -975,3 +898,5 @@ When point is in whitespace between non-whitespace invoke (delete-horizontal-spa
   :config
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-horizontally))
+
+(provide 'init)

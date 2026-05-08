@@ -98,11 +98,6 @@ Naturally a lot of the tuning performed in the =early-init= is done to reduce st
 Variables used both in =early-init= and elsewhere in the configuration. Again, this is currently a pared down selection of variables from =minimal-emacs.d=. Most are included with nothing more than their original docstrings. Some additional commentary is added for others.
 
 #+begin_src emacs-lisp
-  (defvar esprit-emacs-user-directory "~/code/dotemacs/"
-    "Pointer to me Emacs home directory.")
-    #+end_src
-
-#+begin_src emacs-lisp
   (defvar esprit-emacs-ui-features '()
     "List of user interface features to enable in minimal Emacs setup.
     This variable holds a list of Emacs UI features that can be enabled:
@@ -204,7 +199,7 @@ I usually manage my own themes as their own separate packages but it doesn't hur
         (expand-file-name "themes/" esprit-emacs-user-directory))
 
   (setq custom-file (expand-file-name "custom.el" esprit-emacs-user-directory))
-#+end_src
+        #+end_src
 
 *** Garbage Collection
 
@@ -349,7 +344,7 @@ The following remains to be edited and carved up into meaningful sections. But h
   ;;; Performance: File-name-handler-alist
 
   (defvar esprit-emacs--old-file-name-handler-alist (default-toplevel-value
-                                                     'file-name-handler-alist))
+                                                      'file-name-handler-alist))
 
   (defun esprit-emacs--respect-file-handlers (fn args-left)
     "Respect file handlers.
@@ -525,14 +520,17 @@ The following remains to be edited and carved up into meaningful sections. But h
   (setq gnutls-min-prime-bits 3072)  ; Stronger GnuTLS encryption
 
   ;; This results in a more compact output that emphasizes performance
-  (setq use-package-expand-minimally t)
+  (setq use-package-expand-espritly t)
 
   (setq use-package-minimum-reported-time (if esprit-emacs-debug 0 0.1))
   (setq use-package-verbose esprit-emacs-debug)
+  (setq use-package-always-ensure (not noninteractive))
   (setq use-package-enable-imenu-support t)
 
   ;; package.el
   (setq package-enable-at-startup nil)  ; Let the init.el file handle this
+  (setq package-quickstart-file
+        (expand-file-name "package-quickstart.el" user-emacs-directory))
   (setq package-archives '(("melpa"        . "https://melpa.org/packages/")
                            ("gnu"          . "https://elpa.gnu.org/packages/")
                            ("nongnu"       . "https://elpa.nongnu.org/nongnu/")
@@ -542,7 +540,7 @@ The following remains to be edited and carved up into meaningful sections. But h
                                      ("melpa"  . 70)
                                      ("melpa-stable" . 50)))
 
-  ;; Local variables:
+    ;; Local variables:
   ;; byte-compile-warnings: (not obsolete free-vars)
   ;; End:
 
@@ -551,9 +549,10 @@ The following remains to be edited and carved up into meaningful sections. But h
 
 ** Packages management                                            :PERSONAL:
 
-Use [[https://github.com/raxod502/straight.el][straight.el]] for package management and disable checking (for speedup). Hook it up to =use-package= by default at least for the time being.
+Using [[https://github.com/raxod502/straight.el][straight.el]] for package management and disable checking (for speedup). Hook it up to =use-package= by default at least for the time being.
 
 #+begin_src emacs-lisp
+
   (unless (featurep 'straight)
     ;; Bootstrap straight.el
     (defvar bootstrap-version)
@@ -569,34 +568,87 @@ Use [[https://github.com/raxod502/straight.el][straight.el]] for package managem
           (eval-print-last-sexp)))
       (load bootstrap-file nil 'nomessage)))
 
-  (setopt straight-check-for-modifications nil)
-  (setopt straight-use-package-by-default t)
+  (setq straight-check-for-modifications nil)
 
 #+end_src
 
-The =on= package add several new hook triggers inspired by/taken from /Doom Emacs/ allowing for finer tuning of package loading.
+Library load paths with a special case for mu4e (you may need to adapt this path).
 
 #+begin_src emacs-lisp
-  (use-package on
-    :demand t
-    :straight (:type git :host gitlab :repo "axgfn/on.el"))
+
+  (add-to-list 'load-path
+               (expand-file-name "lisp" user-emacs-directory))
+
 #+end_src
 
-Add the =:xdg-state= and =:xdg-cache= keywords to =use-package= helping to keep the the Emacs home directory uncluttered.
+** Packages installation
 
-#+begin_src emacs-lisp
-  (use-package use-package-xdg
-    :demand t
-    :straight (use-package-xdg :type git
-                               :host codeberg
-                               :repo "rossabaker/use-package-xdg"))
-#+end_src
-
-The =lisp= directory is for utility code/packages that are not mature or complex enough to split out into their own repo.
+Packages used in this specific configuration. You may want to adapt this list. The first time this sequence will be executed, *it will take a long time*. Then, at next restart, it should be very fast (less than 1 second because it won't install anything basically).
 
 #+begin_src emacs-lisp
 
-  (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+  (setq package-list
+        '(
+          accent               ; Easier access to accented characters
+          ace-window           ; Easier moving between windows
+          apheleia             ; Code formatting without the pain and blocking
+          avy                  ; Jump to things (but really much, much more...)
+          cape                 ; Completion At Point Extensions
+          circadian            ; Change my theme in rhythm with nature
+          command-log-mode     ; More insight into what commands are being run/looks fancy when showing off
+          consult              ; Consulting completing-read
+          consult-lsp          ; LSP extras for consult to, well, consult
+          corfu                ; Completion Overlay Region FUnction
+  	denote
+  	doct                 ; (D)eclarative (O)rg (C)apture (T)emplates
+  	eglot-booster        ; Enable eglot to use the emacs-lsp-booster Rust program
+          embark
+          embark-consult
+          exec-path-from-shell ; Get environment variables such as $PATH from the shell
+          flycheck             ; Enhanced syntax checking, more flexible than flymake
+          flycheck-eglot       ; Allow Flycheck to understand Eglot as a checker
+          haml-mode            ; Rails templates not covered by treesitter or web-mode
+          helpful              ; A better help buffer
+          magit                ; A Git porcelain inside Emacs.
+          marginalia           ; Enrich existing commands with completion annotations
+          markdown-mode        ; Major mode for Markdown-formatted text
+          no-littering         ; Keep our things clean and tidy
+          orderless            ; Completion style for matching regexps in any order
+  	pdf-tools
+          projectile           ; Project scoped stuffness
+          rg                   ; Ripgrep for speed and profit(?)
+          save-visited-files   ; Simplest form of session persistance
+          surround
+          tempel
+          tempel-collection
+          treesit-auto
+          undo-fu              ; Work around Emacs' clunky undo interface
+          undo-fu-session      ; Persistant undo across sessions
+          vertico              ; VERTical Interactive COmpletion
+          vertico-posframe
+          visual-fill-column   ; Nicer wrapping mostly for text modes
+          vterm                ; A real terminal emulator running in Emacs
+          web-mode             ; Uber mode for web templating languages
+          which-key            ; Discovery method for key bindings
+          ))
+
+  ;; Install packages that are not yet installed
+  (dolist (package package-list)
+    (straight-use-package package))
+
+  (straight-use-package
+   '(jtsx :type git :host github :repo "llemaitre19/jtsx"))
+
+  (straight-use-package
+   '(asdf :type git :host github :repo "tabfugnic/asdf.el"))
+
+  (straight-use-package
+   '(eglot-ltex :type git :host github :repo "emacs-languagetool/eglot-ltex"))
+
+  (straight-use-package
+   '(use-package-xdg :type git :host codeberg :repo "rossabaker/use-package-xdg"))
+
+  (straight-use-package '(org :type built-in))
 
 #+end_src
 
@@ -632,18 +684,36 @@ Display a message to the *Messages* buffer showing the Emacs init time.
 
 ** Backups Etc.
 
-Various settings related to avoiding unnecessary backup and temp files.
+Use [[https://github.com/emacscollective/no-littering][no-littering]] to keep my config directory tidier. Configured using the settings advised by [[https://rossabaker.com/configs/emacs/][Ross A. Baker]].
 
 #+begin_src emacs-lisp
 
-  (setq vc-make-backup-files nil     ; No backup of files under version contr
-        backup-by-copying t          ; Don't clobber symlinks
-        version-control t            ; Version numbers for backup files
-        delete-old-versions t        ; Delete excess backup files silently
-        kept-old-versions 3          ; Number of old versions to keep
-        kept-new-versions 6          ; Number of new versions to keep
-        delete-by-moving-to-trash t  ; Delete files to trash
-        create-lockfiles nil)        ; More trouble than worth
+  (use-package no-littering
+    :init
+    (setq no-littering-etc-directory "~/.cache/emacs/etc/"
+          no-littering-var-directory "~/.cache/emacs/var/")
+    (when (fboundp 'startup-redirect-eln-cache)
+      (startup-redirect-eln-cache
+       (convert-standard-filename
+        (expand-file-name  "eln-cache/" no-littering-var-directory))))
+    (setq vc-make-backup-files nil     ; No backup of files under version contr
+          backup-by-copying t          ; Don't clobber symlinks
+          version-control t            ; Version numbers for backup files
+          delete-old-versions t        ; Delete excess backup files silently
+          kept-old-versions 3          ; Number of old versions to keep
+          kept-new-versions 6          ; Number of new versions to keep
+          delete-by-moving-to-trash t  ; Delete files to trash
+          create-lockfiles nil)        ; More trouble than worth
+    (setq backup-directory-alist
+          `((".*" . ,(no-littering-expand-var-file-name "backup/")))
+          auto-save-file-name-transforms
+          `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
+
+#+end_src
+
+#+begin_src emacs-lisp
+
+  (setq bookmark-default-file (expand-file-name "bookmark" user-emacs-directory))
 
 #+end_src
 
@@ -652,23 +722,21 @@ Enable and tweak =recentf-mode= to keep track of files recently operated on.
 #+begin_src emacs-lisp
 
   (use-package recentf
-    :hook
-    (after-init . recentf-mode)
     :custom
+    (recentf-max-menu-items 10)
     (recentf-max-saved-items 100)
-    :xdg-state
-    (recentf-save-file "recentf"))
+    :init
+    (recentf-mode t))
 
 #+end_src
 
-Preserve cursor position per file across sessions.
+Preservre cursor position per file across sessions.
 
 #+begin_src emacs-lisp
 
   (use-package saveplace
-    :xdg-state
-    (save-place-file "saveplace")
     :custom
+    (save-place-file (expand-file-name "saveplace" user-emacs-directory))
     (save-place-forget-unreadable-files t))
 
 #+end_src
@@ -689,29 +757,52 @@ Remove text properties for kill ring entries (see https://emacs.stackexchange.co
 We save every possible history we can think of.
 
 #+begin_src emacs-lisp
-  (setq savehist-watchlist
-        '(bookmark-history
-          command-history
-          custom-variable-history
-          face-name-history
-          file-name-history
-          minibuffer-history
-          query-replace-history
-          read-char-history
-          read-expression-history
-          set-variable-value-history
-          kill-ring))
 
   (use-package savehist
-    :hook
-    (on-first-buffer . savehist-mode)
-    :xdg-state
-    (savehist-file "history")
+    :init
+    (savehist-mode t)
     :custom
     (kill-ring-max 50)
     (history-length 50)
-    (history-delete-duplicates t)
-    (savehist-additional-variables savehist-watchlist))
+    (savehist-additional-variables
+     '(kill-ring
+       command-history
+       set-variable-value-history
+       custom-variable-history
+       query-replace-history
+       read-expression-history
+       minibuffer-history
+       read-char-history
+       face-name-history
+       bookmark-history
+       file-name-history))
+    :config
+    (put 'minibuffer-history         'history-length 50)
+    (put 'file-name-history          'history-length 50)
+    (put 'set-variable-value-history 'history-length 25)
+    (put 'custom-variable-history    'history-length 25)
+    (put 'query-replace-history      'history-length 25)
+    (put 'read-expression-history    'history-length 25)
+    (put 'read-char-history          'history-length 25)
+    (put 'face-name-history          'history-length 25)
+    (put 'bookmark-history           'history-length 25))
+
+#+end_src
+
+No duplicates in history
+
+#+begin_src emacs-lisp
+
+  (setq history-delete-duplicates t)
+
+#+end_src
+
+Start history mode.
+
+#+begin_src emacs-lisp
+
+  (let (message-log-max)
+    (savehist-mode))
 
 #+end_src
 
@@ -722,16 +813,7 @@ Pull my full set of environmental variables into Emacs. This is most important o
 #+begin_src emacs-lisp
 
   (use-package exec-path-from-shell
-    :if (memq window-system '(mac ns x))
-    :custom
-    (exec-path-from-shell-variables
-     '(
-       "PATH"
-       "MANPATH"
-       "XDG_CONFIG_DIRS"
-       "XDG_DATA_DIRS"
-       ))
-    :config
+    :init
     (exec-path-from-shell-initialize))
 
 #+end_src
@@ -746,12 +828,11 @@ Make Emacs aware of the proper paths for the [[https://asdf-vm.com/][asdf versio
 
 #+end_src
 
-Point to my local root directory. Mostly for the sake of Org later on in the config.
+point to my local root directory. Mostly for the sake of Org later on in the config.
 
 #+begin_src emacs-lisp
 
-  (defvar esprit/local-root "~/"
-    "Convenience pointer to my local root directory.")
+  (setq esprit/local-root "~/")
 
 #+end_src
 
@@ -776,51 +857,73 @@ A variation on =make-frame= that opens to the =*scratch*= buffer rather than the
 
   (defun esprit/make-scratch-frame ()
     "Create a new frame and switch to *scratch* buffer."
+
     (interactive)
     (select-frame (make-frame))
     (switch-to-buffer "*scratch*"))
 
-  (defun esprit/make-eat-frame ()
-    "Create a new frame and create an Eat buffer."
-    (interactive)
-    (select-frame (make-frame))
-    (eat-project))
-
-  (defvar-keymap esprit-frame-map
-    :doc "Prefix map for frame operations."
+  (defvar-keymap liminal-frame-map
+    :doc "Liminal prefix map for frame operations."
     "m" #'make-frame
-    "n" #'esprit/make-scratch-frame
-    "v" #'esprit/make-eat-frame)
+    "n" #'esprit/make-scratch-frame)
 
-  (keymap-global-set "M-n" esprit-frame-map)
+  (keymap-set global-map "M-n" liminal-frame-map)
 
 #+end_src
 
 * Visual
-** Esprit Themes
+** Sensible Settings
+
+As part of it's setup it is running the =sensible-mode= function which sets a number of sensible defaults and settings. For me it would make more sense for these to be there own separate setup but I haven't extracted them yet.
+
+#+begin_src emacs-lisp
+
+  (use-package sensible-settings
+    :load-path "~/code/sensible-settings"
+    :init
+    (setopt sensible-font-size 16
+            sensible-manage-cursor t
+            sensible-manage-fonts t
+            sensible-manage-ui t
+            sensible-manage-ux t)
+    :config
+    (sensible-mode))
+
+#+end_src
+
+** Sensible Themes
 
 New theme ideas I'm playing around with using [[https://www.reasonable.work/colors/][Reasonable Colors]].
 
 #+begin_src emacs-lisp
-  (use-package esprit-themes
-    ;; :straight (:type git :host github :repo "ludamillion/esprit-themes")
-    :straight nil
-    :load-path "~/code/esprit-themes"
-    :demand t)
+
+  (use-package sensible-themes
+    :after 'sensible-settings
+    :load-path "~/code/sensible-themes")
+
 #+end_src
 
-** Esprit modeline
+** Liminal modeline
 
-My own personal mode-line.
+I like the idea and the behavior of this modeline but there are a few more things that I would have present that are missing from it. I have forked it but haven't made any useful changes made.
 
 #+begin_src emacs-lisp
-  (use-package esprit-line
-    :demand t
-    :straight nil
-    :load-path "~/code/esprit-line"
-    :custom
-    (esprit-line-glyph-alist esprit-line-glyphs-unicode)
-    :config (esprit-line-mode))
+
+  (use-package sensible-modeline
+    :after 'sensible-themes
+    :load-path "~/code/sensible-modeline"
+    :init
+    (setopt mode-line-format nil)
+    :hook
+    (prog-mode            . sensible-modeline-prog-mode)
+    (text-mode            . sensible-modeline-text-mode)
+    (org-mode             . sensible-modeline-org-mode)
+    (term-mode            . sensible-modeline-term-mode)
+    (vterm-mode           . sensible-modeline-term-mode)
+    (messages-buffer-mode . sensible-modeline-message-mode)
+    (org-capture-mode     . sensible-modeline-org-capture-mode)
+    (org-agenda-mode      . sensible-modeline-org-agenda-mode))
+
 #+end_src
 
 ** Circadian
@@ -833,8 +936,8 @@ I prefer the legibility of a well designed light theme when the lighting is good
     :custom
     (calendar-latitude 42.4)
     (calendar-longitude -71.0)
-    (circadian-themes '((:sunrise . esprit-amber-light)
-                        (:sunset  . esprit-azure-dark)))
+    (circadian-themes '((:sunrise . sensible-amber-light)
+                        (:sunset  . sensible-azure-dark)))
     :config
     (circadian-setup))
 
@@ -1157,16 +1260,17 @@ if I need to quit out for some reason. Thankfully someone else had the same
 idea.
 
 #+begin_src emacs-lisp
+
   (use-package save-visited-files
     :init
     (save-visited-files-mode t)
-    :xdg-state
-    (save-visited-files-location "save-visited-files")
     :custom
+    (save-visited-files-location (expand-file-name "save-visited-files" user-emacs-directory))
     (save-visited-files-ignore-tramp-files t)
     (save-visited-files-ignore-directories nil)
     (save-visited-files-auto-restore nil))
-    #+end_src
+
+#+end_src
 
 * Minibuffer
 
@@ -1199,16 +1303,14 @@ idea.
 Stuff related, at least philosophically to the management of modes themselves.
 
 #+begin_src emacs-lisp
-  (defvar-keymap esprit-modes-toggles-map
-    :name "esprit-toggles"
-    :doc "Esprit prefix key maps | minor mode toggling."
-    "v" #'global-visual-line-mode
-    "f" #'toggle-frame-fullscreen
-    "w" #'whitespace-mode
-    "c" #'command-log-mode)
 
-  (keymap-set global-map "C-x m" esprit-modes-toggle-map)
-    #+end_src
+  (defvar-keymap liminal-modes-toggle-map
+    :doc "Liminal prefix key maps | mode toggling."
+    "w" #'whitespace-mode)
+
+  (keymap-set global-map "C-x m" liminal-modes-toggle-map)
+
+#+end_src
 
 * Which key for discoverability
 
@@ -1275,6 +1377,23 @@ Use Eglot for LSP integration. Fewer options than =lsp-mode= but it's built-in a
 
 #+end_src
 * Code analysis:
+** Flycheck
+
+Flycheck to run checkers, linters, etc. Also hook Flycheck and Eglot together so that errors, warnings. etc. returned from language servers are piped through Flycheck.
+
+#+begin_src emacs-lisp
+
+  (use-package flycheck
+    :config
+    (global-flycheck-mode))
+
+  (use-package flycheck-eglot
+    :hook
+    (eglot-managed-mode . flycheck-eglot-mode)
+    :after (flycheck eglot))
+
+#+end_src
+
 ** Jinx
 
 Fast just-in-time spell checker leveraging the power of the enchant library.
@@ -1437,6 +1556,7 @@ A nice native feature of Emacs is the =re-builder= package which allows you to b
 The follow is code that is taken from Karthik Chikmagalur's fantastic blog entry on bridging that gap. Found here [[https://karthinks.com/software/bridging-islands-in-emacs-1/][Bridging Islands in Emacs]]
 
 #+begin_src emacs-lisp
+
   (use-package re-builder
     :bind (("M-s %" . #'re-builder)
            :map reb-mode-map ("RET" . #'reb-replace-regexp)
@@ -1524,12 +1644,14 @@ and below the current line if it is blank or deletes the current line if it is
 blank and the the lines surrounding lines are not. Below is a utility function
 to smartly combine the two.
 
-N.B. I should read up on =cycle-spacing= command. It looks like it might do much of what I'm doing here.
+Read up on =cycle-spacing= command. It looks like it might do much of what I'm
+doing here.
 
 #+begin_src emacs-lisp
 
   (defun current-line-empty-p ()
     "Return true is the point is in an empty line, false otherwise."
+
     (save-excursion
       (beginning-of-line)
       (looking-at-p "[[:blank:]]*$")))
@@ -1539,10 +1661,13 @@ N.B. I should read up on =cycle-spacing= command. It looks like it might do much
 
   When point is in a blank line invoke (delete-blank-lines).
   When point is in whitespace between non-whitespace invoke (delete-horizontal-space)."
+
     (interactive)
+
     (if (current-line-empty-p)
         (delete-blank-lines)
       (delete-horizontal-space)))
+
   (global-set-key (kbd "M-\\") 'delete-blank-space-dwim)
 
 #+end_src
@@ -1625,7 +1750,9 @@ Currently unaltered. Found here: [[https://demonastery.org/2013/04/emacs-narrow-
 Seamlessly replace =dabbrev= with =hippie-expand= for fun and profit.
 
 #+begin_src emacs-lisp
+
   (global-set-key [remap dabbrev-expand] 'hippie-expand)
+
 #+end_src
 
 * Behavioral Enhancements
@@ -1633,26 +1760,21 @@ Seamlessly replace =dabbrev= with =hippie-expand= for fun and profit.
 One of the few big holes in Emacs' basic functionality is its undo system. So I use a drop in replacement.
 
 #+begin_src emacs-lisp
+
+  ;; Clean and straightforward undo/redo
   (use-package undo-fu
-    :custom
-    (undo-fu-allow-undo-in-region t)
-    (undo-limit 67108864) ; 64mb.
-    (undo-strong-limit 100663296) ; 96mb.
-    (undo-outer-limit 1006632960) ; 960mb.
+    :config
+    (setopt undo-fu-allow-undo-in-region t)
     :bind
     ("C-/" . undo-fu-only-undo)
-    ("C-?" . undo-fu-only-redo))
+    ("C-M-/" . undo-fu-only-redo))
 
   ;; Persist undo history across sessions
   (use-package undo-fu-session
-    :hook
-    (after-init . undo-fu-session-global-mode)
-    :xdg-state
-    (undo-fu-session-directory "undo-fu-session")
-    :custom
-    (undo-fu-session-compression 'nil)
-    (undo-fu-session-incompatible-files
-     '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
+    :config
+    (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+    (undo-fu-session-global-mode))
+
 #+end_src
 
 I don't want any bells on thanks
@@ -1667,7 +1789,9 @@ I don't want any bells on thanks
 Treat manual buffer switching, via =switch-to-buffer=, the same way as programmatic buffer switching. With this set =switch-to-buffer= will obey any display action rules in place. N.B. requires Emacs 27+.
 
 #+begin_src emacs-lisp
+
   (setq switch-to-buffer-obey-display-actions t)
+
 #+end_src
 
 When I want a terminal I want a real terminal. =vterm= essentially add a 'real' terminal into Emacs via the libvterm library.
@@ -1682,37 +1806,23 @@ When I want a terminal I want a real terminal. =vterm= essentially add a 'real' 
 
 #+end_src
 
-Make Emacs' already helpful **Help** system even more helpful.
+Make Emacs' already helpful **Help** system even more helpful. In addition to adding the =helpful= package to enhance certain queries set a rule to open help buffer's in a side window.
 
 #+begin_src emacs-lisp
-  (defun esprit/helpful-switch-to-buffer (buffer-or-name)
-    "Switch to helpful BUFFER-OR-NAME.
-
-  If we're already in a helpful buffer than reuse its window;
-  otherwise create a new window."
-
-    (if (eq major-mode 'heplful-mode)
-        switch-to-buffer buffer-or-name)
-    (pop-to-buffer buffer-or-name))
 
   (use-package helpful
-    :custom
-    (helpful-switch-to-buffer #'esprit/helpful-switch-to-buffer)
     :bind
-    ("C-h o"    . #'helpful-symbol)
-    ("C-h f"    . #'helpful-callable)
-    ("C-c F"    . #'helpful-function)
-    ("C-h v"    . #'helpful-variable)
-    ("C-h k"    . #'helpful-key)
-    ("C-h x"    . #'helpful-command)
-    ("C-c C-d"  . #'helpful-at-point))
+    ("C-h f" . #'helpful-callable)
+    ("C-c F" . #'helpful-function)
+    ("C-h v" . #'helpful-variable)
+    ("C-h k" . #'helpful-key)
+    ("C-h x" . #'helpful-command)
+    ("C-c C-d" . #'helpful-at-point))
 #+end_src
-
-Special mode is /"A special major mode is intended to view specially formatted data rather than files."/. Most practically this means help(ful) buffers and the like. I prefer this kind of informational display to be in a side window.
 
 #+begin_src emacs-lisp
   (add-to-list 'display-buffer-alist
-               '((derived-mode special-mode)
+               '(special-mode
                  (display-buffer-in-side-window)
                  (side . right)
                  (slot . 0)
@@ -1728,14 +1838,14 @@ Kill the current frame or exit emacs if the frame in question is the only one. T
 #+begin_src emacs-lisp
 
   (defun esprit/quit-dwim (&optional arg)
-    "If current frame is the last frame kill emacs, else delete it."
-    (interactive "P")
+  	"If current frame is the last frame kill emacs, else delete it."
+  	(interactive "P")
 
-    (if (> (length (frame-list)) 1)
-        (delete-frame arg)
-      (if (y-or-n-p (format "Are you sure you want to close the last frame?"))
-  	(save-buffers-kill-terminal arg)
-        (message "Great, back to what you were doing then."))))
+  	(if (> (length (frame-list)) 1)
+    		(delete-frame arg)
+  		(if (y-or-n-p (format "Are you sure you want to close the last frame?"))
+  				(save-buffers-kill-terminal arg)
+  			(message "Great, back to what you were doing then."))))
 
   (global-set-key (kbd "C-x C-c") 'esprit/quit-dwim)
 
@@ -1747,6 +1857,97 @@ When I want to kill a buffer I almost always want to kill the buffer I'm in. Occ
 
   (keymap-set global-map "C-x k" 'kill-current-buffer)
   (keymap-set global-map "C-x C-k" 'kill-buffer)
+
+#+end_src
+
+* Specific Language Support
+
+TreeSitter support covers a fair bit of territory for language support. There are however some gaps that need to be filled.
+
+** CSS
+
+Regular CSS should be covered by the native TreeSitter functionality in tandem with =treesit-auto-mode=. However, I still had this in my config so I'll make it =INACTIVE= and resolve it as part of a cleanup pass.
+
+I also need to figure out what to set up for SCSS as we lean on that heavily at my day job.
+
+#+begin_src emacs-lisp
+
+  (use-package css-mode
+    :custom
+    (tab-width 2)
+    (css-indent-offset 2))
+
+#+end_src
+
+** ERB
+:LOGBOOK:
+- State "CALENDAR"   from              [2024-02-27 Tue 07:52]
+:END:
+
+At my day job we have a primarily Rails codebase. This means we have legacy ERB templates to deal with. These are not covered by TreeSitter but =web-mode= is the next best mode for dealing with many template languages. Currently I basically only use it for ERB templates but it serves as a powerful fallback option when things aren't covered by TreeSitter or a specific language mode that does the job better.
+
+#+begin_src emacs-lisp
+
+  (use-package web-mode
+    :mode
+    (("\\.erb\\'" . web-mode)
+     ("\\.html?\\'" . web-mode)))
+
+#+end_src
+
+** HAML
+
+A Rails codebase also means HAML and Slim templates too. Sadly for my config's dependency graph =web-mode= is designed for template languages that are derived from HTML which HAML is not. So bring in its own mode package.
+
+#+begin_src emacs-lisp
+
+  (use-package haml-mode
+    :defer t)
+
+#+end_src
+
+** Javascript/Typescript
+
+=jtsx-mode= is a lightweight mode that piggybacks on Emacs' built in JSX/TSX mode and integrates with =TreeSitter= sprinkling some nice utilities over the native mode(s).
+
+#+begin_src emacs-lisp
+
+  (use-package jtsx
+    :mode (("\\.jsx?\\'" . jtsx-jsx-mode)
+           ("\\.tsx\\'" . jtsx-tsx-mode)
+           ("\\.ts\\'" . jtsx-typescript-mode))
+    :custom
+    (js-indent-level 2)
+    (typescript-ts-mode-indent-offset 2)
+    (jtsx-switch-indent-offset 0)
+    (jtsx-indent-statement-block-regarding-standalone-parent nil)
+    (jtsx-jsx-element-move-allow-step-out t)
+    (jtsx-enable-jsx-electric-closing-element t)
+    :config
+    (apheleia-mode t))
+
+#+end_src
+
+** Ruby
+
+#+begin_src emacs-lisp
+
+  (use-package ruby-ts-mode
+    :mode "\\.rb\\'"
+    :mode "\\.pryrc\\'"
+    :mode "Rakefile\\'"
+    :mode "Gemfile\\'"
+    :config
+    (apheleia-mode t))
+
+#+end_src
+
+** YAML
+
+#+begin_src emacs-lisp
+
+  (use-package yaml-ts-mode
+    :mode "\\.y[a]?ml")
 
 #+end_src
 
@@ -1780,13 +1981,23 @@ Various directory and file locations for use configuring Org.
 + Long: Everything that doesn't belong on once of the other lists.
 + Wait: A subset of the long list for items which depend on something from someone else.
 
-  Originally I was going to do this with todo states. However upon thinking more about it and reading about some other people's approaches I decided that more typical todo states made more sense and that the 3 list system makes more sense to implement as custom agendas/filters. /That/ version still needs to be implemented.
+  Originally I was going to do this with todo states. However upon thinking more about it and readying about some other people's approaches I decided that more typical todo states made more sense and that the 3 list system makes more sense to implement as custom agendas/filters. /That/ version still needs to be implemented.
 
 #+begin_src emacs-lisp
 
   (setq esprit/todo-keywords
         `((sequence
            "TODO(t!)" "ACTIVE(a!)" "WAITING(w!)" "MAYBE(m!)" "|" "DONE(d!)" "OBSOLETE(o!)" "CANCELED(-!)")))
+
+#+end_src
+
+Doct is a spiffy little DSL for defining Org capture templates in a more readable, declarative manner.
+
+#+begin_src emacs-lisp
+
+  (use-package doct
+  	;;recommended: defer until calling doct
+  	:commands (doct))
 
 #+end_src
 
@@ -1797,98 +2008,53 @@ Configure Org itself
   (use-package org
     :init
     (setq org-export-backends '(ascii md html icalendar latex))
-    :custom
-    (setq org-default-notes-file (expand-file-name "todo.org" esprit/org-dir)) ;; Should maybe be inbox
-    (org-log-done 'time)
-    (org-log-reschedule 'time)
-    (org-log-into-drawer t)
-    (org-startup-truncated nil)
-    (org-todo-keywords esprit/todo-keywords)
-    (org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
-    (org-id-locations-file esprit/org-id-locations-file)
-    (org-id-locations-file-relative t)
-    (org-fontify-whole-heading-line t)
-    (org-agenda-files `(,esprit/org-dir ,esprit/beorg-directory))
-    (org-latex-pdf-process '("tectonic %f"))
-    (org-capture-templates
-     '(("f" "Fleeting note" item
-        (file+headline org-default-notes-file "Notes")
-        "- %?")
-       ("p" "Permanent note" plain
-        (file denote-last-path)
-        #'denote-org-capture
-        :no-save t
-        :immediate-finish nil
-        :kill-buffer t
-        :jump-to-captured t)
-       ("t" "New task" entry
-        (file+headline org-default-notes-file "Tasks")
-        "* TODO %i%?")))
-    :bind
-    ("C-c a" . org-agenda)
-    ("C-c c" . org-capture)
-    ("C-c l" . org-store-link))
-
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
-     (shell . t)))
-#+end_src
-
-Add denote for notes.
-
-#+begin_src emacs-lisp
-  (use-package denote
-    :init
-    (denote-rename-buffer-mode 1)
-    :custom
-    (denote-directory esprit/notes-directory)
-    :hook
-    (dired-mode . denote-dired-mode)
-    :custom-face
-    (denote-faces-link ((t (:slant italic)))))
-
-  ;; Denote extensions
-  (use-package consult-notes
-    :bind
-    ("M-s n" . #'consult-notes)
-    :commands (consult-notes
-               consult-notes-search-in-all-notes)
-    :custom
-    (consult-notes-file-dir-sources
-     `(("Denote" ?d ,esprit/notes-directory))))
-#+end_src
-
-* Miscellaneous
-
-Last bits from my (soon to be?) old init.
-
-#+begin_src emacs-lisp
-  (use-package emacs-lock
     :config
-    (with-current-buffer "*scratch*"
-      (emacs-lock-mode 'kill)))
+    (setq org-default-notes-file (expand-file-name "todo.org" esprit/org-dir)) ;; Should maybe be inbox
+    (setq org-log-done 'time)
+    (setq org-log-reschedule 'time)
+    (setq org-log-into-drawer t)
+    (setq org-startup-truncated nil)
+    (setq org-todo-keywords esprit/todo-keywords)
+    (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
+    (setq org-id-locations-file esprit/org-id-locations-file)
+    (setq org-id-locations-file-relative t)
+    (setq org-fontify-whole-heading-line t)
+    (setq org-agenda-files `(,esprit/org-dir ,esprit/beorg-directory))
+    (setq org-latex-pdf-process
+          '("tectonic %f"))
 
-  (use-package wgrep
-    :straight t
-    :custom
-    (wgrep-auto-save-buffer t))
+  	(setq org-capture-templates
+  				(doct `(("Projects"
+  								 :keys "p" :file ,esprit/projects-file
+  								 :template ("* %{todo-state} %^{Description}\n:PROPERTIES:\n:Created: %U\n:END:\n\n\n%i\n%a")
+  								 :children (("Todo"
+  														 :keys "t"
+  														 :headline "Tasks"
+  														 :todo-state "TODO")
+  														("Note"
+  														 :keys "n"
+  														 :headline "Notes"
+  														 :todo-state ""))
+  								 )
+  								("Journal"
+  								 :keys "j"
+  								 :type plain
+  								 :file ,esprit/journal-file
+  								 :datetree t
+  								 :template ":PROPERTIES\n:Created: %U\n:END:\n\n%?\n%i\n%a"
+  								 :empty-lines 1))))
 
-  (use-package combobulate
-    :custom
-    ;; You can customize Combobulate's key prefix here.
-    ;; Note that you may have to restart Emacs for this to take effect!
-    (combobulate-key-prefix "C-c o")
-    :hook
-    ((prog-mode . combobulate-mode)))
+  	;; ;; One of my big uses for Org is my literate config so having elisp as a template is a must
+  	(add-to-list 'org-structure-template-alist '("sl" . "src emacs-lisp"))
 
-  (use-package esprit-movement
-    :straight nil
-    :bind ("C-a" . #'esprit/beginning-of-line))
-
-
+  	:bind
+  	("C-c a" . org-agenda)
+  	("C-c c" . org-capture)
+  	("C-c l" . org-store-link))
 
 #+end_src
+
+Personal overlay for org mode to 'beautify' it a bit. There are plenty of packages and approaches to this but rather than endlessly customizing a handful of different packages I figured I'd roll my own and take what I liked from different sources.
 
 * Version Control
 ** Magit
@@ -1954,6 +2120,5 @@ Taken from https://panadestein.github.io/emacsd/ a friendlier =ediff= experience
 
 #+end_src
 
-#+begin_src emacs-lisp
-  (provide 'init)
-#+end_src
+
+
