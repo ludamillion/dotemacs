@@ -3,10 +3,12 @@
 
 (setq mc/cmds-to-run-for-all
       '(
+        esprit/beginning-of-line
         org-delete-char
         org-self-insert-command
         ))
 
 (setq mc/cmds-to-run-once
       '(
+        straight-remove-unused-repos
         ))

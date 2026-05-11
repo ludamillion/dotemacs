@@ -28,7 +28,7 @@ This document is a literate configuration for GNU Emacs written in [[https://org
 
 #+END_QUOTE
 
-** Notes to self                                                  :INACTIVE:
+* Notes to self                                                    :INACTIVE:
 
 List of less tasks to do that are more theoretical or investigative than the concrete, actionable items above. N.B. the output of these tasks should include two things, one necessary and one conditional. The necessary item is a note with the result of investigating. The conditional item is a To Do added to the list above if the result of the research is an actionable item.
 
@@ -37,7 +37,7 @@ List of less tasks to do that are more theoretical or investigative than the con
 - [ ] [[https://github.com/alphapapa/activities.el][Activities]] - Package built around the idea of saving files, buffers, and
   other related state defined as an /activity/.
 
-** Header
+* Header
 
 This will generate a header at the top of the tangled file to indicate it is generated and is not meant to be modified directly.
 
@@ -61,7 +61,7 @@ This will generate a header at the top of the tangled file to indicate it is gen
 
 #+END_SRC
 
-** Early Init                                                   :HOOK:OTHER:
+* Early Init                                                     :HOOK:OTHER:
 :PROPERTIES:
 :header-args:emacs-lisp: :tangle ~/code/dotemacs/early-init.el
 :END:
@@ -79,7 +79,7 @@ The =early-init.el= file is mostly lifted from James Cherti's excellent [[https:
   ;; SPDX-License-Identifier: GPL-3.0-or-later
 #+END_SRC
 
-*** Internal variables
+** Internal variables
 
 These are variables used only in the =early-init= context.
 
@@ -93,14 +93,14 @@ Naturally a lot of the tuning performed in the =early-init= is done to reduce st
   (setq gc-cons-percentage 1.0)
 #+end_src
 
-*** Variables
+** Variables
 
 Variables used both in =early-init= and elsewhere in the configuration. Again, this is currently a pared down selection of variables from =minimal-emacs.d=. Most are included with nothing more than their original docstrings. Some additional commentary is added for others.
 
 #+begin_src emacs-lisp
   (defvar esprit-emacs-user-directory "~/code/dotemacs/"
     "Pointer to me Emacs home directory.")
-    #+end_src
+#+end_src
 
 #+begin_src emacs-lisp
   (defvar esprit-emacs-ui-features '()
@@ -176,7 +176,7 @@ The following are flags controlling optimization of various Emacs behaviors that
   of the progress or any relevant activities during startup.")
 #+end_src
 
-*** Configuration success guard
+** Configuration success guard
 
 While this function is a little more crucial to a 'framework config' such as =minimal-emacs.d= is can still be quite useful when hacking on any config. It add a variable and a post startup check to ensure that we are loading the proper =init.el= and that we haven't indicated any other failure by setting the success flag to false.
 
@@ -206,7 +206,7 @@ I usually manage my own themes as their own separate packages but it doesn't hur
   (setq custom-file (expand-file-name "custom.el" esprit-emacs-user-directory))
 #+end_src
 
-*** Garbage Collection
+** Garbage Collection
 
 Garbage collection can cause significant slowdowns during start up. This section delays GC during start up and resets it later.
 
@@ -235,7 +235,7 @@ Garbage collection can cause significant slowdowns during start up. This section
       (setq gc-cons-percentage esprit-emacs--backup-gc-cons-percentage)))
 #+end_src
 
-*** Native compilation and Byte compilation
+** Native compilation and Byte compilation
 
 Tweak some settings related to performing native and byte compilation and tell Emacs we don't care about warnings unless we're in debug mode.
 
@@ -254,7 +254,7 @@ Tweak some settings related to performing native and byte compilation and tell E
         byte-compile-verbose esprit-emacs-debug)
 #+end_src
 
-*** Miscellaneous performance tweaks
+** Miscellaneous performance tweaks
 
 Tweaks mostly related to changing Emacs defaults and constraints that were established in the mode resource constrained past. On very low spec machines it might be worth reconsidering these.
 
@@ -299,7 +299,7 @@ Font compacting can be very resource-intensive, especially when rendering icon f
   (setq inhibit-compacting-font-caches t)
 #+end_src
 
-*** The rest of it
+** The rest of it
 
 The following remains to be edited and carved up into meaningful sections. But here it is.
 
@@ -549,7 +549,7 @@ The following remains to be edited and carved up into meaningful sections. But h
   ;;; early-init.el ends here
 #+end_src
 
-** Packages management                                            :PERSONAL:
+* Packages management                                              :PERSONAL:
 
 Use [[https://github.com/raxod502/straight.el][straight.el]] for package management and disable checking (for speedup). Hook it up to =use-package= by default at least for the time being.
 
@@ -570,16 +570,7 @@ Use [[https://github.com/raxod502/straight.el][straight.el]] for package managem
       (load bootstrap-file nil 'nomessage)))
 
   (setopt straight-check-for-modifications nil)
-  (setopt straight-use-package-by-default t)
-
-#+end_src
-
-The =on= package add several new hook triggers inspired by/taken from /Doom Emacs/ allowing for finer tuning of package loading.
-
-#+begin_src emacs-lisp
-  (use-package on
-    :demand t
-    :straight (:type git :host gitlab :repo "axgfn/on.el"))
+  
 #+end_src
 
 Add the =:xdg-state= and =:xdg-cache= keywords to =use-package= helping to keep the the Emacs home directory uncluttered.
@@ -595,58 +586,87 @@ Add the =:xdg-state= and =:xdg-cache= keywords to =use-package= helping to keep 
 The =lisp= directory is for utility code/packages that are not mature or complex enough to split out into their own repo.
 
 #+begin_src emacs-lisp
-
-  (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
-
+  (add-to-list 'load-path (expand-file-name "lisp/" user-emacs-directory))
 #+end_src
 
-** Meta-Configuration
+* Meta-Configuration
 
 Setup and tooling specifically related to this configuration itself.
 
-*** Init time
+** Init message.
 
 Display a message to the *Messages* buffer showing the Emacs init time.
 
 #+begin_src emacs-lisp
-
   (let ((inhibit-message t))
-    (message "Welcome to GNU Emacs / Sensible edition")
+    (message "Welcome to GNU Emacs / Esprit Edition")
     (message (format "Initialization time: %s" (emacs-init-time))))
-
 #+end_src
 
-*** Configuration reload
+** Configuration reload
 
 #+begin_src emacs-lisp
-
-  (defun reload-init-file ()
+  (defun esprit/reload-init-file ()
     "Reload the file referenced by `user-init-file`."
 
     (interactive)
-    (load-file (expand-file-name "init.el" user-emacs-directory)))
+    (load-file user-init-file))
 
-  (keymap-global-set "<f5>" 'reload-init-file)
-
+  (keymap-global-set "<f5>" 'esprit/reload-init-file)
 #+end_src
 
-** Backups Etc.
+* Backups Etc.
 
 Various settings related to avoiding unnecessary backup and temp files.
 
+No backup of files under version control
+
 #+begin_src emacs-lisp
-
-  (setq vc-make-backup-files nil     ; No backup of files under version contr
-        backup-by-copying t          ; Don't clobber symlinks
-        version-control t            ; Version numbers for backup files
-        delete-old-versions t        ; Delete excess backup files silently
-        kept-old-versions 3          ; Number of old versions to keep
-        kept-new-versions 6          ; Number of new versions to keep
-        delete-by-moving-to-trash t  ; Delete files to trash
-        create-lockfiles nil)        ; More trouble than worth
-
+  (setq vc-make-backup-files nil)
 #+end_src
 
+Don't clobber symlinks
+
+#+begin_src emacs-lisp
+  (setq backup-by-copying t)
+#+end_src
+
+Version numbers for backup files
+
+#+begin_src emacs-lisp
+  (setq version-control t)
+#+end_src
+
+Delete excess backup files silently.
+
+#+begin_src emacs-lisp
+  (setq delete-old-versions t)
+#+end_src
+
+Number of old versions to keep
+
+#+begin_src emacs-lisp
+  (setq kept-old-versions 3)
+#+end_src
+
+Number of new versions to keep
+
+#+begin_src emacs-lisp
+  (setq kept-new-versions 6)
+#+end_src
+
+Delete files to trash.
+
+#+begin_src emacs-lisp
+  (setq delete-by-moving-to-trash t)
+#+end_src
+        
+More trouble than worth
+
+#+begin_src emacs-lisp
+  (setq create-lockfiles nil)
+#+end_src
+  
 Enable and tweak =recentf-mode= to keep track of files recently operated on.
 
 #+begin_src emacs-lisp
@@ -673,7 +693,23 @@ Preserve cursor position per file across sessions.
 
 #+end_src
 
-** History :HOOK:
+Auto-save mode can save your behind sometimes. Let's hide them away in a standard location though...
+
+#+begin_src emacs-lisp
+  (use-package emacs
+    :hook (after-init . auto-save-mode)
+    :xdg-state
+    (auto-save-list-prefix "saves/"))
+#+end_src
+
+Speaking of automatic behaviors; there are no reasons I can think of to not revert (read update) open files when their contents have changed.
+
+#+begin_src emacs-lisp
+  (use-package autorevert
+    :hook (emacs-startup . #'global-auto-revert-mode))
+#+end_src
+
+* History                                                              :HOOK:
 
 Remove text properties for kill ring entries (see https://emacs.stackexchange.com/questions/4187). This saves a lot of time when loading it.
 
@@ -703,24 +739,21 @@ We save every possible history we can think of.
           kill-ring))
 
   (use-package savehist
-    :hook
-    (on-first-buffer . savehist-mode)
-    :xdg-state
-    (savehist-file "history")
+    :hook (emacs-startup . savehist-mode)
+    :xdg-state (savehist-file "history")
     :custom
     (kill-ring-max 50)
     (history-length 50)
     (history-delete-duplicates t)
-    (savehist-additional-variables savehist-watchlist))
+    (savehist-additional-variables savehist-watchlist))#
++end_src
 
-#+end_src
 
-** Path
+* Path
 
 Pull my full set of environmental variables into Emacs. This is most important on MacOS where I am currently spending all of my time.
 
 #+begin_src emacs-lisp
-
   (use-package exec-path-from-shell
     :if (memq window-system '(mac ns x))
     :custom
@@ -733,29 +766,24 @@ Pull my full set of environmental variables into Emacs. This is most important o
        ))
     :config
     (exec-path-from-shell-initialize))
-
 #+end_src
 
 Make Emacs aware of the proper paths for the [[https://asdf-vm.com/][asdf version manager]].
 
 #+begin_src emacs-lisp
-
   (use-package asdf
     :config
     (asdf-enable))
-
 #+end_src
 
 Point to my local root directory. Mostly for the sake of Org later on in the config.
 
 #+begin_src emacs-lisp
-
   (defvar esprit/local-root "~/"
     "Convenience pointer to my local root directory.")
-
 #+end_src
 
-** MacOS specific settings
+* MacOS specific settings
 
 Juggle a few modifier keys to make things a little more comfortable. Tell dired not to use the underlying =ls= command on Mac since it doesn't use GNUVC oreutils which is what dired expects.
 
@@ -796,8 +824,7 @@ A variation on =make-frame= that opens to the =*scratch*= buffer rather than the
 
 #+end_src
 
-* Visual
-** Esprit Themes
+* Esprit Themes
 
 New theme ideas I'm playing around with using [[https://www.reasonable.work/colors/][Reasonable Colors]].
 
@@ -809,7 +836,7 @@ New theme ideas I'm playing around with using [[https://www.reasonable.work/colo
     :demand t)
 #+end_src
 
-** Esprit modeline
+* Esprit modeline
 
 My own personal mode-line.
 
@@ -823,7 +850,7 @@ My own personal mode-line.
     :config (esprit-line-mode))
 #+end_src
 
-** Circadian
+* Circadian
 
 I prefer the legibility of a well designed light theme when the lighting is good. However, I don't want to burn my retinas at night. Thankfully =circadian= exists to automatically adjust my theme at sunrise/sunset in my local area.
 
@@ -840,7 +867,7 @@ I prefer the legibility of a well designed light theme when the lighting is good
 
 #+end_src
 
-** Miscellaneous visual settings.
+* Miscellaneous visual settings.
 
 Nicer display of text lines visually.
 
@@ -860,6 +887,20 @@ Always waffle on how minimal to be. Right now line numbers in prog modes are use
     (display-line-numbers-widen t)
     :hook
     ((prog-mode conf-mode) . display-line-numbers-mode))
+
+#+end_src
+
+* File handling
+
+I'm almost alway working with files with standardized line endings but on the occasions that I'm not I don't want to automatically convert them.
+
+If I'm going to be working in a context where I want to insert tabs for indentation I'll enable that explicitly. Otherwise we want to keep to indenting with spaces.
+
+#+begin_src emacs-lisp
+  (use-package emacs
+    :custom
+    (inhibit-eol-conversion t)
+    (indent-tabs-mode nil))
 
 #+end_src
 
@@ -1166,7 +1207,7 @@ idea.
     (save-visited-files-ignore-tramp-files t)
     (save-visited-files-ignore-directories nil)
     (save-visited-files-auto-restore nil))
-    #+end_src
+#+end_src
 
 * Minibuffer
 
@@ -1208,7 +1249,7 @@ Stuff related, at least philosophically to the management of modes themselves.
     "c" #'command-log-mode)
 
   (keymap-set global-map "C-x m" esprit-modes-toggle-map)
-    #+end_src
+#+end_src
 
 * Which key for discoverability
 
@@ -1274,8 +1315,7 @@ Use Eglot for LSP integration. Fewer options than =lsp-mode= but it's built-in a
     (setq eglot-ltex-server-path "/usr/local/bin/ltex-ls"))
 
 #+end_src
-* Code analysis:
-** Jinx
+* Jinx
 
 Fast just-in-time spell checker leveraging the power of the enchant library.
 
@@ -1347,13 +1387,7 @@ So for the time being I am using [[https://github.com/radian-software/apheleia][
 
 #+end_src
 
-* Text editing and navigation
-
-For a very long time I was a Vim/Neovim user. I love Vim but I've really gotten absorbed into the world of Emacs. Neovim in particular feels like a great tool to use but Emacs feels more like an extension of my brain. I'm pretty all in at this point.
-
-However, there are a few things that I really miss about the Vim and the plugins I used in my setup. Some are bigger than others.
-
-** Avy
+* Avy
 
 Just looking at the tin [[https://github.com/abo-abo/avy][Avy]] is a /...package for jumping to visible text using a char-based decision tree./ However, as Karthik Chikmagalur puts it /Avy can do any thing/.
 
@@ -1414,7 +1448,7 @@ I'm taking his lead and trying it out as the power tools he makes it out to be.
 
 #+end_src
 
-** Occur
+* Occur
 
 Yet another builtin I'm slowly learning to make the most of.
 
@@ -1425,7 +1459,7 @@ Yet another builtin I'm slowly learning to make the most of.
 
 #+end_src
 
-** Regexen + Search and replace
+* Regexen + Search and replace
 :PROPERTIES:
 :ID:       1739F061-BA7D-4A55-AD41-5A5B0FD810C5
 :END:
@@ -1489,7 +1523,7 @@ The follow is code that is taken from Karthik Chikmagalur's fantastic blog entry
 
 #+end_src
 
-** Easier accents
+* Easier accents
 
 At work I sometimes have to write in French. On top of that I'm attempting to learn both French and Spanish. As such I need a nicer way to insert accented characters than Emacs' default =C-x 8= flow.
 
@@ -1501,7 +1535,7 @@ At work I sometimes have to write in French. On top of that I'm attempting to le
 
 #+end_src
 
-** Surround
+* Surround
 
 Something I miss still from my Neovim days is the venerable surround
 plugin. Since I don't use Evil evil-surround isn't for me. However, someone else
@@ -1515,7 +1549,7 @@ well. The, rather obviously named, =surround= package.
 
 #+end_src
 
-** Miscellaneous Enhancements
+* Miscellaneous Enhancements
 
 Emacs has two similar functions for deleting surrounding white space,
 =delete-horizontal-space= which deletes all whitespace surrounding the point on
@@ -1599,7 +1633,7 @@ Turn on electric-pair-mode
 
 #+end_src
 
-** Narrow to indirect
+* Narrow to indirect
 
 Combine two neat features of Emacs to facilitate a better workflow for editing single files with multiple languages.
 
@@ -1620,7 +1654,7 @@ Currently unaltered. Found here: [[https://demonastery.org/2013/04/emacs-narrow-
 
 #+end_src
 
-** Hippie Expand
+* Hippie Expand
 
 Seamlessly replace =dabbrev= with =hippie-expand= for fun and profit.
 
@@ -1890,8 +1924,7 @@ Last bits from my (soon to be?) old init.
 
 #+end_src
 
-* Version Control
-** Magit
+* Magit
 
 The gold standard of Git interfaces and one of the killer apps for Emacs. No real tweaks yet.
 
@@ -1926,7 +1959,7 @@ The gold standard of Git interfaces and one of the killer apps for Emacs. No rea
 
 #+end_src
 
-** Ediff
+* Ediff
 
 Taken from https://panadestein.github.io/emacsd/ a friendlier =ediff= experience. Basically does two things;
 

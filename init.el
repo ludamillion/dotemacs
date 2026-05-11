@@ -1,3 +1,13 @@
+;;; init.el --- Init -*- lexical-binding: t; -*-
+
+;; Author: Luke Inglis
+;; URL: https://github.com/ludamillion/esprit-emacs
+;; Package-Requires: ((emacs "29.1"))
+;; Keywords: maint
+;; Version: 0.1.0
+;; SPDX-License-Identifier: GPL-3.0-or-later
+
+;; Integrated into literate config file
 (unless (featurep 'straight)
   ;; Bootstrap straight.el
   (defvar bootstrap-version)
@@ -13,31 +23,22 @@
         (eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage)))
 
+;; Integrated into literate config file
 (require 'use-package)
 (require 'straight)
 
+;; Integrated into literate config file
 (straight-use-package 'use-package)
 
-;; (straight-use-package
-;;  '(asdf :type git :host github :repo "tabfugnic/asdf.el"))
-
-;; (straight-use-package
-;;  '(eglot-ltex :type git :host github :repo "emacs-languagetool/eglot-ltex"))
-
-;; (straight-use-package
-;;  '(use-package-xdg :type git :host codeberg :repo "rossabaker/use-package-xdg"))
-
-;; (straight-use-package
-;;  '(:type git :host gitlab :repo "axgfn/on.el"))
-
-;; (straight-use-package '(org :type built-in))
-
+;; Integrated into literate config file
 (add-to-list 'load-path (expand-file-name "lisp/" user-emacs-directory))
 
+;; Integrated into literate config file
 (use-package use-package-xdg
   :straight (:type git :host codeberg :repo "rossabaker/use-package-xdg")
   :demand t)
 
+;; Integrated into literate config file
 (use-package exec-path-from-shell
   :straight t
   :if (memq window-system '(mac ns x))
@@ -46,32 +47,33 @@
   :config
   (exec-path-from-shell-initialize))
 
+;; Integrated into literate config file
 (let ((inhibit-message t))
   (message "Welcome to GNU Emacs / Esprit Edition")
   (message (format "Initialization time: %s" (emacs-init-time))))
 
+;; Integrated into literate config file
 (defun esprit/reload-init-file ()
   "Reload the init.el file in the Emacs directory."
   (interactive)
   (load-file (expand-file-name "init.el" user-emacs-directory)))
 
+;; Integrated into literate config file
 (keymap-global-set "<f5>" 'esprit/reload-init-file)
 
-(use-package on
-  :straight (:host gitlab :repo "axgfn/on.el")
-  :demand t)
+(set-fontset-font
+ t 'symbol
+ (cond
+  ((member "Apple Symbols" (font-family-list)) "Apple Symbols")
+  ((member "Symbols Nerd Font" (font-family-list)) "Symbols Nerd Font")
+  ((member "Symbola" (font-family-list)) "Symbola")))
 
-(set-fontset-font t 'symbol
-                  (cond
-                   ((member "Apple Symbols" (font-family-list)) "Apple Symbols")
-                   ((member "Symbols Nerd Font" (font-family-list)) "Symbols Nerd Font")
-                   ((member "Symbola" (font-family-list)) "Symbola")))
-
-(set-fontset-font t 'emoji
-                  (cond
-                   ((member "Apple Color Emoji" (font-family-list)) "Apple Color Emoji")
-                   ((member "Symbols Nerd Font" (font-family-list)) "Symbols Nerd Font")
-                   ((member "Symbola" (font-family-list)) "Symbola")))
+(set-fontset-font
+ t 'emoji
+ (cond
+  ((member "Apple Color Emoji" (font-family-list)) "Apple Color Emoji")
+  ((member "Symbols Nerd Font" (font-family-list)) "Symbols Nerd Font")
+  ((member "Symbola" (font-family-list)) "Symbola")))
 
 (set-fontset-font "fontset-default" nil "Symbola")
 
@@ -95,24 +97,28 @@
 (use-package mini-ontop
   :straight (:host github :repo "hkjels/mini-ontop.el")
   :hook
-  (on-first-input . mini-ontop-mode))
+  (window-setup . mini-ontop-mode))
 
+;; Integrated into literate config file
 (use-package emacs
   :xdg-state
   (auto-save-list-prefix "saves/"))
 
+;; Integrated into literate config file
 (use-package autorevert
   :custom
   (global-auto-revert-mode t))
 
+;; Integrated into literate config file
 (use-package recentf
   :hook
-  (on-first-input . recentf-mode)
+  (emacs-startup . recentf-mode)
   :custom
   (recentf-max-saved-items 100)
   :xdg-state
   (recentf-save-file "recentf"))
 
+;; Integrated into literate config file
 (setopt inhibit-eol-conversion t)
 (setopt indent-tabs-mode nil)
 
@@ -148,7 +154,7 @@
 (use-package savehist
   :straight (:type built-in)
   :hook
-  (on-first-buffer . savehist-mode)
+  (emacs-startup . savehist-mode)
   :xdg-state
   (savehist-file "history")
   :custom
@@ -300,8 +306,8 @@
   :bind (:map vertico-map
               ("C-<backspace>" . vertico-directory-up))
   :hook
-  (on-first-input . vertico-mode)
-  (on-first-input . vertico-multiform-mode)
+  (emacs-startup . vertico-mode)
+  (emacs-startup . vertico-multiform-mode)
   :custom
   (vertico-resize t))
 
@@ -318,7 +324,7 @@
 
 (use-package consult
   :straight t
-  :hook (on-init-ui . consult-mode)
+  :hook (emacs-startup . consult-mode)
   :bind (("M-s d"     . consult-fd) ;; Requires having fd installed otherwise use consult-find
          ("M-s G"     . consult-git-grep)
          ("M-s r"     . wrapper/consult-ripgrep)
@@ -332,7 +338,15 @@
          ("M-g g"     . consult-goto-line)
          ("M-g i"     . consult-imenu)
          ("M-g o"     . consult-outline)
-         ("C-x b"     . consult-bookmark)))
+         ("C-x b"     . consult-bookmark))
+  :init
+  (advice-add #'register-preview :override #'consult-register-window)
+  (setq register-preview-delay 0.5)
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+  :config
+  (setq consult-preview-key "M-.")
+  (setq consult-narrow-key "<"))
 
 (use-package orderless
   :straight t
@@ -359,7 +373,7 @@
         corfu-auto t
         corfu-on-exact-match nil)
   :hook
-  (on-first-buffer . esprit/corfu-modes)
+  (emacs-startup . esprit/corfu-modes)
   (eshell-mode . corfu-x-eshell-hook))
 
 (defun esprit/cape-capf-setup-eglot ()
@@ -394,8 +408,8 @@
 
 (use-package marginalia
   :straight t
-  :hook
-  (on-first-buffer . marginalia-mode)
+  :hook (emacs-startup . marginalia-mode)
+  :custom (marginalia--align 'right)
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle)))
 
@@ -509,7 +523,7 @@
 
 (use-package elec-pair
   :straight (misc :type built-in)
-  :hook (on-init-ui . electric-pair-mode))
+  :hook (emacs-startup . electric-pair-mode))
 
 (use-package accent
   :straight t
@@ -525,7 +539,7 @@
 (keymap-global-set "C-j" #'join-line)
 
 (use-package multiple-cursors
-  :hook (on-init-ui . multiple-cursors-mode)
+  :hook (emacs-startup . multiple-cursors-mode)
   :straight t
   :bind
   ("C->" . #'mc/mark-next-like-this)
@@ -592,30 +606,27 @@
 (use-package fontaine
   :straight t
   :demand t
+  :xdg-state
+  (fontaine-latest-state-file "fontaine-latest-state.eld")
   :custom
-  (fontaine-latest-state-file
-   (locate-user-emacs-file "fontaine-latest-state.eld"))
   (fontaine-presets
    '((small
       :default-family "Geist Mono"
       :default-height 80
       :variable-pitch-family "Geist")
      (regular) ; like this it uses all the fallback values and is named `regular'
-     (medium
-      :default-height 140
-      :bold-weight regular)
-     (large
-      :inherit medium
-      :default-height 180)
+     (medium :default-height 140 :bold-weight regular)
+     (laptop  :inherit medium :default-height 140)
+     (desktop :inherit medium :default-height 160)
+     (large   :inherit medium :default-height 180)
      (t
-      :default-family "Aporetic Sans Mono"
-      :variable-pitch-family "Aporetic Serif"
+      :default-family "Geist Mono"
+      :variable-pitch-family "Geist"
       :fixed-pitch-height 1.0
       :fixed-pitch-serif-height 1.0
       :variable-pitch-height 1.0)))
   :config
   (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
-
   ;; Persist the latest font preset when closing/starting Emacs and
   ;; while switching between themes.
   (fontaine-mode 1)
@@ -767,7 +778,7 @@
   :custom
   (which-key-idle-delay 1)
   :hook
-  (on-first-input . which-key-mode))
+  (emasc-startup . which-key-mode))
 
 (use-package emacs
   :custom (create-lockfiles nil)
