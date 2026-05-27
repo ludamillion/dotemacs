@@ -7,6 +7,8 @@
 ;; Version: 0.1.0
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
+(setopt debug-on-error t)
+
 (defvar esprit-emacs--backup-gc-cons-threshold gc-cons-threshold)
 (defvar esprit-emacs--backup-gc-cons-percentage gc-cons-percentage)
 
@@ -133,6 +135,9 @@ of the progress or any relevant activities during startup.")
 (setq read-process-output-max (* 2 1024 1024))  ; 1024kb
 (setq process-adaptive-read-buffering nil)
 
+(setq max-specpdl-size 3200)
+(setq max-lisp-eval-depth 3200)
+
 (setq warning-minimum-level (if esprit-emacs-debug :warning :error))
 (setq warning-suppress-types '((lexical-binding)))
 
@@ -164,6 +169,9 @@ of the progress or any relevant activities during startup.")
   (setq initial-buffer-choice nil
         inhibit-startup-buffer-menu t
         inhibit-x-resources t)
+
+  ;; y/n rather than yes/no
+  (setq-default use-short-answers t)
 
   ;; Disable bidirectional text scanning for a modest performance boost.
   (setq-default bidi-display-reordering 'left-to-right
@@ -382,6 +390,15 @@ this stage of initialization."
                                    ("nongnu" . 80)
                                    ("melpa"  . 70)
                                    ("melpa-stable" . 50)))
+
+(let ((default-directory  (expand-file-name "lisp" user-emacs-directory)))
+  (setq load-path
+        (append
+         (let ((load-path  (copy-sequence load-path))) ;; Shadow
+           (append
+            (copy-sequence (normal-top-level-add-to-load-path '(".")))
+            (normal-top-level-add-subdirs-to-load-path)))
+         load-path)))
 
 ;; Local variables:
 ;; byte-compile-warnings: (not obsolete free-vars)

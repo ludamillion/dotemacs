@@ -7,6 +7,10 @@
 ;; Version: 0.1.0
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
+;;; Commentary:
+
+;;; Code:
+
 ;; Integrated into literate config file
 (unless (featurep 'straight)
   ;; Bootstrap straight.el
@@ -29,9 +33,6 @@
 
 ;; Integrated into literate config file
 (straight-use-package 'use-package)
-
-;; Integrated into literate config file
-(add-to-list 'load-path (expand-file-name "lisp/" user-emacs-directory))
 
 ;; Integrated into literate config file
 (use-package use-package-xdg
@@ -77,10 +78,7 @@
 
 (set-fontset-font "fontset-default" nil "Symbola")
 
-(use-package diminish
-  :straight t
-  :demand t)
-
+;; Integrated into literate config file
 (defvar esprit-prose-modes
   '(
     bibtex-mode
@@ -94,6 +92,7 @@
     )
   "List of which modes esprit considers prose.")
 
+;; Integrated into literate config file
 (use-package mini-ontop
   :straight (:host github :repo "hkjels/mini-ontop.el")
   :hook
@@ -122,22 +121,26 @@
 (setopt inhibit-eol-conversion t)
 (setopt indent-tabs-mode nil)
 
+;; Integrated into literate config file
 (use-package editorconfig
   :straight t
   :config
   (editorconfig-mode 1))
 
+;; Integrated into literate config file
 (use-package dired
   :straight (:type built-in)
   :custom
   (dired-dwim-target t))
 
+;; Integrated into literate config file
 (use-package bookmark
   :straight (:type built-in)
   :commands (bookmark-set)
   :xdg-state
   (bookmark-default-file "bookmarks.eld"))
 
+;; Integrated into literate config file
 (setq savehist-watchlist
       '(bookmark-history
         command-history
@@ -151,10 +154,11 @@
         set-variable-value-history
         kill-ring))
 
+;; Integrated into literate config file
 (use-package savehist
   :straight (:type built-in)
   :hook
-  (emacs-startup . savehist-mode)
+  (after-init . savehist-mode)
   :xdg-state
   (savehist-file "history")
   :custom
@@ -168,15 +172,18 @@
 ;;;; kill-ring entries. This makes them much faster to
 ;;;; load when savehist restores them.
 
+;; Integrated into literate config file
 (defun unpropertize-kill-ring ()
   "Strip all text properties from text save to the `kill-ring'."
   (setq kill-ring (mapcar 'substring-no-properties kill-ring)))
 
+;; Integrated into literate config file
 (add-hook 'kill-emacs-hook 'unpropertize-kill-ring)
 
 ;;;; Make Emacs aware of the proper paths for the asdf version
 ;;;; manager. https://asdf-vm.com/
 
+;; Integrated into literate config file
 (use-package asdf
   :straight (:type git :host github :repo "tabfugnic/asdf.el")
   :config
@@ -185,6 +192,7 @@
 ;;;; Make keys a little more ergonomic in macOS and tell Dired not to
 ;;;; use the underlying ls
 
+;; Integrated into literate config file
 (when (string-equal system-type "darwin")
   (setq mac-option-modifier 'super)
   (setq mac-command-modifier 'meta)
@@ -193,35 +201,41 @@
 ;; Function and key binds to create new frames by either cloning the
 ;; current buffer or jumping to the scratch buffer.
 
+;; Integrated into literate config file
 (defun esprit/make-scratch-frame ()
   "Create a new frame and switch to *scratch* buffer."
   (interactive)
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
 
+;; Integrated into literate config file
 (defun esprit/make-eat-frame ()
   "Create a new frame and create a vterm buffer."
   (interactive)
   (select-frame (make-frame))
   (eat-project))
 
+;; Integrated into literate config file
 (defvar-keymap esprit-frame-map
   :doc "Prefix map for frame operations."
   "m" #'make-frame
   "n" #'esprit/make-scratch-frame
   "v" #'esprit/make-eat-frame)
 
+;; Integrated into literate config file
 (keymap-global-set "M-n" esprit-frame-map)
 
 ;; Esprit Configuation
 ;;   - Set up my own little bundle of packages to tailor the Emacs experience
 
+;; Integrated into literate config file
 (use-package esprit-themes
   :straight nil
   :load-path "~/code/esprit-themes")
 
 ;;; Choose light or dark theme based on the time of day at my location
 
+;; Integrated into literate config file
 (use-package circadian
   :straight t
   :demand t
@@ -237,47 +251,34 @@
   :straight t
   :demand t)
 
-;; (require 'esprit-line)
-;; (setq esprit-line-glyph-alist esprit-line-glyphs-unicode)
-;; (esprit-line-mode)
-
+;; Integrated into literate config file
 (use-package esprit-line
-  :straight nil
   :load-path "~/code/esprit-line"
+  :demand t
   :custom
   (esprit-line-glyph-alist esprit-line-glyphs-unicode)
+  (esprit-line-format esprit-line-format-default)
   :config (esprit-line-mode))
 
-(mapc
- (lambda (string)
-   (add-to-list 'load-path (locate-user-emacs-file string)))
- '("esprit-modules"))
-
 (use-package flymake
-  :bind  (:map ctl-x-x-map
-               ("m" . flymake-mode) ; C-x x m
-               :map flymake-mode-map
-               ("C-c ! s" . flymake-start)
-               ("C-c ! d" . flymake-show-buffer-diagnostics) ; Emacs28
-               ("C-c ! D" . flymake-show-project-diagnostics) ; Emacs28
-               ("C-c ! n" . flymake-goto-next-error)
-               ("C-c ! p" . flymake-goto-prev-error))
+  :bind (("M-]" . flymake-goto-next-error)
+         ("M-[" . flymake-goto-prev-error))
   :custom
-  (flymake-fringe-indicator-position 'left-fringe)
   (flymake-suppress-zero-counters t)
   (flymake-no-changes-timeout nil)
-  (flymake-start-on-flymake-mode t)
-  (flymake-start-on-save-buffer t)
-  (flymake-proc-compilation-prevents-syntax-check t)
-  (flymake-wrap-around nil)
   (flymake-mode-line-format
    '("" flymake-mode-line-exception flymake-mode-line-counters))
   (flymake-mode-line-counter-format
    '("" flymake-mode-line-error-counter
      flymake-mode-line-warning-counter
-     flymake-mode-line-note-counter ""))
-  (flymake-show-diagnostics-at-end-of-line nil))
+     flymake-mode-line-note-counter "")))
 
+(use-package flymake-follow-mode
+  :after (flymake-mode)
+  :bind (("M-m" . flymake-follow-toggle-diagnostics))
+  :hook (flymake-mode . flymake-follow-mode))
+
+;; Integrated into literate config file
 (use-package jinx
   :straight t
   :hook (after-init . global-jinx-mode)
@@ -288,11 +289,13 @@
    ("C-x j n" . jinx-next)
    ("C-x j p" . jinx-previous)))
 
+;; Integrated into literate config file
 (defun require-and-ensure-eglot-ltex ()
   "Require the eglot-ltex package and run `eglot-ensure'."
   (require 'eglot-ltex)
   (eglot-ensure))
 
+;; Integrated into literate config file
 (use-package eglot-ltex
   :straight (:host github :repo "emacs-languagetool/eglot-ltex")
   :hook
@@ -301,14 +304,15 @@
   (setq eglot-ltex-server-path "~/tools/ltex-ls-plus/bin/ltex-ls-plus"
 	eglot-ltex-communication-channel 'stdio))
 
+;; Integrated into literate config file
 (use-package vertico
   :straight t
   :bind (:map vertico-map
-              ("C-<backspace>" . vertico-directory-up))
-  :hook
-  (emacs-startup . vertico-mode)
-  (emacs-startup . vertico-multiform-mode)
+              ("C-<backspace>" . 'vertico-directory-up))
+  :init
+  (vertico-mode)
   :custom
+  (vertico-count 20)
   (vertico-resize t))
 
 (defun wrapper/consult-ripgrep (&optional dir given-initial)
@@ -324,18 +328,12 @@
 
 (use-package consult
   :straight t
-  :hook (emacs-startup . consult-mode)
   :bind (("M-s d"     . consult-fd) ;; Requires having fd installed otherwise use consult-find
-         ("M-s G"     . consult-git-grep)
          ("M-s r"     . wrapper/consult-ripgrep)
-         ("M-s l"     . consult-line)
-         ("M-s L"     . consult-line-multi)
-         ("M-s k"     . consult-keep-lines)
-         ("M-s u"     . consult-focus-lines)
+         ("C-s"       . consult-line)
          ("M-s <SPC>" . consult-buffer)
          ("M-y"       . consult-yank-pop)
          ("C-x M-k"   . consult-kmacro)
-         ("M-g g"     . consult-goto-line)
          ("M-g i"     . consult-imenu)
          ("M-g o"     . consult-outline)
          ("C-x b"     . consult-bookmark))
@@ -348,6 +346,9 @@
   (setq consult-preview-key "M-.")
   (setq consult-narrow-key "<"))
 
+(keymap-global-set "C-c s" 'isearch-forward)
+
+;; Integrated into literate config file
 (use-package orderless
   :straight t
   :custom
@@ -355,17 +356,20 @@
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
 
+;; Integrated into literate config file
 (defun corfu-x-eshell-hook ()
   "Set up Corfu behaviors in a shell friendly way."
   (setq-local corfu-auto nil)
   (corfu-mode))
 
+;; Integrated into literate config file
 (defun esprit/corfu-modes ()
   "Activate the desired corfu modes."
   (corfu-history-mode)
   (corfu-echo-mode)
   (global-corfu-mode))
 
+;; Integrated into literate config file
 (use-package corfu
   :straight t
   :init
@@ -376,6 +380,7 @@
   (emacs-startup . esprit/corfu-modes)
   (eshell-mode . corfu-x-eshell-hook))
 
+;; Integrated into literate config file
 (defun esprit/cape-capf-setup-eglot ()
   "Configure cape completion at point functions for Eglot managed modes."
   (let ((result))
@@ -384,18 +389,21 @@
 		       cape-dabbrev) result)
       (add-to-list 'completion-at-point-functions element))))
 
+;; Integrated into literate config file
 (defun esprit/cape-capf-setup-org ()
   "Configure cape completion at point functions for org mode."
   (let ((result))
     (dolist (element '(cape-dict cape-dabbrev) result)
       (add-to-list 'completion-at-point-functions element))))
 
+;; Integrated into literate config file
 (defun esprit/cape-capf-setup-git-commit ()
   "Configure cape completion at point functions for git-commit mode."
   (let ((result))
     (dolist (element '(cape-dict cape-dabbrev) result)
       (add-to-list 'completion-at-point-functions element))))
 
+;; Integrated into literate config file
 (use-package cape
   :straight t
   :config
@@ -406,6 +414,7 @@
    (org-mode . esprit/cape-capf-setup-org)
    (git-commit-mode . esprit/cape-capf-setup-git-commit)))
 
+;; Integrated into literate config file
 (use-package marginalia
   :straight t
   :hook (emacs-startup . marginalia-mode)
@@ -413,6 +422,7 @@
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle)))
 
+;; Integrated into literate config file
 (use-package embark
   :straight t
   :bind
@@ -430,12 +440,14 @@
                  (window-parameters (mode-line-format . none)))))
 
 ;; Consult users will also want the embark-consult package.
+;; Integrated into literate config file
 (use-package embark-consult
   :straight t
   :after (consult embark)
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
+;; Integrated into literate config file
 (defvar eglot-enabled-modes
   '(js-ts-mode
     typescript-ts-mode
@@ -444,6 +456,7 @@
     astro-mode)
   "Opt in list of modes which Eglot should manage.")
 
+;; Integrated into literate config file
 (use-package eglot
   :straight (:type built-in)
   :demand t
@@ -459,6 +472,7 @@
                 '(:ltex-ls (:language "en-US"
                                       :disabledRules ["MORFOLOGIK_RULE_EN_US"]))))
 
+;; Integrated into literate config file
 (defun avy-action-embark (pt)
   "Invoke embark at PT."
   (unwind-protect
@@ -469,6 +483,7 @@
      (cdr (ring-ref avy-ring 0))))
   t)
 
+;; Integrated into literate config file
 (defun avy-action-copy-whole-line (pt)
   "Copy entire line starting at PT."
   (save-excursion
@@ -481,12 +496,14 @@
     (ring-ref avy-ring 0)))
   t)
 
+;; Integrated into literate config file
 (defun avy-action-yank-whole-line (pt)
   "Yank line starting at PT."
   (avy-action-copy-whole-line pt)
   (save-excursion (yank))
   t)
 
+;; Integrated into literate config file
 (defun avy-action-kill-whole-line (pt)
   "Kill line starting at PT."
   (save-excursion
@@ -497,11 +514,13 @@
     (ring-ref avy-ring 0)))
   t)
 
+;; Integrated into literate config file
 (defun avy-action-teleport-whole-line (pt)
   "Teleport whole line starting at PT."
   (avy-action-kill-whole-line pt)
   (save-excursion (yank)) t)
 
+;; Integrated into literate config file
 (use-package avy
   :straight t
   :bind ("M-j" . avy-goto-char-timer)
@@ -516,28 +535,34 @@
         (alist-get ?W avy-dispatch-alist) 'avy-action-copy-whole-line
         (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line))
 
+;; Integrated into literate config file
 (use-package emacs
   :straight (misc :type built-in)
   :bind
   ("C-z" . #'zap-up-to-char))
 
+;; Integrated into literate config file
 (use-package elec-pair
   :straight (misc :type built-in)
   :hook (emacs-startup . electric-pair-mode))
 
+;; Integrated into literate config file
 (use-package accent
   :straight t
   :bind ("C-x '" . #'accent-menu))
 
+;; Integrated into literate config file
 (use-package emacs
-  :straight (:type built-in)
   :hook ((esprit-prose-modes . visual-line-mode)
          (esprit-prose-modes . variable-pitch-mode)))
 
+;; Integrated into literate config file
 (global-set-key [remap dabbrev-expand] 'hippie-expand)
 
+;; Integrated into literate config file
 (keymap-global-set "C-j" #'join-line)
 
+;; Integrated into literate config file
 (use-package multiple-cursors
   :hook (emacs-startup . multiple-cursors-mode)
   :straight t
@@ -547,6 +572,7 @@
   ("C-c C->" . #'mc/mark-all-like-this)
   ("C-S-c C-S-c" . #'mc/edit-lines))
 
+;; Integrated into literate config file
 (use-package ace-window
   :straight t
   :bind
@@ -568,97 +594,103 @@
              (setq this-command 'winner-undo))))
      (?r winner-redo))))
 
+;; Integrated into literate config file
 (keymap-global-set "C-M-o" 'mode-line-other-buffer)
 
+;; Integrated into literate config file
 (setq visible-bell nil
       ring-bell-function #'ignore)
 
+;; Integrated into literate config file
 (setq switch-to-buffer-obey-display-actions t)
 
-(defun esprit-close-dwim ()
-  "Quit a frame the same way no matter what kind of frame you are on."
-  (interactive)
-  (let ((frames (visible-frame-list)))
-    (if (eq (car frames) (selected-frame))
-        ;; For parent/master frame...
-        (if (cdr frames)
-            ;; Close a parent with children present.
-            (progn
-              (delete-frame (selected-frame))
-              (when (and (eq (cadr frames) terminal-frame)
-                         (null (cddr frames)))
-                ;; No frames left on this daemon: shut it down.
-                (save-buffers-kill-emacs)))
-          ;; Close a parent with no children present.
-          (save-buffers-kill-emacs))
-      ;; Close a child frame.
-      (delete-frame (selected-frame)))))
+;; Integrated into literate config file
+(use-package swiss-move
+  :bind (("s-n" . swiss-move-line-down)
+	 ("s-p" . swiss-move-line-up)))
 
-;; (use-package swiss-move
-;;   :bind (("s-n" . swiss-move-line-down)
-;; 	 ("s-p" . swiss-move-line-up)))
+;; Integrated into literate config file
+(defun esprit/quit-dwim (&optional arg)
+    "If current frame is the last frame kill Emacs, else delete it."
+    (interactive "P")
 
-(global-set-key (kbd "C-x C-c") 'esprit-close-dwim)
+    (if (> (length (frame-list)) 1)
+        (delete-frame arg)
+      (if (y-or-n-p (format "Are you sure you want to close the last frame?"))
+  	(save-buffers-kill-terminal arg)
+        (message "Great, back to what you were doing then."))))
 
+;; Integrated into literate config file
+(global-set-key (kbd "C-x C-c") 'esprit/quit-dwim)
+
+;; Integrated into literate config file
 (keymap-set global-map "C-x k" 'kill-current-buffer)
+;; Integrated into literate config file
 (keymap-set global-map "C-x C-k" 'kill-buffer)
 
-(use-package fontaine
-  :straight t
-  :demand t
-  :xdg-state
-  (fontaine-latest-state-file "fontaine-latest-state.eld")
-  :custom
-  (fontaine-presets
-   '((small
-      :default-family "Geist Mono"
-      :default-height 80
-      :variable-pitch-family "Geist")
-     (regular) ; like this it uses all the fallback values and is named `regular'
-     (medium :default-height 140 :bold-weight regular)
-     (laptop  :inherit medium :default-height 140)
-     (desktop :inherit medium :default-height 160)
-     (large   :inherit medium :default-height 180)
-     (t
-      :default-family "Geist Mono"
-      :variable-pitch-family "Geist"
-      :fixed-pitch-height 1.0
-      :fixed-pitch-serif-height 1.0
-      :variable-pitch-height 1.0)))
-  :config
-  (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
-  ;; Persist the latest font preset when closing/starting Emacs and
-  ;; while switching between themes.
-  (fontaine-mode 1)
-  :bind
-  ("C-c f" . #'fontaine-set-preset))
+;; Integrated into literate config file
+;; (use-package fontaine
+;;   :straight t
+;;   :demand t
+;;   :xdg-state
+;;   (fontaine-latest-state-file "fontaine-latest-state.eld")
+;;   :custom
+;;   (fontaine-presets
+;;    '((small
+;;       :default-family "Monaspace Neon Var"
+;;       :default-height 80
+;;       :variable-pitch-family "Inter")
+;;      (regular) ; like this it uses all the fallback values and is named `regular'
+;;      (medium :default-height 140 :bold-weight regular)
+;;      (laptop  :inherit medium :default-height 130)
+;;      (desktop :inherit medium :default-height 150)
+;;      (large   :inherit medium :default-height 180)
+;;      (t
+;;       :default-family "Monaspace Neon Var"
+;;       :variable-pitch-family "Inter"
+;;       :fixed-pitch-height 1.0
+;;       :fixed-pitch-serif-height 1.0
+;;       :variable-pitch-height 1.0)))
+;;   :config
+;;   (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
+;;   ;; Persist the latest font preset when closing/starting Emacs and
+;;   ;; while switching between themes.
+;;   (fontaine-mode 1)
+;;   :bind
+;;   ("C-c f" . #'fontaine-set-preset))
 
+;; Integrated into literate config file
 (use-package magit
   :straight t
   :bind
   ("C-M-;" . magit-status))
 
+;; Integrated into literate config file
 (defvar-keymap esprit-vc-branch-map
   :doc "Esprit prefix map for version control branch actions."
   "b" #'magit-checkout
   "c" #'magit-branch-create)
 
+;; Integrated into literate config file
 (defvar-keymap esprit-vc-pull-map
   :doc "Esprit prefix map for version control pull/fetch actions."
   "p" #'magit-pull-from-pushremote
   "u" #'magit-pull-from-upstream
   "e" #'magit-pull-branch)
 
+;; Integrated into literate config file
 (defvar-keymap esprit-vc-file-map
   :doc "Esprit prefix map for version control file actions."
   "r" #'magit-file-rename)
 
+;; Integrated into literate config file
 (defvar-keymap esprit-vc-map
   :doc "Esprit prefix key maps version control operations ."
   "b" esprit-vc-branch-map
   "F" esprit-vc-pull-map
   "f" esprit-vc-file-map)
 
+;; Integrated into literate config file
 (keymap-set global-map "C-c g" esprit-vc-map)
 
 (defvar esprit/ediff-original-windows nil)
@@ -1014,7 +1046,13 @@ otherwise create a new window."
 (use-package esprit-movement
   :bind ("C-a" . #'esprit/beginning-of-line))
 
+(use-package ipe
+  :straight t
+  :bind ("M-(" . #'ipe-insert-pair-edit)
+  :custom
+  (ipe-menu-support-p t))
+
 (setq esprit-emacs--success t)
 
 (provide 'init)
-
+;;; init.el ends here

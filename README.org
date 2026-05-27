@@ -542,6 +542,15 @@ The following remains to be edited and carved up into meaningful sections. But h
                                      ("melpa"  . 70)
                                      ("melpa-stable" . 50)))
 
+  (let ((default-directory  (expand-file-name "lisp" user-emacs-directory)))
+    (setq load-path
+          (append
+           (let ((load-path  (copy-sequence load-path))) ;; Shadow
+             (append
+              (copy-sequence (normal-top-level-add-to-load-path '(".")))
+              (normal-top-level-add-subdirs-to-load-path)))
+           load-path)))
+
   ;; Local variables:
   ;; byte-compile-warnings: (not obsolete free-vars)
   ;; End:
@@ -739,13 +748,13 @@ We save every possible history we can think of.
           kill-ring))
 
   (use-package savehist
-    :hook (emacs-startup . savehist-mode)
+    :hook (after-init . savehist-mode)
     :xdg-state (savehist-file "history")
     :custom
     (kill-ring-max 50)
     (history-length 50)
     (history-delete-duplicates t)
-    (savehist-additional-variables savehist-watchlist))#
+    (savehist-additional-variables savehist-watchlist))
 +end_src
 
 
@@ -772,8 +781,8 @@ Make Emacs aware of the proper paths for the [[https://asdf-vm.com/][asdf versio
 
 #+begin_src emacs-lisp
   (use-package asdf
-    :config
-    (asdf-enable))
+    :straight (:type git :host github :repo "tabfugnic/asdf.el")
+    :hook (after-init . asdf-enable))
 #+end_src
 
 Point to my local root directory. Mostly for the sake of Org later on in the config.
@@ -785,16 +794,15 @@ Point to my local root directory. Mostly for the sake of Org later on in the con
 
 * MacOS specific settings
 
-Juggle a few modifier keys to make things a little more comfortable. Tell dired not to use the underlying =ls= command on Mac since it doesn't use GNUVC oreutils which is what dired expects.
+Juggle a few modifier keys to make things a little more comfortable.
 
 #+begin_src emacs-lisp
 
   (when (string-equal system-type "darwin")
     (setq mac-option-modifier 'super)
-    (setq mac-command-modifier 'meta)
-    (setq dired-use-ls-dired nil))
+    (setq mac-command-modifier 'meta))
 
-#+end_src
+    #+end_src
 
 * Frame
 
@@ -824,6 +832,15 @@ A variation on =make-frame= that opens to the =*scratch*= buffer rather than the
 
 #+end_src
 
+Mini-ontop is a small convenience library to prevent buffer position from jumping around due to an expandable minibuffer.
+
+#+begin_src emacs-lisp
+  (use-package mini-ontop
+    :straight (:host github :repo "hkjels/mini-ontop.el")
+    :hook
+    (after-init . mini-ontop-mode))
+#+end_src
+
 * Esprit Themes
 
 New theme ideas I'm playing around with using [[https://www.reasonable.work/colors/][Reasonable Colors]].
@@ -831,9 +848,7 @@ New theme ideas I'm playing around with using [[https://www.reasonable.work/colo
 #+begin_src emacs-lisp
   (use-package esprit-themes
     ;; :straight (:type git :host github :repo "ludamillion/esprit-themes")
-    :straight nil
-    :load-path "~/code/esprit-themes"
-    :demand t)
+    :load-path "~/code/esprit-themes")
 #+end_src
 
 * Esprit modeline
@@ -842,12 +857,10 @@ My own personal mode-line.
 
 #+begin_src emacs-lisp
   (use-package esprit-line
-    :demand t
-    :straight nil
     :load-path "~/code/esprit-line"
+    :hook (after-init esprit-line-mode)
     :custom
-    (esprit-line-glyph-alist esprit-line-glyphs-unicode)
-    :config (esprit-line-mode))
+    (esprit-line-glyph-alist esprit-line-glyphs-unicode))
 #+end_src
 
 * Circadian
@@ -857,11 +870,12 @@ I prefer the legibility of a well designed light theme when the lighting is good
 #+begin_src emacs-lisp
 
   (use-package circadian
+    :straight t
     :custom
     (calendar-latitude 42.4)
     (calendar-longitude -71.0)
-    (circadian-themes '((:sunrise . esprit-amber-light)
-                        (:sunset  . esprit-azure-dark)))
+    (circadian-themes '((:sunrise . esprit-cerulean-light)
+                        (:sunset  . esprit-cerulean-dark)))
     :config
     (circadian-setup))
 
@@ -968,25 +982,30 @@ What Vertico is to Ivy [[https://github.com/minad/consult][Consult]] is to Ivy's
       (consult-ripgrep dir initial)))
 
   (use-package consult
-    :config
-    (recentf-mode)
-    :bind (
-           ("M-s d" . consult-fd) ;; Requires having fd installed otherwise use consult-find
-           ("M-s c" . consult-locate)
-           ("M-s g" . consult-grep)
-           ("M-s G" . consult-git-grep)
-           ("M-s r" . wrapper/consult-ripgrep)
-           ("M-s l" . consult-line)
-           ("M-s L" . consult-line-multi)
-           ("M-s k" . consult-keep-lines)
-           ("M-s u" . consult-focus-lines)
-           ("M-s <SPC>"   . consult-buffer)
-           ("M-y"   . consult-yank-pop)
-           ("C-x M-k"   . consult-kmacro)
-           ("M-g g" . consult-goto-line)
-           ("M-g i" . consult-imenu)
-           ("M-g o" . consult-outline)
-           ("C-x b" . consult-bookmark)))
+  :straight t
+  :hook (after-init . #'consult-mode)
+  :bind (("M-s d"     . consult-fd) ;; Requires having fd installed otherwise use consult-find
+         ("M-s G"     . consult-git-grep)
+         ("M-s r"     . wrapper/consult-ripgrep)
+         ("M-s l"     . consult-line)
+         ("M-s L"     . consult-line-multi)
+         ("M-s k"     . consult-keep-lines)
+         ("M-s u"     . consult-focus-lines)
+         ("M-s <SPC>" . consult-buffer)
+         ("M-y"       . consult-yank-pop)
+         ("C-x M-k"   . consult-kmacro)
+         ("M-g g"     . consult-goto-line)
+         ("M-g i"     . consult-imenu)
+         ("M-g o"     . consult-outline)
+         ("C-x b"     . consult-bookmark))
+  :init
+  (advice-add #'register-preview :override #'consult-register-window)
+  (setq register-preview-delay 0.5)
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
+  :config
+  (setq consult-preview-key "M-.")
+  (setq consult-narrow-key "<"))
 
 #+end_src
 
@@ -997,10 +1016,11 @@ Orderless enhances completion functions allowing for searching by space delimite
 #+begin_src emacs-lisp
 
   (use-package orderless
-    :config
-    (setq completion-styles '(orderless partial-completion basic))
-    (setq completion-category-defaults nil)
-    (setq completion-category-overrides '((file (styles partial-completion)))))
+    :straight t
+    :custom
+    (completion-styles '(orderless partial-completion basic))
+    (completion-category-defaults nil)
+    (completion-category-overrides '((file (styles partial-completion)))))
 
 #+end_src
 
@@ -1015,15 +1035,20 @@ Another package from =minad= (author of Vertico and Consult) Corfu is the 'in-bu
     (setq-local corfu-auto nil)
     (corfu-mode))
 
+  (defun esprit/corfu-modes ()
+    "Activate the desired corfu modes."
+    (corfu-history-mode)
+    (corfu-echo-mode)
+    (global-corfu-mode))
+
   (use-package corfu
+    :straight t
     :init
     (setq corfu-cycle t
           corfu-auto t
           corfu-on-exact-match nil)
-    (corfu-history-mode)
-    (corfu-echo-mode)
-    (global-corfu-mode)
     :hook
+    (after-init . esprit/corfu-modes)
     (eshell-mode . corfu-x-eshell-hook))
 
 #+end_src
@@ -1033,36 +1058,35 @@ Another package from =minad= (author of Vertico and Consult) Corfu is the 'in-bu
 Yet another package from =minad=. As mentioned Corfu leverages the =completion-at-point-functions= to populate its options. Cape complements it by providing a suite of such functions, usually referred to as Capfs.
 
 #+begin_src emacs-lisp
+  (defun esprit/cape-capf-setup-eglot ()
+  "Configure cape completion at point functions for Eglot managed modes."
+  (let ((result))
+    (dolist (element `(,(cape-capf-buster #'eglot-completion-at-point)
+		       cape-file
+		       cape-dabbrev) result)
+      (add-to-list 'completion-at-point-functions element))))
 
-  (defun esprit/eglot-capf ()
-    (setq-local completion-at-point-functions
-                (list ((cape-capf-buster #'eglot-completion-at-point)
-  		     #'cape-file))))
+(defun esprit/cape-capf-setup-org ()
+  "Configure cape completion at point functions for org mode."
+  (let ((result))
+    (dolist (element '(cape-dict cape-dabbrev) result)
+      (add-to-list 'completion-at-point-functions element))))
 
-  (defun esprit/cape-capf-setup-lsp ()
-    "Replace the default `lsp-completion-at-point' with its
-  `cape-capf-buster' version."
-    (setf (elt (cl-member 'lsp-completion-at-point completion-at-point-functions) 0)
-          (cape-capf-buster #'eglot-completion-at-point))
-    (add-to-list 'completion-at-point-functions #'cape-dabbrev t))
+(defun esprit/cape-capf-setup-git-commit ()
+  "Configure cape completion at point functions for git-commit mode."
+  (let ((result))
+    (dolist (element '(cape-dict cape-dabbrev) result)
+      (add-to-list 'completion-at-point-functions element))))
 
-  (defun esprit/cape-capf-setup-org ()
-    (add-to-list 'completion-at-point-functions (cape-capf-super #'cape-dict #'cape-dabbrev)))
-
-  (defun esprit/cape-capf-setup-git-commit ()
-    (let ((result))
-      (dolist (element '(cape-dabbrev cape-symbol) result)
-        (add-to-list 'completion-at-point-functions element))))
-
-  (use-package cape
-    :config
-    (setq completion-category-overrides '((eglot (styles orderless))
-                                          (eglot-capf (styles orderless))))
-    :hook
-    ((eglot-managed-mode . esprit/eglot-capf)
-     (org-mode . esprit/cape-capf-setup-org)
-     (git-commit-mode . esprit/cape-capf-setup-git-commit)))
-
+(use-package cape
+  :straight t
+  :config
+  (setq completion-category-overrides '((eglot (styles orderless))
+                                        (eglot-capf (styles orderless))))
+  :hook
+  ((eglot-managed-mode . esprit/cape-capf-setup-eglot)
+   (org-mode . esprit/cape-capf-setup-org)
+   (git-commit-mode . esprit/cape-capf-setup-git-commit)))
 #+end_src
 * Marginalia
 
@@ -1073,6 +1097,7 @@ Marginalia adds rich annotations to the minibuffer completions. Good for quick r
   (use-package marginalia
     :init
     (marginalia-mode)
+    :custom (marginalia--align 'right)
     :bind (:map minibuffer-local-map
                 ("M-A" . marginalia-cycle)))
 
@@ -1083,35 +1108,24 @@ Marginalia adds rich annotations to the minibuffer completions. Good for quick r
 #+begin_src emacs-lisp
 
   (use-package embark
+    :straight t
     :bind
     (("C-." . embark-act)         ;; pick some comfortable binding
      ("M-." . embark-dwim)        ;; good alternative: M-.
      ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
-
     :init
-
     ;; Optionally replace the key help with a completing-read interface
     (setq prefix-help-command #'embark-prefix-help-command)
-
-    ;; Show the Embark target at point via Eldoc. You may adjust the
-    ;; Eldoc strategy, if you want to see the documentation from
-    ;; multiple providers. Beware that using this can be a little
-    ;; jarring since the message shown in the minibuffer can be more
-    ;; than one line, causing the modeline to move up and down:
-
-    ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
-    ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
-
     :config
-
     ;; Hide the mode line of the Embark live/completions buffers
     (add-to-list 'display-buffer-alist
                  '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                    nil
                    (window-parameters (mode-line-format . none)))))
 
-  ;; Consult users will also want the embark-consult package.
   (use-package embark-consult
+    :straight t
+    :after (consult embark)
     :hook
     (embark-collect-mode . consult-preview-at-point-mode))
 
@@ -1246,10 +1260,11 @@ Stuff related, at least philosophically to the management of modes themselves.
     "v" #'global-visual-line-mode
     "f" #'toggle-frame-fullscreen
     "w" #'whitespace-mode
-    "c" #'command-log-mode)
+    "c" #'command-log-mode
+    "!" #'flymake-mode)
 
   (keymap-set global-map "C-x m" esprit-modes-toggle-map)
-#+end_src
+    #+end_src
 
 * Which key for discoverability
 
@@ -1285,23 +1300,28 @@ I had stopped exploring projectile for a bit but never removed it. I'm taking a 
 Use Eglot for LSP integration. Fewer options than =lsp-mode= but it's built-in and covers the ground that I need it for right noe
 
 #+begin_src emacs-lisp
+  (defvar eglot-enabled-modes
+    '(js-ts-mode
+      typescript-ts-mode
+      ruby-mode
+      go-ts-mode
+      astro-mode)
+    "Opt in list of modes which Eglot should manage.")
 
   (use-package eglot
+    :straight (:type built-in)
+    :demand t
+    :hook (eglot-enabled-modes . eglot-ensure)
     :bind (:map eglot-mode-map
                 ("C-x l r" . eglot-rename)
                 ("M-k" . eglot-code-actions))
-    :hook ((prog-mode . eglot-ensure)
-           (css-mode . eglot-ensure))
+    :custom
+    (eldoc-echo-area-use-multiline-p nil)
+    (eglot-events-buffer-config '(:size 2000000 :format lisp))
     :config
-    (setq eldoc-echo-area-use-multiline-p nil)
-    (add-to-list 'eglot-server-programs
-                 '(ruby-ts-mode . ("solargraph" "stdio"))))
-
-  (use-package eglot-booster
-    :after eglot
-    :config
-    (eglot-booster-mode))
-
+    (setq-default eglot-workspace-configuration
+                  '(:ltex-ls (:language "en-US"
+                                        :disabledRules ["MORFOLOGIK_RULE_EN_US"]))))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -1434,6 +1454,8 @@ I'm taking his lead and trying it out as the power tools he makes it out to be.
     (save-excursion (yank)) t)
 
   (use-package avy
+    :straight t
+    :bind ("M-j" . avy-goto-char-timer)
     :config
     (setf (alist-get ?. avy-dispatch-alist) 'avy-action-embark
           (alist-get ?k avy-dispatch-alist) 'avy-action-kill-stay
@@ -1443,9 +1465,7 @@ I'm taking his lead and trying it out as the power tools he makes it out to be.
           (alist-get ?y avy-dispatch-alist) 'avy-action-yank
           (alist-get ?w avy-dispatch-alist) 'avy-action-copy
           (alist-get ?W avy-dispatch-alist) 'avy-action-copy-whole-line
-          (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line)
-    :bind ("M-j" . avy-goto-char-timer))
-
+          (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line)))
 #+end_src
 
 * Occur
@@ -1608,9 +1628,8 @@ A couple of quick functions to move lines up/down quickly.
 As probably want to zap up to a character as often as I want to zap the character too. I certainly want to zap up to a character far more often than I want to minimize the frame I'm working in. So commandeer the =C-z= binding for that purpose.
 
 #+begin_src emacs-lisp
-
-  (global-set-key (kbd "C-z") 'zap-up-to-char)
-
+  (use-package emacs
+    :bind ("C-z" . #'zap-up-to-char))
 #+end_src
 
 Emacs has given us many DWIM versions of common commands over the years. However, they don't replace the 'old version' by default. DWIM when I use the case change commands.
@@ -1626,11 +1645,16 @@ Emacs has given us many DWIM versions of common commands over the years. However
 Turn on electric-pair-mode
 
 #+begin_src emacs-lisp
-
   (use-package elec-pair
-    :config
-    (electric-pair-mode))
+    :init (electric-pair-mode))
+#+end_src
 
+* Visual line
+
+#+begin_src emacs-lisp
+  (use-package emacs
+    :hook ((esprit-prose-modes . visual-line-mode)
+           (esprit-prose-modes . variable-pitch-mode)))
 #+end_src
 
 * Narrow to indirect
@@ -1660,6 +1684,12 @@ Seamlessly replace =dabbrev= with =hippie-expand= for fun and profit.
 
 #+begin_src emacs-lisp
   (global-set-key [remap dabbrev-expand] 'hippie-expand)
+#+end_src
+
+* Join line
+
+#+begin_src emacs-lisp
+  (keymap-global-set "C-j" #'join-line)
 #+end_src
 
 * Behavioral Enhancements
@@ -1769,9 +1799,9 @@ Kill the current frame or exit emacs if the frame in question is the only one. T
         (delete-frame arg)
       (if (y-or-n-p (format "Are you sure you want to close the last frame?"))
   	(save-buffers-kill-terminal arg)
-        (message "Great, back to what you were doing then."))))
+        (message "Great, back to what you were doing then.")))
 
-  (global-set-key (kbd "C-x C-c") 'esprit/quit-dwim)
+    (global-set-key (kbd "C-x C-c") 'esprit/quit-dwim)
 
 #+end_src
 
@@ -1934,26 +1964,26 @@ The gold standard of Git interfaces and one of the killer apps for Emacs. No rea
     :bind
     ("C-M-;" . magit-status))
 
-  (defvar-keymap liminal-vc-branch-map
-    :doc "Liminal prefix map for version control branch actions."
+  (defvar-keymap esprit-vc-branch-map
+    :doc "Esprit prefix map for version control branch actions."
     "b" #'magit-checkout
     "c" #'magit-branch-create)
 
-  (defvar-keymap liminal-vc-pull-map
-    :doc "Liminal prefix map for version control pull/fetch actions."
+  (defvar-keymap esprit-vc-pull-map
+    :doc "Esprit prefix map for version control pull/fetch actions."
     "p" #'magit-pull-from-pushremote
     "u" #'magit-pull-from-upstream
     "e" #'magit-pull-branch)
 
-  (defvar-keymap liminal-vc-file-map
-    :doc "Liminal prefix map for version control file actions."
+  (defvar-keymap esprit-vc-file-map
+    :doc "Esprit prefix map for version control file actions."
     "r" #'magit-file-rename)
 
-  (defvar-keymap liminal-vc-map
-    :doc "Liminal prefix key maps version control operations ."
-    "b" liminal-vc-branch-map
-    "F" liminal-vc-pull-map
-    "f" liminal-vc-file-map)
+  (defvar-keymap esprit-vc-map
+    :doc "Esprit prefix key maps version control operations ."
+    "b" esprit-vc-branch-map
+    "F" esprit-vc-pull-map
+    "f" esprit-vc-file-map)
 
   (keymap-set global-map "C-x g" liminal-vc-map)
 
@@ -1989,4 +2019,160 @@ Taken from https://panadestein.github.io/emacsd/ a friendlier =ediff= experience
 
 #+begin_src emacs-lisp
   (provide 'init)
+#+end_src
+* Prose modes
+
+This is the list of mode I consider prose modes. Modes that focus on the written word rather than code, structured data, &c. Necessary since not all modes that I would consider prose are derived from =text-mode=.
+
+#+begin_src emacs-lisp
+  (defvar esprit-prose-modes
+    '(
+      bibtex-mode
+      context-mode
+      git-commit-elisp-text-mode
+      latex-mode
+      markdown-mode
+      org-mode
+      rst-mode
+      text-mode
+      )
+    "List of which modes esprit considers prose.")
+#+end_src
+
+* EditorConfig
+
+Emacs has built in support for =editorconfig= files. If a project uses that I sure as heck want to be using it too. Well...with the limitation that in my experience it's really only code bases that leverage =.editorconfig= files so only load it for prog modes.
+
+#+begin_src emacs-lisp
+  (use-package editorconfig
+    :hook (prog-mode . editorconfig-mode))
+#+end_src
+
+* Dired
+
+Settings an customizations for /Dired/.
+
+#+begin_src emacs-lisp
+  (use-package dired
+    :straight (:type built-in)
+    :custom
+    (dired-dwim-target t))
+#+end_src
+
+MacOS doesn't use GNU =coreutils= and as such does not include the standard =ls= command which dired expects.
+
+#+begin_src emacs-lisp
+  (when (string-equal system-type "darwin")
+    (setq dired-use-ls-dired nil))
+#+end_src
+* Bookmarks
+
+One of the many Emacs features I'm still trying to adopt more fully.
+
+#+begin_src emacs-lisp
+  (use-package bookmark
+    :straight (:type built-in)
+    :commands (bookmark-set)
+    :xdg-state
+    (bookmark-default-file "bookmarks.eld"))
+#+end_src
+
+* Flymake
+
+I have briefly dipped my toes in into =Flycheck= as it is often touted as being supperior to =Flymake= but I'll keep following my own maxim of only adding tools when I determine a need for them. Right now I do not have a particular answer for why /I/ should use Flycheck over Flymake.
+
+#+begin_src emacs-lisp
+  (use-package flymake
+    :bind (("C-c ! d" . flymake-show-buffer-diagnostics) ; Emacs28
+           ("C-c ! D" . flymake-show-project-diagnostics) ; Emacs28
+           ("M-]" . flymake-goto-next-error)
+           ("M-[" . flymake-goto-prev-error))
+    :custom
+    (flymake-suppress-zero-counters t)
+    (flymake-no-changes-timeout nil)
+    (flymake-mode-line-format
+     '("" flymake-mode-line-exception flymake-mode-line-counters))
+    (flymake-mode-line-counter-format
+     '("" flymake-mode-line-error-counter
+       flymake-mode-line-warning-counter
+       flymake-mode-line-note-counter "")))
+#+end_src
+
+* LTex
+
+A languagetools language server.
+
+#+begin_src emacs-lisp
+  (defun require-and-ensure-eglot-ltex ()
+    "Require the eglot-ltex package and run `eglot-ensure'."
+    (require 'eglot-ltex)
+    (eglot-ensure))
+
+  (use-package eglot-ltex
+    :straight (:host github :repo "emacs-languagetool/eglot-ltex")
+    :hook
+    (esprit/prose-mode-list . require-and-ensure-eglot-ltex)
+    :init
+    (setq eglot-ltex-server-path "~/tools/ltex-ls-plus/bin/ltex-ls-plus"
+  	eglot-ltex-communication-channel 'stdio))
+#+end_src
+* Accent
+
+#+begin_src emacs-lisp
+  (use-package accent
+    :straight t
+    :bind ("C-x '" . #'accent-menu))
+#+end_src
+
+* Multiple Cursors
+
+#+begin_src emacs-lisp
+  (use-package multiple-cursors
+    :hook (emacs-startup . multiple-cursors-mode)
+    :straight t
+    :bind
+    ("C->" . #'mc/mark-next-like-this)
+    ("C-<" . #'mc/mark-previous-like-this)
+    ("C-c C->" . #'mc/mark-all-like-this)
+    ("C-S-c C-S-c" . #'mc/edit-lines))
+#+end_src
+* Swiss Move
+
+#+begin_src emacs-lisp
+  (use-package swiss-move
+    :bind (("s-n" . swiss-move-line-down)
+  	 ("s-p" . swiss-move-line-up)))
+#+end_src
+* Fontaine
+
+#+begin_src emacs-lisp
+  (use-package fontaine
+    :straight t
+    :demand t
+    :xdg-state
+    (fontaine-latest-state-file "fontaine-latest-state.eld")
+    :custom
+    (fontaine-presets
+     '((small
+        :default-family "Geist Mono"
+        :default-height 80
+        :variable-pitch-family "Geist")
+       (regular) ; like this it uses all the fallback values and is named `regular'
+       (medium :default-height 140 :bold-weight regular)
+       (laptop  :inherit medium :default-height 140)
+       (desktop :inherit medium :default-height 160)
+       (large   :inherit medium :default-height 180)
+       (t
+        :default-family "Geist Mono"
+        :variable-pitch-family "Geist"
+        :fixed-pitch-height 1.0
+        :fixed-pitch-serif-height 1.0
+        :variable-pitch-height 1.0)))
+    :config
+    (fontaine-set-preset (or (fontaine-restore-latest-preset) 'regular))
+    ;; Persist the latest font preset when closing/starting Emacs and
+    ;; while switching between themes.
+    (fontaine-mode 1)
+    :bind
+    ("C-c f" . #'fontaine-set-preset))
 #+end_src
