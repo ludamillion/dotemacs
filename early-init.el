@@ -7,15 +7,13 @@
 ;; Version: 0.1.0
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
-(setopt debug-on-error t)
-
 (defvar esprit-emacs--backup-gc-cons-threshold gc-cons-threshold)
 (defvar esprit-emacs--backup-gc-cons-percentage gc-cons-percentage)
 
 (setq gc-cons-threshold most-positive-fixnum)
 (setq gc-cons-percentage 1.0)
 
-(defvar esprit-emacs-user-directory "~/code/dotemacs/"
+(defvar esprit-emacs-user-directory "~/tools/dotemacs/"
   "Pointer to me Emacs home directory.")
 
 (defvar esprit-emacs-ui-features '()
@@ -86,6 +84,9 @@ of the progress or any relevant activities during startup.")
      (t
       (error "Configuration error. Debug by starting Emacs with: --debug-init")))))
 
+(when esprit-emacs-debug
+  (setopt debug-on-error t))
+
 (unless noninteractive
   (add-hook 'emacs-startup-hook #'esprit-emacs--check-success 102))
 
@@ -132,10 +133,6 @@ of the progress or any relevant activities during startup.")
 
 (set-language-environment "UTF-8")
 
-(setq read-process-output-max (* 2 1024 1024))  ; 1024kb
-(setq process-adaptive-read-buffering nil)
-
-(setq max-specpdl-size 3200)
 (setq max-lisp-eval-depth 3200)
 
 (setq warning-minimum-level (if esprit-emacs-debug :warning :error))
@@ -145,8 +142,6 @@ of the progress or any relevant activities during startup.")
   (setq message-log-max 16384))
 
 (setq ffap-machine-p-known 'reject)
-
-(setq ad-redefinition-action 'accept)
 
 (setq inhibit-compacting-font-caches t)
 
@@ -164,8 +159,7 @@ of the progress or any relevant activities during startup.")
 
   ;; Reduce *Message* noise at startup. An empty scratch buffer (or the
   ;; dashboard) is more than enough, and faster to display.
-  (setq inhibit-startup-screen t
-        inhibit-startup-echo-area-message user-login-name)
+  (setq inhibit-startup-echo-area-message user-login-name)
   (setq initial-buffer-choice nil
         inhibit-startup-buffer-menu t
         inhibit-x-resources t)
