@@ -118,6 +118,7 @@
    ("C-x M-t" . transpose-paragraphs)                ; Expands C-x C-t for transposing lines
    ("C-s" . isearch-forward)
    ("C-x C-m" . execute-extended-command)
+   ("C-s-p"   . execute-extended-command)
    ([remap capitalize-word] . capitalize-dwim)       ; Make M-c work on regions
    ([remap downcase-word] . downcase-dwim)           ; Make M-l work on regions
    ([remap upcase-word] . upcase-dwim)               ; Make M-u work on regions
@@ -155,13 +156,6 @@
   (redisplay-skip-fontification-on-input t)
   
   (register-use-preview t)
-  (remote-file-name-inhibit-delete-by-moving-to-trash t)
-  (remote-file-name-inhibit-auto-save t)
-  (remote-file-name-inhibit-locks t)
-  (remote-file-name-inhibit-auto-save-visited t)
-  (tramp-copy-size-limit (* 2 1024 1024)) ;; 2MB
-  (tramp-use-scp-direct-remote-copying t)
-  (tramp-verbose 2)
   (resize-mini-windows 'grow-only)
   (scroll-margin 5)
   (save-interprogram-paste-before-kill t)
@@ -232,7 +226,7 @@
    '((tramp-direct-async-process . t)))
 
   (connection-local-set-profiles
-   '(:application tramp :protocol "scp")
+   '(:application tramp :protocol "ssh" :machine "dev-instance")
    'remote-direct-async-process)
   
   (declare-function tramp-compile-disable-ssh-controlmaster-options "")
@@ -457,42 +451,53 @@ or is an ERC buffer."
   )
 
 (use-package tramp
+  :custom
+  (remote-file-name-inhibit-delete-by-moving-to-trash t)
+  (remote-file-name-inhibit-auto-save t)
+  (remote-file-name-inhibit-locks t)
+  (remote-file-name-inhibit-auto-save-visited t)
+  (tramp-copy-size-limit (* 2 1024 1024)) ;; 2MB
+  (tramp-use-scp-direct-remote-copying t)
+  (tramp-verbose 1)
+  (tramp-remote-path (append tramp-remote-path '("~/.local/bin")))
+  (shell-history-file-name t)
   :config
-  (advice-add 'project-current :around #'memoize-project-current)
-  (advice-add 'magit-toplevel :around #'memoize-magit-toplevel)
-  (advice-add 'vc-git-root :around #'memoize-vc-git-root)
+  (defun memoize-remote (key cache orig-fn &rest args)
+    "Memoize a value if the key is a remote path."
+    (if (and key
+             (file-remote-p key))
+        (if-let ((current (assoc key (symbol-value cache))))
+            (cdr current)
+          (let ((current (apply orig-fn args)))
+            (set cache (cons (cons key current) (symbol-value cache)))
+            current))
+      (apply orig-fn args)))
+
   ;; Memoize current project
   (defvar project-current-cache nil)
-  (defvar vc-git-root-cache nil)
-  (defvar magit-toplevel-cache nil)
   (defun memoize-project-current (orig &optional prompt directory)
-    (let ((value (memoize-remote (or directory
-                                     project-current-directory-override
-                                     default-directory)
-                                 'project-current-cache orig prompt directory)))
-      ;; sometimes project-current returns nil even when there is a project there
-      (when (null (cdr (car project-current-cache)))
-        (setq project-current-cache (cdr project-current-cache)))
-      value))
+    (memoize-remote (or directory
+                        project-current-directory-override
+                        default-directory)
+                    'project-current-cache orig prompt directory))
+  (advice-add 'project-current :around #'memoize-project-current)
+
   ;; Memoize magit top level
+  (defvar magit-toplevel-cache nil)
   (defun memoize-magit-toplevel (orig &optional directory)
-    (let ((value (memoize-remote (or directory default-directory)
-                                 'magit-toplevel-cache orig directory)))
-      ;; sometimes magit-toplevel returns nil even when there is a root there
-      (when (null (cdr (car magit-toplevel-cache)))
-        (setq magit-toplevel-cache (cdr magit-toplevel-cache)))
-      value))
+    (memoize-remote (or directory default-directory)
+                    'magit-toplevel-cache orig directory))
+  (advice-add 'magit-toplevel :around #'memoize-magit-toplevel)
+
+  ;; memoize vc-git-root
+  (defvar vc-git-root-cache nil)
   (defun memoize-vc-git-root (orig file)
     (let ((value (memoize-remote (file-name-directory file) 'vc-git-root-cache orig file)))
       ;; sometimes vc-git-root returns nil even when there is a root there
       (when (null (cdr (car vc-git-root-cache)))
         (setq vc-git-root-cache (cdr vc-git-root-cache)))
-      ;; locate-dominating-file abbreviates its result (e.g. "/ssh:host:~/repo/"),
-      ;; and callers like vc-git-registered's (cd root) don't reliably
-      ;; re-expand the "~" for tramp paths, so always return it expanded.
-      (if value (expand-file-name value) value)))
-  (add-to-list 'tramp-remote-path "/usr/share/rvm/gems/ruby-3.3.8/bin")
-  (add-to-list 'tramp-remote-path ".nvm/versions/node/v24.16.0/bin"))
+      value))
+  (advice-add 'vc-git-root :around #'memoize-vc-git-root))
 
 (use-package autorevert
   :hook
@@ -724,6 +729,7 @@ or is an ERC buffer."
          ("M-s r"     . wrapper/consult-ripgrep)
          ("M-s l"     . consult-line)
          ("M-s <SPC>" . consult-buffer)
+         ("s-p"       . consult-buffer)
          ("M-y"       . consult-yank-pop)
          ("C-x M-k"   . consult-kmacro)
          ("M-g i"     . consult-imenu)
@@ -940,7 +946,7 @@ or is an ERC buffer."
   :straight t
   :bind ("C-x '" . #'accent-menu))
 
-(keymap-global-set [remap dabbrev-expand] 'hippie-expand)
+;; (keymap-global-set [remap dabbrev-expand] 'hippie-expand)
 
 (keymap-global-set "C-j" #'join-line)
 
@@ -1443,32 +1449,6 @@ otherwise create a new window."
 (use-package inheritenv
   :straight (:type git :host github :repo "purcell/inheritenv"))
 
-;; for ghostel terminal backend (libghostty):
-(use-package ghostel
-  :straight (:type git :host github :repo "dakra/ghostel")
-  :bind (("C-x m" . ghostel)
-         :map ghostel-semi-char-mode-map
-         ("C-s"  . consult-line)
-         ("C-k"  . my/ghostel-send-C-k-and-kill)
-         ;; ;; I'm used to go up/down the shell history with M-n/p from eshell
-         ;; ;; Simulate this behavior in ghostel by sending C-p and C-n
-         ("M-p" . (lambda () (interactive) (ghostel-send-key "p" "ctrl")))
-         ("M-n" . (lambda () (interactive) (ghostel-send-key "n" "ctrl")))
-         :map project-prefix-map
-         ("m" . ghostel-project)
-         ("M" . ghostel-project-list-buffers))
-  :config
-  (defun my/ghostel-send-C-k-and-kill ()
-    "Send `C-k' to ghostel.
-Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
-    (interactive)
-    (kill-ring-save (point) (line-end-position))
-    (ghostel-send-key "k" "ctrl"))
-
-  (add-to-list 'project-switch-commands '(ghostel-project "Ghostel") t)
-  (add-to-list 'project-switch-commands '(ghostel-project-list-buffers "Ghostel buffers") t)
-  (add-to-list 'ghostel-eval-cmds '("magit-status-setup-buffer" magit-status-setup-buffer)))
-
 (use-package monet
   :straight (:type git :host github :repo "stevemolitor/monet"))
 
@@ -1482,7 +1462,7 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
   :bind
   (:repeat-map my-claude-code-map ("M" . claude-code-cycle-mode))
   :custom
-  (claude-code-terminal-backend 'ghostel)
+  (claude-code-terminal-backend 'eat)
   :config
   (claude-code-mode))
 

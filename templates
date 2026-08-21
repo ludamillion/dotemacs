@@ -1,0 +1,16 @@
+web-mode
+
+(html5 "<!DOCTYPE html>" n>
+"<html lang=\"en\">" n>
+ "<head>" n>
+  "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" n>
+  "<title>" p "</title>" n>
+  "<meta name=\"description\" content=\"Basic template\">" n>
+  "<meta name=\"author\" content=\"Autore sicuramente\">" n>
+
+  "<link rel=\"stylesheet\" href=\"css/styles.css\">" n>
+  "</head>" n>
+ "<body>" n> "<main>" n> r> "</main>" n>
+"<script src=\"js/scripts.js\"></script>" n>
+ "</body>" n>
+"</html>")
