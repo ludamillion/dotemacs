@@ -451,12 +451,6 @@ or is an ERC buffer."
   )
 
 (use-package tramp
-  :init
-  ;; NB: must be an absolute path, not "~/.local/bin" -- tramp's
-  ;; directory-existence check for tramp-remote-path entries quotes the
-  ;; path when testing it remotely (test -d "$file"), so a literal ~
-  ;; never gets shell-expanded and the entry is silently dropped.
-  (setq tramp-remote-path (append tramp-remote-path '("/home/linglis/.local/bin")))
   :custom
   (remote-file-name-inhibit-delete-by-moving-to-trash t)
   (remote-file-name-inhibit-auto-save t)
@@ -465,6 +459,11 @@ or is an ERC buffer."
   (tramp-copy-size-limit (* 2 1024 1024)) ;; 2MB
   (tramp-use-scp-direct-remote-copying t)
   (tramp-verbose 1)
+  ;; NB: must be an absolute path, not "~/.local/bin" -- tramp's
+  ;; directory-existence check for tramp-remote-path entries quotes the
+  ;; path when testing it remotely (test -d "$file"), so a literal ~
+  ;; never gets shell-expanded and the entry is silently dropped.
+  (tramp-remote-path (append tramp-remote-path '("/home/linglis/.local/bin")))
   (shell-history-file-name t)
   :config
   (defun memoize-remote (key cache orig-fn &rest args)
