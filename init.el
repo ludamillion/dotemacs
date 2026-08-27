@@ -591,17 +591,17 @@ or is an ERC buffer."
   (select-frame (make-frame))
   (switch-to-buffer "*scratch*"))
 
-(defun esprit/make-eat-frame ()
-  "Create a new frame and create a vterm buffer."
+(defun esprit/make-ghostel-frame ()
+  "Create a new frame and create a ghostel buffer in current project directory."
   (interactive)
   (select-frame (make-frame))
-  (eat-project))
+  (ghostel-project))
 
 (defvar-keymap esprit-frame-map
   :doc "Prefix map for frame operations."
   "m" #'make-frame
   "n" #'esprit/make-scratch-frame
-  "v" #'esprit/make-eat-frame)
+  "t" #'esprit/make-ghostel-frame)
 
 (keymap-global-set "M-n" esprit-frame-map)
 
@@ -1087,16 +1087,41 @@ or is an ERC buffer."
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-horizontally))
 
-;; (use-package eat
-;;   :straight (:type git :host codeberg :repo "akib/emacs-eat"
-;; 	           :files ("*.el" ("term" "term/*.el") "*.texi"
-;; 		           "*.ti" ("terminfo/e" "terminfo/e/*")
-;; 		           ("terminfo/65" "terminfo/65/*")
-;; 		           ("integration" "integration/*")
-;; 		           (:exclude ".dir-locals.el" "*-tests.el"))))
+(use-package ghostel
+  :straight t
+  :bind (("C-x m" . ghostel)
+         :map ghostel-semi-char-mode-map
+         ("C-s"  . consult-line)
+         ("M-<backspace>" . ghostel-backward-kill-word)
+         ;; ;; I'm used to go up/down the shell history with M-n/p from eshell
+         ;; ;; Simulate this behavior in ghostel by sending C-p and C-n
+         ("M-p" . (lambda () (interactive) (ghostel-send-key "p" "ctrl")))
+         ("M-n" . (lambda () (interactive) (ghostel-send-key "n" "ctrl")))
+         :map project-prefix-map
+         ("m" . ghostel-project)
+         ("M" . ghostel-project-list-buffers))
+  :custom
+  (ghostel-tramp-shell-integration t)
+  :config
+  (defun ghostel-send-C-k-and-kill ()
+    "Send `C-k' to ghostel.
+Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
+    (interactive)
+    (kill-ring-save (point) (line-end-position))
+    (ghostel-send-key "k" "ctrl"))
 
-(use-package vterm
-  :straight t)
+  (add-to-list 'project-switch-commands '(ghostel-project "Ghostel") t)
+  (add-to-list 'project-switch-commands '(ghostel-project-list-buffers "Ghostel buffers") t)
+  (add-to-list 'ghostel-eval-cmds '("magit-status-setup-buffer" magit-status-setup-buffer)))
+
+(use-package ghostel-eshell
+  :hook (eshell-load . ghostel-eshell-visual-command-mode))
+
+(use-package ghostel-compile
+  :hook (after-init . ghostel-compile-global-mode))
+
+(use-package ghostel-comint
+  :hook (after-init . ghostel-comint-global-mode))
 
 (use-package treesit-env
   :straight (:host github :repo "cottontailia/treesit-env")
@@ -1468,7 +1493,7 @@ otherwise create a new window."
   :bind
   (:repeat-map my-claude-code-map ("M" . claude-code-cycle-mode))
   :custom
-  (claude-code-terminal-backend 'vterm)
+  (claude-code-terminal-backend 'ghostel)
   :config
   (claude-code-mode))
 
