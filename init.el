@@ -157,7 +157,6 @@
   
   (register-use-preview t)
   (resize-mini-windows 'grow-only)
-  (scroll-margin 5)
   (save-interprogram-paste-before-kill t)
   (savehist-save-minibuffer-history t)    ; t is default
   (save-place-limit 600)
@@ -1088,13 +1087,16 @@ or is an ERC buffer."
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-horizontally))
 
-(use-package eat
-  :straight (:type git :host codeberg :repo "akib/emacs-eat"
-	           :files ("*.el" ("term" "term/*.el") "*.texi"
-		           "*.ti" ("terminfo/e" "terminfo/e/*")
-		           ("terminfo/65" "terminfo/65/*")
-		           ("integration" "integration/*")
-		           (:exclude ".dir-locals.el" "*-tests.el"))))
+;; (use-package eat
+;;   :straight (:type git :host codeberg :repo "akib/emacs-eat"
+;; 	           :files ("*.el" ("term" "term/*.el") "*.texi"
+;; 		           "*.ti" ("terminfo/e" "terminfo/e/*")
+;; 		           ("terminfo/65" "terminfo/65/*")
+;; 		           ("integration" "integration/*")
+;; 		           (:exclude ".dir-locals.el" "*-tests.el"))))
+
+(use-package vterm
+  :straight t)
 
 (use-package treesit-env
   :straight (:host github :repo "cottontailia/treesit-env")
@@ -1466,7 +1468,7 @@ otherwise create a new window."
   :bind
   (:repeat-map my-claude-code-map ("M" . claude-code-cycle-mode))
   :custom
-  (claude-code-terminal-backend 'eat)
+  (claude-code-terminal-backend 'vterm)
   :config
   (claude-code-mode))
 

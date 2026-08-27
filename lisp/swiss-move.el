@@ -137,7 +137,6 @@ half of the last stepsize to 63.  And so on.
 
 You'd better test it.
 "
-  (interactive)
   (or percentage (setq percentage swiss-move-line-percent))
   (let* ((currli (swiss-move-line-number))
          (otherli (cond
@@ -161,8 +160,8 @@ You'd better test it.
 Install and remove ourself on `pre-command-hook' and control the swiss
 movement active state."
   (if (and (not (or
-                 (eq last-command 'swiss-move-line-up)
-                 (eq last-command 'swiss-move-line-down)))
+                 (eq this-command 'swiss-move-line-up)
+                 (eq this-command 'swiss-move-line-down)))
            (not (null swiss-move-running))
            (memq 'swiss-move-hook-function pre-command-hook))
       (progn

@@ -335,6 +335,10 @@ this stage of initialization."
       (funcall 'tool-bar-setup))))
 
 (unless noninteractive
+  (add-to-list 'initial-frame-alist '(width  . 144))
+  (add-to-list 'initial-frame-alist '(height . 48)))
+
+(unless noninteractive
   (when (fboundp 'tool-bar-setup)
     ;; Temporarily override the tool-bar-setup function to prevent it from
     ;; running during the initial stages of startup
