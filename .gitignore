@@ -47,6 +47,7 @@ transient/
 .projectile
 projects
 projectile-bookmarks.eld
+places.eld
 
 .cache/
 .lsp-session-*

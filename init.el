@@ -206,7 +206,6 @@
     "For OSC 52 compatible terminals support.")
   
   ;; TERMs should use the entire window space
-  (declare-function esprit-emacs/disable-global-scrolling-in-ansi-term "")
   (defun esprit-emacs/disable-global-scrolling-in-ansi-term ()
     "Disable global scrolling behavior in ansi-term buffers."
     (setq-local scroll-conservatively 101)
@@ -535,6 +534,10 @@ or is an ERC buffer."
   :commands (bookmark-set)
   :xdg-state
   (bookmark-default-file "bookmarks.eld"))
+
+(use-package saveplace
+  :xdg-state
+  (save-place-file "places.eld"))
 
 (setq savehist-watchlist
       '(bookmark-history
