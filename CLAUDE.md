@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Personal Emacs configuration ("Esprit Emacs") for Emacs 29.1+. Uses `straight.el` for package management and `use-package` for declarative configuration.
+Personal Emacs configuration ("Esprit Emacs") for Emacs 29.1+. Uses `package.el`/`package-vc.el` for package management (via `use-package`'s `:ensure`/`:vc` keywords) and `use-package` for declarative configuration.
 
 ## Commands
 
@@ -30,7 +30,7 @@ Note: `init.el` is the active config — `lit-init.el` is generated/reference on
 
 ```
 early-init.el     Startup optimization, UI suppression, load-path, package archives
-init.el           All package config (straight.el bootstrap → use-package declarations)
+init.el           All package config (package.el bootstrap → use-package declarations)
 README.org        Literate documentation source (not the active config)
 lisp/             Custom local packages (on load-path via early-init.el)
 themes/           Custom theme files
@@ -48,7 +48,7 @@ themes/           Custom theme files
 
 ### init.el structure (sections in order)
 
-1. `straight.el` bootstrap
+1. `package.el` bootstrap
 2. `use-package emacs` — global keybindings, ibuffer groups, TRAMP optimizations
 3. Completion stack: `vertico` → `consult` → `orderless` → `corfu` → `cape` → `marginalia`
 4. Navigation: `avy`, `embark`, `ace-window`, `multiple-cursors`
@@ -63,11 +63,12 @@ themes/           Custom theme files
 **Adding a package:**
 ```elisp
 (use-package package-name
-  :straight t
+  :ensure t
   :bind (...)
   :custom (...)
   :config (...))
 ```
+For packages not on a package archive (GNU/NonGNU/MELPA), use `:vc` instead, e.g. `:vc (:url "https://github.com/user/repo")` (add `:branch "name"` to pin a branch).
 
 **TRAMP optimization**: `project-current`, `magit-toplevel`, and `vc-git-root` are memoized per-connection in `init.el`. Don't add remote path calls outside those memo caches.
 

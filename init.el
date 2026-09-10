@@ -11,32 +11,17 @@
 
 ;;; Code:
 
-(unless (featurep 'straight)
-  ;; Bootstrap straight.el
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-        (bootstrap-version 5))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage)))
-
+(require 'package)
+(package-initialize)
 (require 'use-package)
-(require 'straight)
-
-(straight-use-package 'use-package)
+(setq use-package-vc-prefer-newest t)
 
 (use-package use-package-xdg
-  :straight (:type git :host codeberg :repo "rossabaker/use-package-xdg")
+  :vc (:url "https://codeberg.org/rossabaker/use-package-xdg")
   :demand t)
 
 ;; (use-package exec-path-from-shell
-;;   :straight t
+;;   :ensure t
 ;;   :if (memq window-system '(mac ns x))
 ;;   :custom
 ;;   (exec-path-from-shell-variables '("PATH" "MANPATH" "XDG_CONFIG_DIRS" "XDG_DATA_DIRS"))
@@ -84,7 +69,7 @@
   "List of which modes esprit considers prose.")
 
 (use-package mini-ontop
-  :straight (:host github :repo "hkjels/mini-ontop.el")
+  :vc (:url "https://github.com/hkjels/mini-ontop.el")
   :hook
   (after-init . mini-ontop-mode))
 
@@ -98,7 +83,6 @@
   (("M-g r" . recentf)
    ("C-x ;" . comment-line)
    ("M-s f" . find-name-dired)
-   ("C-x C-b" . ibuffer)
    ("C-x p l". project-list-buffers)
    ("C-x w t"  . window-layout-transpose)            ; EMACS-31
    ("C-x w r"  . window-layout-rotate-clockwise)     ; EMACS-31
@@ -113,20 +97,23 @@
    ("M-Z" . zap-up-to-char)                          ; Expands M-z for zap-to-char
    ("M-F" . forward-to-word)                         ; Expands M-f to jump to beginning of next word
    ("M-B" . backward-to-word)                        ; Expands M-b to jump to end of previous word
-   ("M-M" . end-of-line)                             ; Expands M-m to jump to end line, useful for paragraphs
+   ("M-M" . end-of-line)                             ; Expands M-m to jump to end line
    ("M-T" . transpose-sentences)                     ; Expands M-t for transposing words
    ("C-x M-t" . transpose-paragraphs)                ; Expands C-x C-t for transposing lines
    ("C-s" . isearch-forward)
    ("C-x C-m" . execute-extended-command)
    ("C-s-p"   . execute-extended-command)
+   ("s-\\" . indent-region)
    ([remap capitalize-word] . capitalize-dwim)       ; Make M-c work on regions
    ([remap downcase-word] . downcase-dwim)           ; Make M-l work on regions
    ([remap upcase-word] . upcase-dwim)               ; Make M-u work on regions
    ([remap kill-buffer] . kill-current-buffer)       ; C-x k stops prompting for buffer to kill
-   ([remap delete-horizontal-space] . cycle-spacing) ; M-\. Called twice, cycle-spacing has same effect and its default binding (M-SPC) is problematic in macOS
+   ([remap delete-horizontal-space] . cycle-spacing) ; M-\. Called twice, remap has same effect
    :map isearch-mode-map
    ("C-o" . isearch-occur))
   :custom
+  (fill-column 100)
+  (trash-directory "~/.Trash")
   (ad-redefinition-action 'accept)
   (auto-save-default t)
   (line-spacing 0.15)
@@ -141,7 +128,7 @@
   (find-ls-option '("-exec ls -ldh {} +" . "-ldh"))  ; find-dired results with human readable sizes
   (browse-url-secondary-browser-function 'eww-browse-url) ; C-u C-c RET on URLs open in EWW
   (help-window-select t)
-  (ibuffer-human-readable-size t) ; EMACS-31
+                                        ; EMACS-31
   (kill-do-not-save-duplicates t)
   (kill-region-dwim 'emacs-word)  ; EMACS-31
   (create-lockfiles nil)   ; No lock files
@@ -182,7 +169,7 @@
   (grep-find-ignored-directories
    '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".jj" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "node_modules" "build" "dist"))
   :config
-  (global-goto-address-mode t)                            ;     C-c RET on URLs open in default browser
+  (global-goto-address-mode t)
   (pixel-scroll-precision-mode t)
   (delete-selection-mode t)
   ;; Make C-x 5 o repeatable
@@ -219,18 +206,25 @@
 
   ;; TRAMP specific HACKs
   ;; See https://coredumped.dev/2025/06/18/making-tramp-go-brrrr./
-  (connection-local-set-profile-variables
-   'remote-direct-async-process
-   '((tramp-direct-async-process . t)))
-
-  (connection-local-set-profiles
-   '(:application tramp :protocol "ssh" :machine "dev-instance")
-   'remote-direct-async-process)
-  
-  (declare-function tramp-compile-disable-ssh-controlmaster-options "")
-  (with-eval-after-load 'tramp
-    (with-eval-after-load 'compile
-      (remove-hook 'compilation-mode-hook #'tramp-compile-disable-ssh-controlmaster-options)))
+  ;; A connection-local `tramp-direct-async-process' applies to every
+  ;; async process Tramp starts on the host, including Eglot's LSP
+  ;; server. That process is long-lived and needs Tramp's normal
+  ;; connection tracking; direct-async bypasses it, so a dropped SSH
+  ;; connection leaves Eglot reporting "connected" while requests go
+  ;; nowhere. Toggle the connection property instead, only around
+  ;; `compilation-start', so only compile/recompile get the speedup.
+  (defun esprit/compilation-start-with-direct-async-process (orig-fn &rest args)
+    "Enable direct async Tramp processes only for this compilation."
+    (if-let* ((vec (and (file-remote-p default-directory)
+                         (tramp-dissect-file-name default-directory))))
+        (unwind-protect
+            (progn
+              (tramp-set-connection-property vec "direct-async-process" t)
+              (apply orig-fn args))
+          (tramp-flush-connection-property vec "direct-async-process"))
+      (apply orig-fn args)))
+  (advice-add 'compilation-start :around
+              #'esprit/compilation-start-with-direct-async-process)
 
   ;; vc-ignore-dir-regexp can accumulate a tramp-file-name-regexp alternative
   ;; at runtime, which matches the "/method:host:" prefix of every remote
@@ -257,52 +251,12 @@
   (set-display-table-slot standard-display-table 'vertical-border ?\u2502)
   (set-display-table-slot standard-display-table 'truncation ?\u2192)
 
-  ;; Ibuffer filters
-  (setq ibuffer-saved-filter-groups
-        '(("default"
-           ("org"     (or
-                       (mode  . org-mode)
-                       (name  . "^\\*Org Src")
-                       (name  . "^\\*Org Agenda\\*$")))
-           ("tramp"   (name   . "^\\*tramp.*"))
-           ("emacs"   (or
-                       (name  . "^\\*scratch\\*$")
-                       (name  . "^\\*Messages\\*$")
-                       (name  . "^\\*Warnings\\*$")
-                       (name  . "^\\*Shell Command Output\\*$")
-                       (name  . "^\\*Async-native-compile-log\\*$")))
-           ("ediff"   (name   . "^\\*[Ee]diff.*"))
-           ("vc"      (name   . "^\\*vc-.*"))
-           ("dired"   (mode   . dired-mode))
-           ("terminal" (or
-                        (mode . term-mode)
-                        (mode . shell-mode)
-                        (mode . eshell-mode)))
-           ("help"    (or
-                       (name  . "^\\*Help\\*$")
-                       (name  . "^\\*info\\*$")))
-           ("news"    (name   . "^\\*Newsticker.*"))
-           ("gnus"    (or
-                       (mode  . message-mode)
-                       (mode  . gnus-group-mode)
-                       (mode  . gnus-summary-mode)
-                       (mode  . gnus-article-mode)
-                       (name  . "^\\*Group\\*")
-                       (name  . "^\\*Summary\\*")
-                       (name  . "^\\*Article\\*")
-                       (name  . "^\\*BBDB\\*")))
-           ("chat"    (or
-                       (mode  . rcirc-mode)
-                       (mode  . erc-mode)
-                       (name  . "^\\*rcirc.*")
-                       (name  . "^\\*ERC.*"))))))
-
-  (add-hook 'ibuffer-mode-hook
-            (lambda ()
-              (ibuffer-switch-to-saved-filter-groups "default")))
-  (setq ibuffer-show-empty-filter-groups nil) ; don't show empty groups
-
-
+  ;; See `trash-directory' as it requires defining `system-move-file-to-trash'.
+  (defun system-move-file-to-trash (file)
+    "Use \"trash\" to move FILE to the system trash."
+    (cl-assert (executable-find "trash") nil "'trash' must be installed. Needs \"brew install trash\"")
+    (call-process "trash" nil 0 nil "-F"  file))
+    
   (defun esprit-emacs/filtered-project-buffer-completer (project files-only)
     "A function that filters special buffers and uses `completing-read`."
     (let* ((project-buffers (project-buffers project))
@@ -457,18 +411,29 @@ or is an ERC buffer."
   (tramp-copy-size-limit (* 2 1024 1024)) ;; 2MB
   (tramp-use-scp-direct-remote-copying t)
   (tramp-verbose 1)
-  ;; NB: must be an absolute path, not "~/.local/bin" -- tramp's
+  (shell-history-file-name t)
+  :config
+  ;; NB: must be absolute paths, not "~/.local/bin" -- tramp's
   ;; directory-existence check for tramp-remote-path entries quotes the
   ;; path when testing it remotely (test -d "$file"), so a literal ~
   ;; never gets shell-expanded and the entry is silently dropped.
-  (tramp-remote-path (append tramp-remote-path '("/home/linglis/.local/bin")))
-  (shell-history-file-name t)
-  :config
+  ;;
+  ;; NB: this must go in :config, not :custom -- tramp-loaddefs.el
+  ;; pre-binds `tramp-remote-path' via a plain `defvar' before tramp.el's
+  ;; own `defcustom' runs, so `custom-initialize-reset' sees it's already
+  ;; bound and silently discards any `:custom' value that references the
+  ;; variable's own prior value (e.g. via `append').
+  (dolist (dir '("/home/linglis/.local/bin" "/home/linglis/.local/share/mise/shims"))
+    (add-to-list 'tramp-remote-path dir))
+  (defun clear-memoized-caches (&rest _)
+    (setq project-current-cache nil)
+    (setq magit-toplevel-cache nil)
+    (setq vc-git-root-cache nil))
   (defun memoize-remote (key cache orig-fn &rest args)
     "Memoize a value if the key is a remote path."
     (if (and key
              (file-remote-p key))
-        (if-let ((current (assoc key (symbol-value cache))))
+        (if-let* ((current (assoc key (symbol-value cache))))
             (cdr current)
           (let ((current (apply orig-fn args)))
             (set cache (cons (cons key current) (symbol-value cache)))
@@ -499,7 +464,72 @@ or is an ERC buffer."
       (when (null (cdr (car vc-git-root-cache)))
         (setq vc-git-root-cache (cdr vc-git-root-cache)))
       value))
-  (advice-add 'vc-git-root :around #'memoize-vc-git-root))
+  (advice-add 'vc-git-root :around #'memoize-vc-git-root)
+  :hook
+  ((tramp-cleanup-connection . clear-memoized-caches)
+   (tramp-cleanup-all-connections . clear-memoized-caches)))
+
+(use-package ibuffer
+  :init
+  (setq ibuffer-saved-filter-groups
+        '(("Default"
+           ("Fundamental" (or
+                           (mode . fundamental-mode)
+                           (mode . text-mode)))
+           ("Org"     (or
+                       (mode  . org-mode)
+                       (name  . "^\\*Org Src")
+                       (name  . "^\\*Org Agenda\\*$")))
+           ("Tramp"   (name   . "^\\*tramp.*"))
+           ("Emacs"   (or
+                       (name  . "^\\*scratch\\*$")
+                       (name  . "^\\*Messages\\*$")
+                       (name  . "^\\*Warnings\\*$")
+                       (name  . "^\\*Shell Command Output\\*$")
+                       (name  . "^\\*Async-native-compile-log\\*$")))
+           ("Ediff"   (name   . "^\\*[Ee]diff.*"))
+           ("VC"      (name   . "^\\*vc-.*"))
+           ("Dired"   (mode   . dired-mode))
+           ("Terminal" (or
+                        (mode . term-mode)
+                        (mode . shell-mode)
+                        (mode . eshell-mode)
+                        (mode . ghostel-mode)))
+           ("Help"    (or
+                       (name  . "^\\*Help\\*$")
+                       (name  . "^\\*info\\*$")
+                       (mode  . helpful-mode)))
+           ("Markup"  (or
+                       (mode . markdown-mode)))
+           ("Magit" (or
+                     (mode . magit-blame-mode)
+                     (mode . magit-cherry-mode)
+                     (mode . magit-diff-mode)
+                     (mode . magit-log-mode)
+                     (mode . magit-process-mode)
+                     (mode . magit-status-Mode)))
+           ("News"    (name   . "^\\*Newsticker.*"))
+           ("chat"    (or
+                       (mode  . rcirc-mode)
+                       (mode  . erc-mode)
+                       (name  . "^\\*rcirc.*")
+                       (name  . "^\\*ERC.*"))))))
+
+  (defun esprit/open-ibuffer-with-filters (&optional filter-group)
+    "Open ibuffer using a saved filter group from `ibuffer-saved-filter-groups'.
+Uses the \"Default\" group when FILTER-GROUP is nil; a prefix arg
+prompts for a group name via `completing-read'."
+    (interactive)
+    (let* ((name (if current-prefix-arg
+                      (completing-read "Filter group: " ibuffer-saved-filter-groups nil t)
+                    (or filter-group "Default")))
+           (fg (cdr (assoc name ibuffer-saved-filter-groups))))
+      (ibuffer nil nil nil nil nil fg)))
+  :bind
+  (("C-x C-b" . esprit/open-ibuffer-with-filters))
+  :custom
+  (ibuffer-human-readable-size t)
+  (ibuffer-show-empty-filter-groups nil))
 
 (use-package autorevert
   :hook
@@ -520,17 +550,15 @@ or is an ERC buffer."
 (setopt indent-tabs-mode nil)
 
 (use-package editorconfig
-  :straight t
+  :ensure t
   :config
   (editorconfig-mode 1))
 
 (use-package dired
-  :straight (:type built-in)
   :custom
   (dired-dwim-target t))
 
 (use-package bookmark
-  :straight (:type built-in)
   :commands (bookmark-set)
   :xdg-state
   (bookmark-default-file "bookmarks.eld"))
@@ -553,7 +581,6 @@ or is an ERC buffer."
         kill-ring))
 
 (use-package savehist
-  :straight (:type built-in)
   :hook
   (after-init . savehist-mode)
   :xdg-state
@@ -581,7 +608,9 @@ or is an ERC buffer."
 (when (eq system-type 'darwin)
   (setopt mac-option-modifier 'meta)
   (setopt mac-command-modifier 'control)
-  (setopt mac-control-modifier 'super))
+  (setopt mac-control-modifier 'super)
+  (setq ns-use-srgb-colorspace nil)
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t)))
 
 (setq process-adaptive-read-buffering nil)
 
@@ -611,13 +640,12 @@ or is an ERC buffer."
 ;; Esprit Configuation
 ;;   - Set up my own little bundle of packages to tailor the Emacs experience
 
-(use-package esprit-themes
-  :straight nil)
+(use-package esprit-themes)
 
 ;;; Choose light or dark theme based on the time of day at my location
 
 (use-package circadian
-  :straight t
+  :ensure t
   :demand t
   :custom
   (calendar-latitude 42.4)
@@ -628,7 +656,6 @@ or is an ERC buffer."
   (circadian-setup))
 
 (use-package esprit-line
-  :straight nil
   :custom
   (esprit-line-glyph-alist esprit-line-glyphs-unicode)
   (esprit-line-format esprit-line-format-default)
@@ -661,9 +688,9 @@ or is an ERC buffer."
 
 ;; Integrated into literate config file
 (use-package jinx
-  :straight t
+  :ensure t
   :hook (after-init . global-jinx-mode)
-  :custom (jinx-languages "en_US")
+  :custom (jinx-languages "en_US es")
   :bind
   (("C-;" . jinx-correct-nearest)
    ("C-x j a" . jinx-correct-all)
@@ -676,7 +703,7 @@ or is an ERC buffer."
   (eglot-ensure))
 
 (use-package eglot-ltex
-  :straight (:host github :repo "emacs-languagetool/eglot-ltex")
+  :vc (:url "https://github.com/emacs-languagetool/eglot-ltex")
   :init
   (setq eglot-ltex-server-path "~/tools/ltex-ls-plus/bin/ltex-ls-plus"
         eglot-ltex-communication-channel 'stdio)
@@ -686,7 +713,7 @@ or is an ERC buffer."
               #'require-and-ensure-eglot-ltex)))
 
 (use-package quick-sdcv
-  :straight t
+  :ensure t
   :bind (("C-c s" . quick-sdcv-search-at-point)
          ("C-c S" . quick-sdcv-search-input))
   :custom
@@ -709,7 +736,7 @@ or is an ERC buffer."
   (quick-sdcv-fold-on-search nil))
 
 (use-package vertico
-  :straight t
+  :ensure t
   :bind (:map vertico-map
               ("C-<backspace>" . 'vertico-directory-up))
   :init
@@ -719,7 +746,7 @@ or is an ERC buffer."
   (vertico-resize t))
 
 (use-package consult
-  :straight t
+  :ensure t
   :preface
   (defun wrapper/consult-ripgrep (&optional dir given-initial)
     "Pass the region to `consult-ripgrep' if available.
@@ -751,14 +778,14 @@ or is an ERC buffer."
   (consult-narrow-key "<"))
 
 (use-package orderless
-  :straight t
+  :ensure t
   :custom
   (completion-styles '(orderless partial-completion basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion)))))
 
 (use-package corfu
-  :straight t
+  :ensure t
   :preface
   (defun corfu-x-eshell-hook ()
     "Set up Corfu behaviors in a shell friendly way."
@@ -778,13 +805,19 @@ or is an ERC buffer."
   (eshell-mode . corfu-x-eshell-hook))
 
 (use-package cape
-  :straight t
+  :ensure t
   :preface
+  (defun esprit/eglot-completion-at-point-safe ()
+    "Call `eglot-completion-at-point' only when a server is attached.
+Avoids a jsonrpc-error from Corfu's deferred auto-complete timer
+firing after Eglot has disconnected from the buffer."
+    (when (eglot-current-server)
+      (eglot-completion-at-point)))
   (defun esprit/cape-capf-setup-eglot ()
     "Configure cape completion at point functions for Eglot managed modes."
     (setq-local completion-at-point-functions
                 (list (cape-capf-super
-                       (cape-capf-buster #'eglot-completion-at-point)
+                       (cape-capf-buster #'esprit/eglot-completion-at-point-safe)
                        #'cape-file
                        #'cape-dabbrev))))
   (defun esprit/cape-capf-setup-prose ()
@@ -800,14 +833,14 @@ or is an ERC buffer."
    (git-commit-mode . esprit/cape-capf-setup-prose)))
 
 (use-package marginalia
-  :straight t
+  :ensure t
   :hook (after-init . marginalia-mode)
   :custom (marginalia--align 'right)
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle)))
 
 (use-package embark
-  :straight t
+  :ensure t
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
    ("M-." . embark-dwim)        ;; good alternative: M-.
@@ -823,22 +856,32 @@ or is an ERC buffer."
                  (window-parameters (mode-line-format . none)))))
 
 (use-package embark-consult
-  :straight t
+  :ensure t
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
 
 
 (use-package eglot
-  :straight (:type built-in)
   :demand t
-  :hook (eglot-enabled-modes . eglot-ensure)
   :bind (:map eglot-mode-map
               ("C-x l r" . eglot-rename)
+              ("C-x l R" . esprit/eglot-reconnect-after-tramp-drop)
               ("M-k" . eglot-code-actions))
   :custom
   (eglot-events-buffer-config '(:size 2000000 :format lisp))
   :config
+  (defun esprit/eglot-reconnect-after-tramp-drop ()
+    "Kill Eglot's stale server process and flush Tramp's cache for it.
+For when a kept-alive SSH connection drops silently: Eglot keeps
+reporting \"connected\" while requests go nowhere, and a plain
+`eglot-reconnect' hangs trying to gracefully shut down the dead
+process."
+    (interactive)
+    (when-let* ((vec (and (file-remote-p default-directory)
+                           (tramp-dissect-file-name default-directory))))
+      (tramp-cleanup-connection vec))
+    (eglot-reconnect (eglot--current-server-or-lose) t))
   (defun esprit/eglot-angular-contact (_interactive)
     "Build ngserver contact using nearest angular.json as project root."
     (let* ((root (locate-dominating-file default-directory "angular.json"))
@@ -856,8 +899,11 @@ or is an ERC buffer."
       typescript-ts-mode
       ruby-ts-mode
       go-ts-mode
-      astro-mode)
+      astro-mode
+      esprit-vue-mode)
     "Opt in list of modes which Eglot should manage.")
+  (dolist (mode eglot-enabled-modes)
+    (add-hook (intern (concat (symbol-name mode) "-hook")) #'eglot-ensure))
   (add-to-list 'eglot-server-programs
                '(ruby-ts-mode . ("ruby-lsp" :initializationOptions
                                  (:formatter "standard" :linters ["standard"] :enabledFeatures (:codeActions t :diagnostics t :formatting t)))))
@@ -880,11 +926,11 @@ or is an ERC buffer."
   (global-eldoc-mode))
 
 (use-package eldoc-box
-  :straight t
+  :ensure t
   :bind (("C-c k" . eldoc-box-help-at-point)))
 
 (use-package avy
-  :straight t
+  :ensure t
   :bind ("M-j" . avy-goto-char-timer)
   :config
   (defun avy-action-embark (pt)
@@ -941,15 +987,13 @@ or is an ERC buffer."
         (alist-get ?Y avy-dispatch-alist) 'avy-action-yank-whole-line))
 
 (use-package misc
-  :straight (:type built-in)
   :bind ("C-z" . #'zap-up-to-char))
 
 (use-package elec-pair
-  :straight (:type built-in)
   :hook (after-init . electric-pair-mode))
 
 (use-package accent
-  :straight t
+  :ensure t
   :bind ("C-x '" . #'accent-menu))
 
 ;; (keymap-global-set [remap dabbrev-expand] 'hippie-expand)
@@ -957,7 +1001,7 @@ or is an ERC buffer."
 (keymap-global-set "C-j" #'join-line)
 
 (use-package multiple-cursors
-  :straight t
+  :ensure t
   :bind
   ("C->" . #'mc/mark-next-like-this)
   ("C-<" . #'mc/mark-previous-like-this)
@@ -965,7 +1009,7 @@ or is an ERC buffer."
   ("C-S-c C-S-c" . #'mc/edit-lines))
 
 (use-package ace-window
-  :straight t
+  :ensure t
   :bind
   ("M-o" . 'ace-window)
   :custom
@@ -1015,24 +1059,24 @@ or is an ERC buffer."
 
 
 (use-package fontaine
-  :straight t
+  :ensure t
   :demand t
   :xdg-state
   (fontaine-latest-state-file "fontaine-latest-state.eld")
   :custom
   (fontaine-presets
    '((small
-      :default-family "Monaspace Neon Var"
+      :default-family "Ioskeley Mono"
       :default-height 80
-      :variable-pitch-family "Inter")
+      :variable-pitch-family "Atkinson Hyperlegible Next")
      (regular) ; like this it uses all the fallback values and is named `regular'
-     (medium :default-height 140 :bold-weight regular)
+     (medium  :default-height 140 :bold-weight semi-bold)
      (laptop  :inherit medium :default-height 130)
      (desktop :inherit medium :default-height 150)
      (large   :inherit medium :default-height 180)
      (t
-      :default-family "Monaspace Neon Var"
-      :variable-pitch-family "Inter"
+      :default-family "Ioskeley Mono"
+      :variable-pitch-family "Atkinson Hyperlegible Next"
       :fixed-pitch-height 1.0
       :fixed-pitch-serif-height 1.0
       :variable-pitch-height 1.0)))
@@ -1045,7 +1089,7 @@ or is an ERC buffer."
   ("C-c f" . #'fontaine-set-preset))
 
 (use-package magit
-  :straight t
+  :ensure t
   :bind
   ("C-M-;" . magit-status)
   :config
@@ -1073,7 +1117,6 @@ or is an ERC buffer."
   (keymap-set global-map "C-c g" esprit-vc-map))
 
 (use-package ediff
-  :straight (ediff :type built-in)
   :hook ((ediff-before-setup . esprit/store-pre-ediff-winconfig)
          (ediff-quit . esprit/restore-pre-ediff-winconfig))
   :config
@@ -1091,7 +1134,7 @@ or is an ERC buffer."
   (setq ediff-split-window-function 'split-window-horizontally))
 
 (use-package ghostel
-  :straight t
+  :ensure t
   :bind (("C-x m" . ghostel)
          :map ghostel-semi-char-mode-map
          ("C-s"  . consult-line)
@@ -1127,15 +1170,12 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
   :hook (after-init . ghostel-comint-global-mode))
 
 (use-package treesit-env
-  :straight (:host github :repo "cottontailia/treesit-env")
+  :vc (:url "https://github.com/cottontailia/treesit-env")
   :custom
   (treesit-env-default-revision-auto t)
   (treesit-env-abi-max 14)
   :config
-  (treesit-env vue
-    :vc grammars
-    :mode "\\.vue\\'" vue-ts-mode)
-  (treesit-env typescript javascript go ruby lua css vue)
+  (treesit-env typescript javascript go ruby lua css)
   ;; Use the provided minimal sample recipes (Optional)
   (require 'treesit-env-recipe-placeholder)
   (treesit-env-source treesit-env-recipe-placeholder))
@@ -1147,7 +1187,7 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 (use-package js-ts-mode
   :mode (rx (: ".js" (? (in ?x ?m)) eow))
   :custom
-  (js-indent-level 4))
+  (js-indent-level 2))
 
 (use-package ruby-ts-mode
   :mode (rx (: (| ".rb" "Rakefile" "Gemfile") eos))
@@ -1183,9 +1223,12 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
   (unbind-key "M-." typescript-ts-base-mode-map))
 
 (use-package web-mode
-  :straight t
+  :ensure t
+  :demand t
   :custom
   (web-mode-markup-indent-offset 2)
+  (web-mode-css-indent-offset 2)
+  (web-mode-code-indent-offset 2)
   :mode  (rx (: ".html" (? ".erb") eow))
   :config
   (define-derived-mode astro-mode web-mode "astro")
@@ -1194,14 +1237,25 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
   (define-derived-mode esprit-vue-mode web-mode "ES-Vue"
     "A major mode derived from web-mode, for editing .vue files with LSP support.")
   (add-to-list 'auto-mode-alist '("\\.vue\\'" . esprit-vue-mode))
-  (add-hook 'esprit-vue-mode-hook #'eglot-ensure)
-  (add-to-list 'eglot-server-programs '((esprit-vue-mode) "vue-language-server")))
+
+  (defun esprit/eglot-vue-contact (_interactive)
+    "Contact form for vue-language-server, pointing it at the project's local typescript."
+    (let* ((root (or (locate-dominating-file default-directory "node_modules")
+                      default-directory))
+           ;; vue-language-server runs on the same host as `root' (remote,
+           ;; under TRAMP), so tsdk must be a path local to that host --
+           ;; strip any /method:host: prefix before sending it over.
+           (tsdk (file-local-name (expand-file-name "node_modules/typescript/lib" root))))
+      `("vue-language-server" "--stdio"
+        :initializationOptions
+        (:typescript (:tsdk ,tsdk) :vue (:hybridMode :json-false)))))
+  (add-to-list 'eglot-server-programs '(esprit-vue-mode . esprit/eglot-vue-contact)))
 
 (use-package lua-ts-mode
   :mode (rx ".lua" eos))
 
 (use-package tempel
-  :straight t
+  :ensure t
   :custom
   (tempel-trigger-prefix "<")
   :bind (("M-=" . tempel-complete) ;; Alternative tempel-expand
@@ -1210,7 +1264,7 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 ;; Optional: Add tempel-collection.
 ;; The package is young and doesn't have comprehensive coverage.
 (use-package tempel-collection
-  :straight t
+  :ensure t
   :after tempel)
 
 (defvar-keymap esprit-toggles-map
@@ -1243,11 +1297,9 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 (keymap-global-set "C-c t" esprit-toggles-map)
 
 (use-package outline
-  :straight (:type built-in)
   :diminish "¶")
 
 (use-package which-key
-  :straight (:type built-in)
   :diminish which-key-mode
   :custom
   (which-key-idle-delay 1)
@@ -1256,7 +1308,7 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 
 ;; Clean and straightforward undo/redo
 (use-package undo-fu
-  :straight t
+  :ensure t
   :custom
   (undo-fu-allow-undo-in-region t)
   (undo-limit 67108864) ; 64mb.
@@ -1268,7 +1320,7 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
 
 ;; Persist undo history across sessions
 (use-package undo-fu-session
-  :straight t
+  :ensure t
   :hook
   (after-init . undo-fu-session-global-mode)
   :xdg-state
@@ -1279,7 +1331,7 @@ Like normal Emacs `C-k'.  Kill to end of line and put content in kill-ring."
    '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
 
 (use-package helpful
-  :straight t
+  :ensure t
   :custom
   (helpful-switch-to-buffer #'esprit/helpful-switch-to-buffer)
   :config
@@ -1313,25 +1365,27 @@ otherwise create a new window."
                 (no-delete-other-windows . t))))
 
 (use-package nxml-mode
-  :straight (:type built-in)
   :mode (rx (| ".xml" ".svg") eos))
 
 (use-package markdown-mode
-  :straight t
+  :ensure t
   :mode ((rx ".md" eos) . gfm-mode)
   :commands (markdown-mode gfm-mode)
   :bind ("C-c C-c C-p" . 'esprit/markdown-preview)
   :config
   (setq markdown-command "pandoc -t html5"))
 
+(use-package prose-mode
+  :hook markdown-mode)
+
 (use-package simple-httpd
-  :straight t
+  :ensure t
   :config
   (setq httpd-host 'local)
   (setq httpd-port 7070))
 
 (use-package impatient-mode
-  :straight t
+  :ensure t
   :commands impatient-mode)
 
 (defun esprit/markdown-filter (buffer)
@@ -1354,19 +1408,18 @@ otherwise create a new window."
   (imp-visit-buffer))
 
 (use-package md-mermaid
-  :straight (:host github :repo "ahmetus/md-mermaid")
+  :vc (:url "https://github.com/ahmetus/md-mermaid")
   :commands (md-mermaid-render-current
              md-mermaid-preview-last-svg
              md-mermaid-transient))
 
 (use-package yaml-ts-mode
-  :straight (:type built-in)
   :mode (rx (| ".yml" ".yaml") eos)
   :custom
   (tab-width 2))
 
 (use-package command-log-mode
-  :straight (:host github :repo "ludamillion/command-log-mode"))
+  :vc (:url "https://github.com/ludamillion/command-log-mode"))
 
 (defvar esprit/local-root "~/"
   "The explicit root directory value.")
@@ -1389,7 +1442,6 @@ otherwise create a new window."
 (setq esprit/org-id-locations-file (expand-file-name ".org-id-locations" esprit/org-dir))
 
 (use-package org
-  :straight (:type built-in)
   :init
   (setq org-export-backends '(ascii md html icalendar latex))
   :custom
@@ -1431,8 +1483,10 @@ otherwise create a new window."
   ("C-c c" . org-capture)
   ("C-c l" . org-store-link))
 
+(use-package esprit-side-note)
+
 (use-package denote
-  :straight t
+  :ensure t
   :init
   (denote-rename-buffer-mode 1)
   :custom
@@ -1440,10 +1494,36 @@ otherwise create a new window."
   :hook
   (dired-mode . denote-dired-mode)
   :custom-face
-  (denote-faces-link ((t (:slant italic)))))
+  (denote-faces-link ((t (:slant italic))))
+  :config
+  (defun esprit/denote-bench-note-p ()
+    "Non-nil if the current buffer is visiting a denote note tagged \"bench\"."
+    (and buffer-file-name
+         (denote-file-is-note-p buffer-file-name)
+         (member "bench" (denote-extract-keywords-from-path buffer-file-name))))
+  (add-to-list 'esprit-side-note-predicates #'esprit/denote-bench-note-p)
+
+  (defun esprit/bench-note-open ()
+    "Find or create this project's bench note, shown in the side window."
+    (interactive)
+    (let* ((proj (project-current))
+           (label (if proj
+                      (file-name-nondirectory (directory-file-name (project-root proj)))
+                    (read-string "Bench note label: ")))
+           (candidates (seq-filter
+                        (lambda (f)
+                          (let ((kw (denote-extract-keywords-from-path f)))
+                            (and (member "bench" kw) (member label kw))))
+                        (denote-directory-files nil nil t))))
+      (cond
+       ((null candidates) (denote (format "Bench notes: %s" label) (list "bench" label)))
+       ((= (length candidates) 1) (find-file (car candidates)))
+       (t (find-file (completing-read "Bench note: " candidates nil t))))))
+  :bind
+  ("C-c n b" . esprit/bench-note-open))
 
 (use-package consult-notes
-  :straight t
+  :ensure t
   :bind
   ("M-s n" . #'consult-notes)
   :commands (consult-notes
@@ -1458,12 +1538,12 @@ otherwise create a new window."
     (emacs-lock-mode 'kill)))
 
 (use-package wgrep
-  :straight t
+  :ensure t
   :custom
   (wgrep-auto-save-buffer t))
 
 (use-package combobulate
-  :straight t
+  :vc (:url "https://github.com/mickeynp/combobulate")
   :custom
   ;; You can customize Combobulate's key prefix here.
   ;; Note that you may have to restart Emacs for this to take effect!
@@ -1474,29 +1554,34 @@ otherwise create a new window."
   :bind ("C-a" . #'esprit/beginning-of-line))
 
 (use-package ipe
-  :straight t
+  :vc (:url "https://github.com/BriansEmacs/insert-pair-edit.el")
   :bind ("M-(" . #'ipe-insert-pair-edit)
   :custom
   (ipe-menu-support-p t))
 
 ;; install required inheritenv dependency:
 (use-package inheritenv
-  :straight (:type git :host github :repo "purcell/inheritenv"))
+  :vc (:url "https://github.com/purcell/inheritenv"))
 
 (use-package monet
-  :straight (:type git :host github :repo "stevemolitor/monet"))
+  :vc (:url "https://github.com/stevemolitor/monet"))
 
-;; install claude-code.el, using :depth 1 to reduce download size:
 (use-package claude-code
-  :straight (:type git :host github :repo "stevemolitor/claude-code.el" :branch "main" :depth 1
-                   :files ("*.el" (:exclude "images/*")))
+  :vc (:url "https://github.com/stevemolitor/claude-code.el" :branch "main" :ignored-files ("images/*"))
   :bind-keymap
   ("C-x c" . claude-code-command-map) ;; or your preferred key
   ;; Optionally define a repeat map so that "M" will cycle thru Claude auto-accept/plan/confirm modes after invoking claude-code-cycle-mode / C-c M.
   :bind
   (:repeat-map my-claude-code-map ("M" . claude-code-cycle-mode))
+  :init
+  (defun esprit/claude-display-fn (buffer)
+  "Display Claude buffer in right side window."
+  (display-buffer buffer '((display-buffer-in-side-window)
+                           (side . right)
+                           (window-width . 90))))
   :custom
   (claude-code-terminal-backend 'ghostel)
+  (claude-code-display-window-fn #'esprit/claude-display-fn)
   :config
   (claude-code-mode))
 
@@ -1515,7 +1600,7 @@ otherwise create a new window."
 (keymap-global-set "C-c w p" #'esprit/tear-off-window)
 
 (use-package obsidian
-  :straight t
+  :ensure t
   :commands (obsidian-capture obsidian-search)
   :config
   (global-obsidian-mode t)
@@ -1538,15 +1623,11 @@ otherwise create a new window."
               ("C-c C-b" . obsidian-backlink-jump)))
 
 (use-package csv-mode
-  :straight t
+  :ensure t
   :mode (rx ".csv" eos))
 
-;; (use-package vue-ts-mode
-;;   :straight (:host github :repo "8uff3r/vue-ts-mode")
-;;   :mode (rx (: ".vue" eow)))
-
 (use-package mise
-  :straight t
+  :ensure t
   :hook (after-init . #'global-mise-mode))
 
 (provide 'init)

@@ -51,7 +51,6 @@ places.eld
 
 .cache/
 .lsp-session-*
-straight/
 var/
 
 # directory configuration

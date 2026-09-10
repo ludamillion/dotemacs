@@ -133,7 +133,7 @@ of the progress or any relevant activities during startup.")
 
 (set-language-environment "UTF-8")
 
-(setq max-lisp-eval-depth 3200)
+(setq max-lisp-eval-depth 12800)
 
 (setq warning-minimum-level (if esprit-emacs-debug :warning :error))
 (setq warning-suppress-types '((lexical-binding)))
