@@ -71,8 +71,8 @@
   :global t
   :lighter nil
   (if flymake-follow-mode
-      (add-hook 'post-command-hook #'flymake-follow-sync-diagnostics nil t)
-    (remove-hook 'post-command-hook #'flymake-follow-sync-diagnostics t)))
+      (add-hook 'post-command-hook #'flymake-follow-sync-diagnostics)
+    (remove-hook 'post-command-hook #'flymake-follow-sync-diagnostics)))
 
 (provide 'flymake-follow-mode)
 ;;; flymake-follow-mode.el ends here

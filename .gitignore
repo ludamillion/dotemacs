@@ -47,10 +47,18 @@ transient/
 .projectile
 projects
 projectile-bookmarks.eld
+places.eld
+projects.eld
+
+# savehist / recentf
+history
+recentf.eld
+
+# elgrep
+elgrep-data.el
 
 .cache/
 .lsp-session-*
-straight/
 var/
 
 # directory configuration

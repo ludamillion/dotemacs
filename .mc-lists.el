@@ -3,12 +3,24 @@
 
 (setq mc/cmds-to-run-for-all
       '(
+        beginning-of-buffer
+        dabbrev-expand
         esprit/beginning-of-line
+        exit-recursive-edit
+        indent-for-tab-command
+        keyboard-escape-quit
         org-delete-char
         org-self-insert-command
+        org-yank
         ))
 
 (setq mc/cmds-to-run-once
       '(
-        straight-remove-unused-repos
+        consult-yank-pop
+        dabbrev-completion
+        embark-act
+        end-of-buffer
+        end-of-visual-line
+        goto-line
+        pixel-scroll-precision
         ))
