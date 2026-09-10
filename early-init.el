@@ -13,7 +13,7 @@
 (setq gc-cons-threshold most-positive-fixnum)
 (setq gc-cons-percentage 1.0)
 
-(defvar esprit-emacs-user-directory "~/tools/dotemacs/"
+(defvar esprit-emacs-user-directory user-emacs-directory
   "Pointer to me Emacs home directory.")
 
 (defvar esprit-emacs-ui-features '()
